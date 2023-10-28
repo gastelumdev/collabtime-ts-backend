@@ -6,7 +6,7 @@ export interface IUser {
     lastname: string;
     email: string;
     password: string;
-    role: string;
+    role?: string;
     workspaces: string[];
     created_at: Date;
 };

@@ -16,11 +16,14 @@ export const register = async (req: Request, res: Response) => {
             console.log(user);
             res.status(500).send({successful: false, message: "User already exists."});
         } else {
+            const hash = await bcrypt.hash(req.body.password, Number(10));
+            console.log(hash);
             const user = new User({
                 firstname: req.body.firstname,
                 lastname: req.body.lastname,
                 email: req.body.email,
-                password: bcrypt.hashSync(req.body.password, 8),
+                role: req.body.role,
+                password: hash,
                 workspaces: []
             });
 
@@ -44,12 +47,13 @@ export const login = async (req: Request, res: Response) => {
         if (!user) {
             res.status(404).send({message: "Login failed. Try again."});
         } else {
+            console.log(user.password)
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
             if (!passwordIsValid) {
+                console.log(passwordIsValid)
                 res.status(401).send({accesToken: null, message: "Login failed. Try again."});
             } else {
                 const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "259200"});
-                
                 
                 try {
                     res.status(200).send({user: user, message: "Login successful", accessToken: token});

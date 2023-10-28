@@ -7,20 +7,20 @@ const userSchema: Schema<IUserDocument> = new Schema({
     lastname: {type: String, required: true},
     email: {type: String, required: true},
     password: {type: String, required: true},
-    role: {type: String, enum: ["general", "admin", "superuser"], required: true},
+    role: {type: String, enum: ["general", "admin", "superuser"]},
     workspaces: [String],
     created_at: {type: Date, default: Date.now},
 });
 
-userSchema.pre("save", async function (this: IUserDocument, next: Function) {
-    if (!this.isModified("password")) {
-        return next();
-    }
+// userSchema.pre("save", async function (this: IUserDocument, next: Function) {
+//     if (!this.isModified("password")) {
+//         return next();
+//     }
 
-    const hash = await bcrypt.hash(this.password, Number(10));
-    this.password = hash;
-    next();
-})
+//     const hash = await bcrypt.hash(this.password, Number(10));
+//     this.password = hash;
+//     next();
+// })
 
 userSchema.statics.buildUser = (args: IUser) => {
     return new User(args);
