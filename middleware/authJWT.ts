@@ -5,8 +5,11 @@ import { NextFunction, Request, Response } from "express";
 const verifyToken = (req: Request, res: Response, next: NextFunction) => {
     if (req.headers && req.headers.authorization && req.headers.authorization.split(" ")[0] === "JWT") {
         jwt.verify(req.headers.authorization.split(" ")[1], process.env.API_SECRET || "myapisecret", async function (err, decode) {
+            console.log(err)
             if (err) (<any>req).user = undefined;
+            console.log((<any>decode).id)
             try {
+
                 const user = await User.findOne({
                     _id: (<any>decode).id
                 });
@@ -14,7 +17,12 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
                 try {
                     (<any>req).user = user;
                     console.log("Request", (<any>req).user.id);
-                    next();
+                    if ((<any>req).user) {
+                        next();
+                    } else {
+                        res.status(401).send({success: false})
+                    }
+                    
                 } catch (error) {
                     res.status(500).send({message: error});
                 }
@@ -24,8 +32,10 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
             }
         });
     } else {
-        (<any>req).user = undefined;
-        next();
+        // (<any>req).user = undefined;
+        // next();
+
+        res.status(401).send({success: false})
     }
 }
 

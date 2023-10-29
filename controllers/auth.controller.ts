@@ -7,6 +7,7 @@ import verifyToken from '../middleware/authJWT';
 import User from "../models/auth.model"
 import Token from '../models/token.model';
 import setSendEmail from '../utils/sendEmail';
+import { io } from "../index";
 
 export const register = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email});
@@ -51,11 +52,13 @@ export const login = async (req: Request, res: Response) => {
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
             if (!passwordIsValid) {
                 console.log(passwordIsValid)
+                io.emit("login", {success: false})
                 res.status(401).send({accesToken: null, message: "Login failed. Try again."});
             } else {
-                const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "259200"});
+                const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: 2592000});
                 
                 try {
+                    
                     res.status(200).send({user: user, message: "Login successful", accessToken: token});
                 } catch (error) {
                     res.status(500).send({message: error})
