@@ -4,7 +4,7 @@ import { IToken, ITokenDocument, ITokenModel} from "../services/token.service";
 const tokenSchema: Schema<ITokenDocument> = new Schema({
     userId: {type: Schema.Types.ObjectId, required: true, ref: "user"},
     token: {type: String, required: true},
-    createdAt: {type: Date, default: Date.now, expires: 3600}
+    createdAt: {type: Date, default: Date.now}
 },{
     timestamps: true,
 });

@@ -4,8 +4,8 @@ import { IWorkspace, IWorkspaceDocument, IWorkspaceModel } from "../services/wor
 const workspaceSchema: Schema<IWorkspaceDocument> = new Schema({
     name: {type: String, required: true},
     description: {type: String},
-    tools: {type: Array},
-    invitees: {type: Schema.Types.Mixed},
+    tools: {type: Schema.Types.Mixed},
+    invitees: {type: []},
     owner: {type: Schema.Types.ObjectId},
     createdAt: {type: Date, default: Date.now}
 },{

@@ -27,10 +27,10 @@ export const createWorkspace = async (req: Request, res: Response) => {
 
     if ((<any>req).user) {
         const workspace = new Workspace({...(req.body), owner: (<any>req).user._id});
+        console.log(workspace)
     
         try {
             if (user) {
-                // console.log(workspace);
                 await workspace.save();
                 const userWorkspaces = user.workspaces;
                 userWorkspaces.push(workspace._id);

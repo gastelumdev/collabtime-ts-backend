@@ -28,7 +28,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
                 }
             } catch(error) {
                 console.log("Error is:", error);
-                res.status(401).send({message: error});
+                res.status(401).send({message: error})
             }
         });
     } else {

@@ -55,7 +55,7 @@ export const login = async (req: Request, res: Response) => {
                 io.emit("login", {success: false})
                 res.status(401).send({accesToken: null, message: "Login failed. Try again."});
             } else {
-                const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: 2592000});
+                const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "365d"});
                 
                 try {
                     
@@ -67,6 +67,20 @@ export const login = async (req: Request, res: Response) => {
         }
     } catch (error) {
         res.status(500).send({message: error});
+    }
+}
+
+export const getUser = async (req: Request, res: Response) => {
+    const user = await User.findOne({_id: req.params.id});
+
+    try {
+        if (user) {
+            res.send(user);
+        } else {
+            res.status(400).send({success: false});
+        }
+    } catch (error) {
+        res.status(400).send({success: false});
     }
 }
 
