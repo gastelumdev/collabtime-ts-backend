@@ -147,12 +147,19 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
         console.log(error)
         res.status(500).send({success: false})
     }
-    
-    
-    
-    
 
     await passwordResetToken.deleteOne();
+}
+
+export const getAllUsers = async (req: Request, res: Response) => {
+    const users = await User.find({});
+    console.log(users);
+    try{
+        res.send(users)
+    } catch (error) {
+        res.status(400).send(error)
+    }
+    
 }
 
 
