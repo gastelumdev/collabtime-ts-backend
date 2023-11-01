@@ -21,6 +21,7 @@ export interface IWorkspace {
     description?: string;
     tools: TTools;
     invitees: TInvitee[];
+    members: TInvitee[];
     owner: Schema.Types.ObjectId;
     createdAt: Date;
 }

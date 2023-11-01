@@ -6,6 +6,7 @@ const workspaceSchema: Schema<IWorkspaceDocument> = new Schema({
     description: {type: String},
     tools: {type: Schema.Types.Mixed},
     invitees: {type: []},
+    members: {type: []},
     owner: {type: Schema.Types.ObjectId},
     createdAt: {type: Date, default: Date.now}
 },{
