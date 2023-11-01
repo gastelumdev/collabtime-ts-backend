@@ -58,7 +58,7 @@ export const login = async (req: Request, res: Response) => {
                 const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "365d"});
                 
                 try {
-                    
+                    io.emit("login", {success: true})
                     res.status(200).send({user: user, message: "Login successful", accessToken: token});
                 } catch (error) {
                     res.status(500).send({message: error})
