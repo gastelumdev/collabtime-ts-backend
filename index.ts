@@ -35,7 +35,7 @@ app.use(authRouter);
 app.use(workspaceRouter);
 
 
-const server = http.createServer();
+const server = http.createServer(app);
 
 export const io = new Server(server, {cors: {origin: process.env.CORS_URL}})
 
@@ -45,10 +45,10 @@ io.on("connection", (socket) => {
   
 })
 
-server.listen(9000, () => {
-  console.log("[ws-server]: Server is running on port 9000")
+server.listen(port, () => {
+  console.log("[ws-server]: Server is running on port " + port)
 })
 
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`[server]: Server is running at http://localhost:${port}`);
+// });
