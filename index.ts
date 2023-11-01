@@ -37,7 +37,7 @@ app.use(workspaceRouter);
 
 const server = http.createServer();
 
-export const io = new Server(server, {cors: {origin: "http://127.0.0.1:5173"}})
+export const io = new Server(server, {cors: {origin: process.env.CORS_URL}})
 
 io.on("connection", (socket) => {
   socket.emit("con", {message: "a new client connected"})
