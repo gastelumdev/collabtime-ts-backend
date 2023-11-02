@@ -52,13 +52,13 @@ export const login = async (req: Request, res: Response) => {
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
             if (!passwordIsValid) {
                 console.log(passwordIsValid)
-                io.emit("login", {success: false})
+                io.emit("login", {message: `${user.firstname} ${user.lastname} attemted to log in with an invalid password.`, created_on: Date.now(), data_source: "login", priority: "Low"});
                 res.status(401).send({accesToken: null, message: "Login failed. Try again."});
             } else {
                 const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "365d"});
                 
                 try {
-                    io.emit("login", {success: true})
+                    io.emit("login", {message: `${user.firstname} ${user.lastname} logged in.`, created_on: Date.now(), data_source: "login", priority: "Low"})
                     res.status(200).send({user: user, message: "Login successful", accessToken: token});
                 } catch (error) {
                     res.status(500).send({message: error})

@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import { IUser } from "../services/auth.service"
 import { TInvitee, TUser, TWorkspace } from "../types"
+import { io } from "../index";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: (<any>req).user._id});
@@ -41,8 +42,10 @@ export const createWorkspace = async (req: Request, res: Response) => {
                 await workspace.save();
                 const userWorkspaces = user.workspaces;
                 userWorkspaces.push({id: workspace._id, permissions: 2});
+                
                 await User.updateOne({_id: (<any>req).user._id}, {$set: {workspaces: userWorkspaces}});
                 res.send(workspace);
+                io.emit("update", {});
             
             } catch (error) {
                 console.log("No user")
@@ -80,8 +83,9 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
         const workspace = await Workspace.findOne({_id: req.params.id, owner: (<any>req).user._id});
         const user = await User.findOne({_id: (<any>req).user._id});
         const userWorkspaces = user?.workspaces.filter((item) => {
-            return item.id === workspace?._id;
+            return !workspace?._id.equals(item.id);
         });
+
 
         console.log(userWorkspaces);
         await User.updateOne({_id: user?._id}, {$set: {workspaces: userWorkspaces}});
@@ -91,7 +95,8 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
                 let currentMember: any = await User.findOne({email: member.email});
                 console.log("CURRENT MEMBER", currentMember);
                 let workspaceMembers = currentMember?.workspaces.filter((item: any) => {
-                    console.log( workspace._id.equals(item.id))
+                    console.log(workspace._id, item.id)
+                    console.log(workspace._id.equals(item.id))
                     return !workspace._id.equals(item.id);
                 });
                 console.log("WORKSPACE MEMBERS", workspaceMembers)
@@ -228,4 +233,8 @@ export const joinWorkspace = async (req: Request, res: Response) => {
 
 
     res.send({success: true})
+}
+
+export const callUpdate = async (req: Request, res: Response) => {
+    res.send({success: true});
 }

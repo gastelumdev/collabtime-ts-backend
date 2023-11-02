@@ -12,5 +12,6 @@ router.post("/workspaces/delete/:id", verifyToken, workspaceController.deleteWor
 router.get("/workspaces/:id/users", verifyToken, workspaceController.getUsers);
 router.post("/workspaces/:id/inviteTeamMembers", workspaceController.inviteTeamMembers);
 router.post("/workspaces/:id/joinWorkspace", workspaceController.joinWorkspace);
+router.post("/workspaces/callUpdate", verifyToken, workspaceController.callUpdate);
 
 export default router;
