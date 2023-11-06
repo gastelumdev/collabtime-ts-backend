@@ -7,7 +7,7 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
         jwt.verify(req.headers.authorization.split(" ")[1], process.env.API_SECRET || "myapisecret", async function (err, decode) {
             console.log(err)
             if (err) (<any>req).user = undefined;
-            console.log((<any>decode).id)
+            // console.log((<any>decode).id)
             try {
 
                 const user = await User.findOne({
@@ -28,7 +28,8 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
                     res.status(500).send({message: error});
                 }
             } catch(error) {
-                console.log("Error is:", error);
+                // console.log("Error is:", error);
+                console.log("There is an error in authJWT")
                 res.status(401).send({message: error})
             }
         });

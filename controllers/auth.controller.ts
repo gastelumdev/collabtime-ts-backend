@@ -6,6 +6,7 @@ import * as userServices from '../services/auth.service';
 import verifyToken from '../middleware/authJWT';
 import User from "../models/auth.model"
 import Token from '../models/token.model';
+import Notification from '../models/notification.model';
 import setSendEmail from '../utils/sendEmail';
 import { io } from "../index";
 
@@ -18,7 +19,6 @@ export const register = async (req: Request, res: Response) => {
             res.status(500).send({successful: false, message: "User already exists."});
         } else {
             const hash = await bcrypt.hash(req.body.password, Number(10));
-            console.log(hash);
             const user = new User({
                 firstname: req.body.firstname,
                 lastname: req.body.lastname,
@@ -48,17 +48,27 @@ export const login = async (req: Request, res: Response) => {
         if (!user) {
             res.status(404).send({message: "Login failed. Try again."});
         } else {
-            console.log(user.password)
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
             if (!passwordIsValid) {
                 console.log(passwordIsValid)
-                io.emit("login", {message: `${user.firstname} ${user.lastname} attemted to log in with an invalid password.`, created_on: Date.now(), data_source: "login", priority: "Low"});
+                const notification = new Notification({
+                    message: `${user.firstname} ${user.lastname} attempted to login.`,
+                    dataSource: "Login",
+                    priority: "Low",
+                });
+                notification.save();
+
+                io.emit("update", {});
                 res.status(401).send({accesToken: null, message: "Login failed. Try again."});
             } else {
                 const token = jwt.sign({id: user.id}, process.env.API_SECRET || "myapisecret", {expiresIn: "365d"});
                 
                 try {
-                    io.emit("login", {message: `${user.firstname} ${user.lastname} logged in.`, created_on: Date.now(), data_source: "login", priority: "Low"})
+                    const notification = new Notification({
+                        message: `${user.firstname} ${user.lastname} logged in.`, dataSource: "login", priority: "Low"
+                    });
+                    notification.save();
+                    io.emit("update", {})
                     res.status(200).send({user: user, message: "Login successful", accessToken: token});
                 } catch (error) {
                     res.status(500).send({message: error})

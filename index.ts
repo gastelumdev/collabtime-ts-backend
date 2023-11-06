@@ -7,6 +7,7 @@ import bodyparser from 'body-parser';
 import connection from './config/db';
 import authRouter from "./routes/auth.routes"
 import workspaceRouter from "./routes/workspace.routes"
+import notificationRouter from "./routes/notifications.routes"
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use(authRouter);
 app.use(workspaceRouter);
+app.use(notificationRouter);
 
 
 const server = http.createServer(app);
