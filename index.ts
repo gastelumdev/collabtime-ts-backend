@@ -8,6 +8,10 @@ import connection from './config/db';
 import authRouter from "./routes/auth.routes"
 import workspaceRouter from "./routes/workspace.routes"
 import notificationRouter from "./routes/notifications.routes"
+import dataCollectionRouter from './routes/dataCollection.routes';
+import columnRouter from "./routes/column.routes";
+import rowRouter from "./routes/row.routes";
+import cellRouter from "./routes/cell.routes";
 
 dotenv.config();
 
@@ -35,6 +39,10 @@ app.get('/', (req: Request, res: Response) => {
 app.use(authRouter);
 app.use(workspaceRouter);
 app.use(notificationRouter);
+app.use(dataCollectionRouter);
+app.use(columnRouter);
+app.use(rowRouter);
+app.use(cellRouter);
 
 
 const server = http.createServer(app);
