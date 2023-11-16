@@ -3,6 +3,9 @@ import DataCollection from "../models/dataCollection.model";
 import Workspace from "../models/workspace.model";
 import { TDataCollection, TWorkspace } from "../types";
 import Column from "../models/column.model";
+import Cell from "../models/cell.models";
+import Row from "../models/row.models";
+import mongoose from "mongoose";
 
 export const getDataCollections = async(req: Request, res: Response) => {
     const workspace = await Workspace.findOne({_id: req?.params.workspaceId});
@@ -82,12 +85,16 @@ export const updateDataCollection = async (req: Request, res: Response) => {
 }
 
 export const deleteDataCollection = async (req: Request, res: Response) => {
-    const dataCollectionId = req?.params.id;
+    const dataCollectionId = new mongoose.Types.ObjectId(req?.params.id);
 
     try {
+        await Cell.deleteMany({dataCollection: dataCollectionId});
+        await Row.deleteMany({dataCollection: dataCollectionId});
+        await Column.deleteMany({dataCollection: dataCollectionId});
         await DataCollection.findByIdAndDelete({_id: dataCollectionId});
         res.send({success: true});
     } catch (error) {
+        console.log(error)
         res.status(400).send({success: false})
     }
     

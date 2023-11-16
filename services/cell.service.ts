@@ -6,6 +6,7 @@ export type TLabel = {
 }
 
 export interface ICell {
+    dataCollection: Schema.Types.ObjectId;
     row: Schema.Types.ObjectId;
     name: string;
     type: string;

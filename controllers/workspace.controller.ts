@@ -8,6 +8,10 @@ import path from "path";
 import { IUser } from "../services/auth.service"
 import { TInvitee, TUser, TWorkspace } from "../types"
 import { io } from "../index";
+import DataCollection from "../models/dataCollection.model";
+import Cell from "../models/cell.models";
+import Row from "../models/row.models";
+import Column from "../models/column.model";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: (<any>req).user._id});
@@ -85,6 +89,7 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
         const userWorkspaces = user?.workspaces.filter((item) => {
             return !workspace?._id.equals(item.id);
         });
+        const dataCollections = await DataCollection.find({workspace: workspace?._id});
 
 
         console.log(userWorkspaces);
@@ -107,6 +112,14 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
                     
                     console.log("UPDATED MEMBER", updatedMember);
                 }
+            }
+
+            for (const dataCollection of dataCollections) {
+                const dataCollectionId = dataCollection._id;
+                await Cell.deleteMany({dataCollection: dataCollectionId});
+                await Row.deleteMany({dataCollection: dataCollectionId});
+                await Column.deleteMany({dataCollection: dataCollectionId});
+                await DataCollection.findByIdAndDelete({_id: dataCollectionId});
             }
         }
         

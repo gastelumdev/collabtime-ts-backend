@@ -18,15 +18,10 @@ export const getRows = async (req: Request, res: Response) => {
     const result = [];
 
     for (const row of rows) {
-        console.log("ROW", row)
         for (const i in columns) {
-            
-            console.log("COLUMN",columns[i]);
-            console.log("CELLID", row.cells[i])
             const cell = await Cell.findOne({_id: row.cells[i]});
             if (columns[i].name == cell?.name) {
                 
-                console.log("CELL", cell);
                 cells.push(cell);
             } else {
                 cells.push({})
@@ -34,15 +29,11 @@ export const getRows = async (req: Request, res: Response) => {
             
         }
 
-        console.log("CELLS", cells);
-
         row.cells = cells;
         cells = []
         
         result.push(row);
     }
-
-    console.log("RESULT", result);
 
     // console.log(totalCells)
 
@@ -59,15 +50,12 @@ export const createRow = async (req: Request, res: Response) => {
     const body = req.body;
 
     const row = new Row({dataCollection: dataCollection?._id});
-    console.log(body);
-    console.log(columns)
 
     for (const column of columns) {
-        let cell = new Cell({row: row._id, name: column.name, type: column.type, value: body[column.name]});
+        let cell = new Cell({dataCollection: column.dataCollection, row: row._id, name: column.name, type: column.type, value: body[column.name],  labels: column.labels},);
         row.cells.push(cell._id);
         try {
             cell.save();
-            console.log(cell);
         } catch(error) {
             res.status(400).send({success:false});
         }

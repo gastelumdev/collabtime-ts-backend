@@ -2,6 +2,7 @@ import mongoose, {Schema, Types, model} from "mongoose";
 import { ICell, ICellDocument, ICellModel } from "../services/cell.service";
 
 const cellSchema: Schema<ICellDocument> = new Schema({
+    dataCollection: {type: Schema.Types.ObjectId},
     row: {type: Schema.Types.ObjectId},
     name: {type: String, required: true},
     type: {type: String},
