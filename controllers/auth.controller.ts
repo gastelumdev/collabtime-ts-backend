@@ -83,6 +83,8 @@ export const login = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: req.params.id});
 
+    console.log("USER", user)
+
     try {
         if (user) {
             res.send(user);

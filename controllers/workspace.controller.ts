@@ -52,7 +52,6 @@ export const createWorkspace = async (req: Request, res: Response) => {
                 io.emit("update", {});
             
             } catch (error) {
-                console.log("No user")
                 res.status(400).send({success: false, error: error});
             }
         }
@@ -90,30 +89,22 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
             return !workspace?._id.equals(item.id);
         });
         const dataCollections = await DataCollection.find({workspace: workspace?._id});
-
-
-        console.log(userWorkspaces);
         await User.updateOne({_id: user?._id}, {$set: {workspaces: userWorkspaces}});
 
         if (workspace) {
             for (const member of workspace?.members) {
                 let currentMember: any = await User.findOne({email: member.email});
-                console.log("CURRENT MEMBER", currentMember);
                 let workspaceMembers = currentMember?.workspaces.filter((item: any) => {
-                    console.log(workspace._id, item.id)
-                    console.log(workspace._id.equals(item.id))
                     return !workspace._id.equals(item.id);
                 });
-                console.log("WORKSPACE MEMBERS", workspaceMembers)
 
                 if (currentMember) {
                     currentMember.workspaces = workspaceMembers || user?.workspaces
-                    let updatedMember = await User.updateOne({email: member.email}, currentMember);
-                    
-                    console.log("UPDATED MEMBER", updatedMember);
+                    await User.updateOne({email: member.email}, currentMember);
                 }
             }
 
+            // Delete any data collections associated to the workspace
             for (const dataCollection of dataCollections) {
                 const dataCollectionId = dataCollection._id;
                 await Cell.deleteMany({dataCollection: dataCollectionId});
@@ -230,7 +221,7 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         return item.email === user?.email;
     })[0] || [];
 
-
+    console.log(member)
 
     if (workspace) {
         workspace.invitees = invitees || workspace.invitees;
