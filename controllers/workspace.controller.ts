@@ -129,25 +129,15 @@ export const getUsers = async (req: Request, res: Response) => {
         const workspace = await Workspace.findById(req.params.id);
         const membersAndInvitees = workspace?.members.concat(workspace?.invitees);
         
-        const nonMemberEmails = membersAndInvitees?.map((item) => {
-            return item.email;
-        });
+        const nonMemberEmails = membersAndInvitees?.map(item => item.email);
 
-        const memberEmails = workspace?.members.map((item) => {
-            return item.email;
-        });
+        const memberEmails = workspace?.members.map(item => item.email);
 
-        const inviteeEmails = workspace?.invitees.map((item) => {
-            return item.email;
-        })
+        const inviteeEmails = workspace?.invitees.map(item => item.email)
         
         const nonMembers = await User.find({email: {$nin: nonMemberEmails}});
         const members = await User.find({email: {$in: memberEmails}});
         const invitees = await User.find({email: {$in: inviteeEmails}});
-
-        console.log("Non members", nonMembers);
-        console.log("members", members);
-        console.log("invitees", invitees)
 
         const reactSelectOptions = nonMembers.map((item: any) => {
             return {value: item.email, label: `${item.firstname} ${item.lastname}`};
@@ -160,6 +150,7 @@ export const getUsers = async (req: Request, res: Response) => {
 
 export const inviteTeamMembers = async (req: Request, res: Response) => {
     const workspace = await Workspace.findByIdAndUpdate(req.params.id, req.body);
+    console.log("WORKSPACE", workspace)
     try {
         
         if (workspace) {
@@ -210,33 +201,51 @@ export const joinWorkspace = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: req.body.userId});
     const workspace = await Workspace.findOne({_id: req.body.workspaceId});
 
-    
-    console.log("WORKSPACE", workspace)
-
-    const invitees = workspace?.invitees.filter((item) => {
-        return item.email !== user?.email;
-    });
-
-    const member = workspace?.invitees.filter((item) => {
-        return item.email === user?.email;
-    })[0] || [];
-
-    console.log(member)
+    const invitees = workspace?.invitees.filter(item => item.email !== user?.email);
+    const member = workspace?.invitees.filter(item => item.email === user?.email)[0];
 
     if (workspace) {
         workspace.invitees = invitees || workspace.invitees;
-        // workspace.members = members || workspace.members;
-        workspace.members.push(member as TInvitee)
-        workspace.save();
+        if (member) {
+            workspace.members.push(member as TInvitee);
+            user?.workspaces.push({id: workspace?._id, permissions: (member as TInvitee).permissions});
+        }
+        
     }
 
-    console.log("INVITEES",invitees);
-    console.log("MEMBER",member);
-    user?.workspaces.push({id: workspace?._id, permissions: (member as TInvitee).permissions});
-    user?.save();
+    
 
+    try {
+        workspace?.save();
+        user?.save();
+        res.send({success: true});
+    } catch (error) {
+        res.status(400).send({success: true});
+    }
+}
 
-    res.send({success: true})
+export const removeMember = async (req: Request, res: Response) => {
+    
+
+    try {
+        console.log("USERID", req.body)
+        const user = await User.findOne({_id: req.body.userId});
+        const workspace = await Workspace.findOne({_id: req.params.id});
+
+        const filteredMembers = workspace?.members.filter(item => item.email !== user?.email);
+        const filteredWorkspaces = user?.workspaces.filter(item => !workspace?._id.equals(item.id));
+
+        console.log("FILTERED WORKSPACES", filteredWorkspaces)
+
+        if (workspace) workspace.members = filteredMembers || workspace?.members;
+        if (user) user.workspaces = filteredWorkspaces || user.workspaces;
+        workspace?.save();
+        user?.save();
+        res.send({success: true})
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({success: false})
+    }
 }
 
 export const callUpdate = async (req: Request, res: Response) => {
