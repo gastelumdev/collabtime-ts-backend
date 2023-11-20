@@ -225,17 +225,12 @@ export const joinWorkspace = async (req: Request, res: Response) => {
 }
 
 export const removeMember = async (req: Request, res: Response) => {
-    
-
     try {
-        console.log("USERID", req.body)
         const user = await User.findOne({_id: req.body.userId});
         const workspace = await Workspace.findOne({_id: req.params.id});
 
         const filteredMembers = workspace?.members.filter(item => item.email !== user?.email);
         const filteredWorkspaces = user?.workspaces.filter(item => !workspace?._id.equals(item.id));
-
-        console.log("FILTERED WORKSPACES", filteredWorkspaces)
 
         if (workspace) workspace.members = filteredMembers || workspace?.members;
         if (user) user.workspaces = filteredWorkspaces || user.workspaces;
@@ -243,8 +238,23 @@ export const removeMember = async (req: Request, res: Response) => {
         user?.save();
         res.send({success: true})
     } catch (error) {
-        console.log(error)
         res.status(400).send({success: false})
+    }
+}
+
+export const removeInvitee = async (req: Request, res: Response) => {
+    try {
+        const user = await User.findOne({_id: req.body.userId});
+        const workspace = await Workspace.findOne({_id: req.params.id});
+
+        const filteredInvitees = workspace?.invitees.filter(item => item.email !== user?.email);
+
+        if (workspace) workspace.invitees = filteredInvitees || workspace?.invitees;
+
+        workspace?.save();
+        res.send({success: true});
+    } catch (error) {
+        res.status(400).send({success: false});
     }
 }
 
