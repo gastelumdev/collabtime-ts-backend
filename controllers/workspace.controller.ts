@@ -204,24 +204,30 @@ export const joinWorkspace = async (req: Request, res: Response) => {
     const invitees = workspace?.invitees.filter(item => item.email !== user?.email);
     const member = workspace?.invitees.filter(item => item.email === user?.email)[0];
 
-    if (workspace) {
-        workspace.invitees = invitees || workspace.invitees;
-        if (member) {
-            workspace.members.push(member as TInvitee);
-            user?.workspaces.push({id: workspace?._id, permissions: (member as TInvitee).permissions});
+    const numberOfFilteredInvitees = invitees?.length || 0;
+    const numberOfInvitees = workspace?.invitees.length || 0;
+
+    if (numberOfFilteredInvitees < numberOfInvitees) {
+        if (workspace) {
+            workspace.invitees = invitees || workspace.invitees;
+            if (member) {
+                workspace.members.push(member as TInvitee);
+                user?.workspaces.push({id: workspace?._id, permissions: (member as TInvitee).permissions});
+            }
         }
-        
+    
+        try {
+            workspace?.save();
+            user?.save();
+            res.send({success: true});
+        } catch (error) {
+            res.send({success: true});
+        }
+    } else {
+        res.status(400).send({success: false});
     }
 
     
-
-    try {
-        workspace?.save();
-        user?.save();
-        res.send({success: true});
-    } catch (error) {
-        res.status(400).send({success: true});
-    }
 }
 
 export const removeMember = async (req: Request, res: Response) => {
