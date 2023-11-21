@@ -219,6 +219,7 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         try {
             workspace?.save();
             user?.save();
+            io.emit("update", {});
             res.send({success: true});
         } catch (error) {
             res.send({success: true});

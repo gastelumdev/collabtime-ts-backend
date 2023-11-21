@@ -75,7 +75,7 @@ export const deleteColumn = async (req: Request, res: Response) => {
 
     try {
         for (const cell of cellsInThisColumn) {
-            await Cell.findByIdAndDelete({_id: cell._id});
+            await Cell.findByIdAndDelete({_id: cell._id})
             cellIds.push(cell._id);
         }
             
