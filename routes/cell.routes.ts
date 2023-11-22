@@ -4,6 +4,6 @@ import verifyToken from "../middleware/authJWT";
 
 const router = Router()
 
-router.post("/dataCollections/:dataCollectionId/cells/:id", verifyToken, cellController.updateCell);
+router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/cells/:id", verifyToken, cellController.updateCell);
 
 export default router;

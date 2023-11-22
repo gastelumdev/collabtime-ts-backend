@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import Workspace from "../models/workspace.model"
 import User from "../models/auth.model"
+import Notification from "../models/notification.model";
 import nodemailer from "nodemailer";
 import handlebars from "handlebars";
 import fs from "fs";
@@ -16,6 +17,9 @@ import Column from "../models/column.model";
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: (<any>req).user._id});
     const data = [];
+
+    io.emit("getWorkspaces-" + user?._id, {success: true})
+
     if (user) {
         try {
             for (const userWorkspace of user.workspaces) {
@@ -217,9 +221,16 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         }
     
         try {
+            const notification = new Notification({
+                message: `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`,
+                workspaceId: workspace?._id,
+                dataSource: "",
+                priority: "Low",
+            });
+            notification.save();
             workspace?.save();
             user?.save();
-            io.emit("update", {});
+            io.emit("update", `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`);
             res.send({success: true});
         } catch (error) {
             res.send({success: true});
