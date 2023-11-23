@@ -1,4 +1,5 @@
 import { Document, Schema, Model } from "mongoose";
+import { TUser } from "../types";
 
 export type TLabel = {
     title: string;
@@ -11,7 +12,7 @@ export interface ICell {
     name: string;
     type: string;
     labels?: TLabel[];
-    people?: string[];
+    people?: TUser[];
     value: string;
     createdAt: Date;
 }

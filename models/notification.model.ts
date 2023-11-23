@@ -4,6 +4,7 @@ import { INotification, INotificationDocument, INotificationModel } from "../ser
 const notificationSchema: Schema<INotificationDocument> = new Schema({
     message: {type: String, required: true},
     workspaceId: {type: Schema.Types.ObjectId},
+    assignedTo: {type: Schema.Types.ObjectId, default: null},
     createdAt: {type: Date, default: Date.now},
     dataSource: {type: String},
     priority: {type: String},

@@ -18,9 +18,16 @@ export const getNotifications = async (req: Request, res: Response) => {
         } else {
             notifications = await Notification.find({workspaceId: {"$in": workspaceIds}, priority: notificationsFilter}).sort({createdAt: -1});
         }
+
+        const filteredNotifications = notifications.filter((item) => {
+            console.log("ITEM", item.assignedTo, user?._id)
+            return item.assignedTo?.toString() == user?._id.toString() || item.assignedTo == null
+        })
+
+        console.log("FILTERED NOTIFICATIONS", filteredNotifications)
         
-        console.log(notifications)
-        res.send(notifications);
+        // console.log(notifications)
+        res.send(filteredNotifications);
     } catch (error) {
         console.log(error)
         res.status(400).send(error);

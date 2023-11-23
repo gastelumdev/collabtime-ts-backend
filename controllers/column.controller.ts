@@ -3,6 +3,8 @@ import DataCollection from "../models/dataCollection.model";
 import Column from "../models/column.model";
 import Row from "../models/row.models";
 import Cell from "../models/cell.models";
+import Workspace from "../models/workspace.model";
+import User from "../models/auth.model";
 
 export const getColumns = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
@@ -18,7 +20,22 @@ export const getColumns = async (req: Request, res: Response) => {
 export const createColumn = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
     const rows = await Row.find({dataCollection: dataCollection?._id});
-    const column = new Column({...(req.body), dataCollection: dataCollection?._id});
+
+    const workspace = await Workspace.findOne({_id: req.params.workspaceId});
+
+    const people: any = [];
+
+    for (const member of workspace?.members || []) {
+        let person = await User.findOne({email: member.email});
+        people.push(person);
+    }
+    
+    const column = new Column({...(req.body), dataCollection: dataCollection?._id, people: people});
+    let value;
+
+    if (column.type === "text") value = "";
+    if (column.type === "label") value = (column.labels || [])[0].title;
+    if (column.type === "people") value = "Select person";
 
     for (const row of rows) {
         const cell = new Cell({
@@ -27,7 +44,8 @@ export const createColumn = async (req: Request, res: Response) => {
             name: column.name,
             type: column.type,
             labels: column.labels,
-            value: (column.labels || [])[0].title
+            people: people,
+            value: value
         });
 
         row.cells.push(cell._id);
