@@ -4,6 +4,7 @@ import { IRow, IRowDocument, IRowModel } from "../services/row.service";
 const rowSchema: Schema<IRowDocument> = new Schema({
     dataCollection: {type: Schema.Types.ObjectId},
     cells: {type: []},
+    assignedTo: {type: Schema.Types.ObjectId},
     createdAt: {type: Date, default: Date.now}
 },{
     timestamps: true

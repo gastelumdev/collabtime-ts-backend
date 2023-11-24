@@ -63,6 +63,7 @@ export const createRow = async (req: Request, res: Response) => {
     }
 
     const row = new Row({dataCollection: dataCollection?._id});
+    row.assignedTo = (<any>req).user._id;
 
     for (const column of columns) {
         if (column.type == "people") {
@@ -70,7 +71,7 @@ export const createRow = async (req: Request, res: Response) => {
             console.log("USER", user);
             value = `${user?.firstname} ${user?.lastname}`;
 
-            io.emit(user?._id || "", "You have been assigned to a data collection task.");
+            io.emit(user?._id || "", {message: "You have been assigned to a data collection task."});
         } else {
             value = body[column.name];
         }

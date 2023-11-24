@@ -34,7 +34,7 @@ export const createColumn = async (req: Request, res: Response) => {
     let value;
 
     if (column.type === "text") value = "";
-    if (column.type === "label") value = (column.labels || [])[0].title;
+    if (column.type === "label" || column.type === "priority") value = (column.labels || [])[0].title;
     if (column.type === "people") value = "Select person";
 
     for (const row of rows) {

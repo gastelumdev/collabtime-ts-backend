@@ -3,6 +3,7 @@ import { Document, Schema, Model } from "mongoose";
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[];
+    assignedTo: Schema.Types.ObjectId | String;
     createdAt: Date;
 }
 
