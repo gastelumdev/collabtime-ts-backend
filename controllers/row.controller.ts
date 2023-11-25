@@ -93,6 +93,15 @@ export const createRow = async (req: Request, res: Response) => {
     }
 }
 
+export const updateRow = async (req: Request, res: Response) => {
+    try {
+        const row = await Row.findByIdAndUpdate(req.params.id, req.body);
+        res.send(row)
+    } catch (error) {
+        res.status(400).send({success: false})
+    }
+}
+
 export const deleteRow = async (req: Request, res: Response) => {
     const row = await Row.findOne({_id: req.params.id});
 

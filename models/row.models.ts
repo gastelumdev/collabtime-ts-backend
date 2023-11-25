@@ -5,6 +5,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     dataCollection: {type: Schema.Types.ObjectId},
     cells: {type: []},
     assignedTo: {type: Schema.Types.ObjectId},
+    notes: {type: String, default: ""},
     createdAt: {type: Date, default: Date.now}
 },{
     timestamps: true
