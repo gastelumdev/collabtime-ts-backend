@@ -116,10 +116,12 @@ export const updateRow = async (req: Request, res: Response) => {
 
 export const deleteRow = async (req: Request, res: Response) => {
     const row = await Row.findOne({_id: req.params.id});
+    let cells: any = row?.cells;
 
     try {
-        for (const cellId of row?.cells || []) {
-            await Cell.findByIdAndDelete({_id: cellId});
+        for (const cell of cells || []) {
+            console.log(cell)
+            await Cell.findByIdAndDelete({_id: cell._id});
         }
         await Row.findByIdAndDelete({_id: row?._id});
         res.send(row);
