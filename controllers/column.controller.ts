@@ -5,6 +5,7 @@ import Row from "../models/row.models";
 import Cell from "../models/cell.models";
 import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
+import { io } from "../index";
 
 export const getColumns = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
@@ -25,6 +26,13 @@ export const createColumn = async (req: Request, res: Response) => {
     const columns = await Column.find({dataCollection: dataCollection?._id});
     const columnsLength = columns.length;
 
+    for (const column of columns) {
+        if (column.name == req.body.name) {
+            io.emit("update", {message: "Column already exists."})
+            res.status(400).send({success: false})
+        }
+    }
+
     const workspace = await Workspace.findOne({_id: req.params.workspaceId});
 
     const people: any = [];
@@ -41,7 +49,7 @@ export const createColumn = async (req: Request, res: Response) => {
     if (column.type === "text") value = "";
     if (column.type === "label" || column.type === "priority") value = (column.labels || [])[0].title;
     if (column.type === "people") value = "Select person";
-    if (column.type === "date") value = (new Date()).toISOString();
+    if (column.type === "date") value = (new Date()).toISOString()
 
     for (const row of rows) {
         const cell = new Cell({

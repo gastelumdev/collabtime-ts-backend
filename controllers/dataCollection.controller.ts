@@ -46,6 +46,7 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         type: "status",
         permanent: true,
         labels: [
+            { title: "Ready to start", color: "#121f82" },
             { title: "Working on it", color: "#146c96" },
             { title: "Pending review", color: "#FFA500" },
             { title: "Done", color: "#28B542" },
