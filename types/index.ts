@@ -57,6 +57,7 @@ export type TCell = {
     rowId: string;
     name: string;
     type: string;
+    position: number;
     people?: string[];
     labels?: TLabel[];
     value: string;

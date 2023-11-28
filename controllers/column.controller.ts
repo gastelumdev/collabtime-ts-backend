@@ -8,7 +8,9 @@ import User from "../models/auth.model";
 
 export const getColumns = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
-    const columns = await Column.find({dataCollection: dataCollection?._id});
+    const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position");
+
+    console.log(columns)
 
     try {
         res.send(columns);
@@ -20,6 +22,8 @@ export const getColumns = async (req: Request, res: Response) => {
 export const createColumn = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
     const rows = await Row.find({dataCollection: dataCollection?._id});
+    const columns = await Column.find({dataCollection: dataCollection?._id});
+    const columnsLength = columns.length;
 
     const workspace = await Workspace.findOne({_id: req.params.workspaceId});
 
@@ -31,6 +35,7 @@ export const createColumn = async (req: Request, res: Response) => {
     }
     
     const column = new Column({...(req.body), dataCollection: dataCollection?._id, people: people});
+    column.position = columnsLength + 1;
     let value;
 
     if (column.type === "text") value = "";
@@ -44,6 +49,7 @@ export const createColumn = async (req: Request, res: Response) => {
             row: row._id,
             name: column.name,
             type: column.type,
+            position: column.position,
             labels: column.labels,
             people: people,
             value: value
@@ -72,8 +78,17 @@ export const createColumn = async (req: Request, res: Response) => {
 
 export const updateColumn = async (req: Request, res: Response) => {
     try {
-        const column = await Column.findByIdAndUpdate(req.params.id, req.body);
-        res.send(column);
+        const column = await Column.findOne({_id: req.params.id});
+        const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
+        const cells = await Cell.find({dataCollection: dataCollection?._id, name: column?.name})
+
+        for (const cell of cells) {
+            cell.name = req.body.name;
+            cell.save();
+        }
+        
+        const newColumn = await Column.findByIdAndUpdate(req.params.id, req.body);
+        res.send(newColumn);
     } catch (error) {
         res.status(400).send({success: false})
     }
@@ -115,9 +130,10 @@ export const deleteColumn = async (req: Request, res: Response) => {
             }
 
             console.log("RESULT", result)
-            row.cells = result;
+            const rowCopy: any = row;
+            rowCopy.cells = result;
             result = [];
-            await Row.findByIdAndUpdate({_id: row._id}, row);
+            await Row.findByIdAndUpdate({_id: rowCopy._id}, rowCopy);
         }
     } catch (error) {
         res.status(400).send({success: false})

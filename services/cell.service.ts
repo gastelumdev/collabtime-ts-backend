@@ -11,6 +11,7 @@ export interface ICell {
     row: Schema.Types.ObjectId;
     name: string;
     type: string;
+    position: number;
     labels?: TLabel[];
     people?: TUser[];
     value: string;

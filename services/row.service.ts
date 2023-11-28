@@ -1,8 +1,9 @@
 import { Document, Schema, Model } from "mongoose";
+import { TCell } from "../types";
 
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
-    cells: string[];
+    cells: string[] | TCell[];
     assignedTo: Schema.Types.ObjectId | String;
     notes: string;
     createdAt: Date;

@@ -10,6 +10,7 @@ export interface IDataCollection {
     name: string;
     description: string;
     workspace: Schema.Types.ObjectId;
+    template: string;
     form: TForm;
     columns: string[];
     rows: string[];

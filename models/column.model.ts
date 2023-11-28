@@ -5,6 +5,7 @@ const columnSchema: Schema<IColumnDocument> = new Schema({
     dataCollection: {type: Schema.Types.ObjectId},
     name: {type: String},
     type: {type: String},
+    position: {type: Number},
     permanent: {type: Boolean},
     people: {type: []},
     labels: {type: []},

@@ -9,6 +9,7 @@ export interface IColumn {
     dataCollection: Schema.Types.ObjectId;
     name: string;
     type: string;
+    position: number;
     permanent: boolean;
     people?: string[];
     labels?: TLabel[];

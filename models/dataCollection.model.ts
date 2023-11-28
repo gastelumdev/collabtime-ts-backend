@@ -5,6 +5,7 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     name: {type: String, required: true},
     description: {type: String},
     workspace: {type: Schema.Types.ObjectId},
+    template: {type: String, default: "default"},
     form: {type: {}},
     columns: {type: []},
     rows: {type: []},

@@ -12,33 +12,43 @@ import { io } from "../index";
 export const getRows = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
     const rows = await Row.find({dataCollection: dataCollection?._id});
-    const columns = await Column.find({dataCollection: dataCollection?._id})
+    const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position")
 
     // console.log("DATA COLLECTION", dataCollection);
     // console.log("ROWS", rows);
 
-    let cells: any[] = [];
+    // let cells: any[] = [];
     const result = [];
 
-    for (const row of rows) {
-        for (const i in columns) {
-            const cell = await Cell.findOne({_id: row.cells[i]});
-            if (columns[i].name == cell?.name) {
+    // for (const row of rows) {
+    //     for (const i in columns) {
+    //         const cell = await Cell.findOne({_id: row.cells[i]});
+    //         console.log(columns[i].name, cell?.name)
+    //         if (columns[i].name == cell?.name) {
                 
-                cells.push(cell);
-            } else {
-                cells.push({})
-            }
+    //             cells.push(cell);
+    //         } else {
+    //             cells.push({})
+    //         }
             
-        }
+    //     }
 
-        row.cells = cells;
-        cells = []
+    //     console.log("CELLS", cells)
+
+    //     row.cells = cells;
+    //     cells = []
         
-        result.push(row);
-    }
+    //     result.push(row);
+    // }
 
-    // console.log(totalCells)
+    let cells;
+
+    for (const row of rows) {
+        const rowCopy: any = row;
+        let cells = await Cell.find({row: row._id}).sort("position");
+        rowCopy.cells = cells;
+        result.push(rowCopy)
+    }
 
     try {
         res.send(result);
@@ -72,10 +82,12 @@ export const createRow = async (req: Request, res: Response) => {
             value = `${user?.firstname} ${user?.lastname}`;
 
             io.emit(user?._id || "", {message: "You have been assigned to a data collection task."});
+        } else if (column.type === "date") {
+            value = (new Date()).toISOString();
         } else {
             value = body[column.name];
         }
-        let cell = new Cell({dataCollection: column.dataCollection, row: row._id, name: column.name, type: column.type, value: value, labels: column.labels, people: people});
+        let cell = new Cell({dataCollection: column.dataCollection, row: row._id, name: column.name, type: column.type, value: value, labels: column.labels, people: people, position: column.position});
         row.cells.push(cell._id);
         try {
             cell.save();

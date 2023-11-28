@@ -6,6 +6,7 @@ const cellSchema: Schema<ICellDocument> = new Schema({
     row: {type: Schema.Types.ObjectId},
     name: {type: String, required: true},
     type: {type: String},
+    position: {type: Number},
     labels: {type: []},
     people: {type: []},
     value: {type: String},
