@@ -13,33 +13,8 @@ export const getRows = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
     const rows = await Row.find({dataCollection: dataCollection?._id});
     const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position")
-
-    // console.log("DATA COLLECTION", dataCollection);
-    // console.log("ROWS", rows);
-
-    // let cells: any[] = [];
     const result = [];
 
-    // for (const row of rows) {
-    //     for (const i in columns) {
-    //         const cell = await Cell.findOne({_id: row.cells[i]});
-    //         console.log(columns[i].name, cell?.name)
-    //         if (columns[i].name == cell?.name) {
-                
-    //             cells.push(cell);
-    //         } else {
-    //             cells.push({})
-    //         }
-            
-    //     }
-
-    //     console.log("CELLS", cells)
-
-    //     row.cells = cells;
-    //     cells = []
-        
-    //     result.push(row);
-    // }
 
     let cells;
 
@@ -106,6 +81,7 @@ export const createRow = async (req: Request, res: Response) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
+    
     try {
         const row = await Row.findByIdAndUpdate(req.params.id, req.body);
         res.send(row)
@@ -121,13 +97,30 @@ export const deleteRow = async (req: Request, res: Response) => {
     try {
         for (const cell of cells || []) {
             console.log(cell)
-            await Cell.findByIdAndDelete({_id: cell._id});
+            await Cell.findByIdAndDelete({_id: cell._id})
         }
         await Row.findByIdAndDelete({_id: row?._id});
         res.send(row);
     } catch (error) {
         res.status(400).send({success: false});
     }
+}
+
+export const migrateRows = async (req: Request, res: Response) => {
+    try {
+        const rows = await Row.find({});
+
+        for (const row of rows) {
+            if (row?.notes != "") {
+                row.notesList.push({content: row?.notes, owner: "Carlos Torres", createdAt: (new Date()).toISOString()})
+            }
+            await Row.findByIdAndUpdate(row._id, row);
+        }
+        res.send({success: true})
+    } catch (error) {
+        res.status(400).send({success: false})
+    }
+    
 
 
 }
