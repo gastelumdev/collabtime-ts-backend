@@ -3,6 +3,7 @@ import DataCollection from "../models/dataCollection.model"
 import Column from "../models/column.model";
 import Row from "../models/row.models";
 import Cell from "../models/cell.models";
+import Notification from "../models/notification.model";
 import { ICell } from "../services/cell.service";
 import { TCell, TUser } from "../types";
 import Workspace from "../models/workspace.model";
@@ -81,9 +82,35 @@ export const createRow = async (req: Request, res: Response) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
+    const row = await Row.findOne({_id: req.params.id});
+    const workspace = await Workspace.findOne({_id: req.params.workspaceId});
+    const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId})
+    const noteCreator = await User.findOne({_id: (<any>req).user._id});
+
+    console.log("ROWS FROM DB", row?.notesList);
+    console.log("ROWS FROM REQ", req.body.notesList)
+
+    if (row?.notesList.length !== req.body.notesList.length) {
+        console.log("NOTES ARE UNEVEN");
+        console.log(row?.notesList.length, req.body.notesList.length);
+        for (const member of workspace?.members || []) {
+            const user = await User.findOne({email: member.email});
+            io.emit(user?._id || "", {message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`});
+            io.emit("update row", {message: ""});
+            const notification =  new Notification({
+                message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
+                workspaceId: workspace?._id,
+                assignedTo: user?._id,
+                dataSource: "",
+                priority: "Low",
+                read: false,
+            })
+            notification.save();
+        }
+    }
     
     try {
-        const row = await Row.findByIdAndUpdate(req.params.id, req.body);
+        await Row.findByIdAndUpdate(req.params.id, req.body);
         res.send(row)
     } catch (error) {
         res.status(400).send({success: false})
@@ -110,17 +137,37 @@ export const migrateRows = async (req: Request, res: Response) => {
     try {
         const rows = await Row.find({});
 
+        // for (const row of rows) {
+        //     if (row?.notes != "") {
+        //         row.notesList.push({content: row?.notes, owner: "Carlos Torres", createdAt: (new Date()).toISOString(), read: false})
+        //     }
+        //     await Row.findByIdAndUpdate(row._id, row);
+        // }
+
+        
+
         for (const row of rows) {
-            if (row?.notes != "") {
-                row.notesList.push({content: row?.notes, owner: "Carlos Torres", createdAt: (new Date()).toISOString()})
+            const dataCollection = await DataCollection.findOne({_id: row?.dataCollection});
+            const workspace = await Workspace.findOne({_id: dataCollection?.workspace});
+            const members = workspace?.members;
+            let newNotes = []
+            const thisRow = await Row.findOne({_id: row._id});
+            for (const note of row.notesList) {
+                note.people = members || [];
+                newNotes.push(note)
             }
-            await Row.findByIdAndUpdate(row._id, row);
+            if (thisRow) {
+                thisRow.notesList = newNotes;
+            }
+            thisRow?.save();
+            
         }
         res.send({success: true})
     } catch (error) {
         res.status(400).send({success: false})
     }
-    
+}
 
-
+export const callUpdate = async (req: Request, res: Response) => {
+    res.send({success: true});
 }

@@ -55,6 +55,8 @@ export const updateCell = async (req: Request, res: Response) => {
             notification.save();
         }
 
+        io.emit("update")
+
         const cellResponse = await Cell.findByIdAndUpdate(req.params.id, req.body);
         res.send(cellResponse);
     } catch (error) {

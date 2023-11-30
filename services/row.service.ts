@@ -1,10 +1,13 @@
 import { Document, Schema, Model } from "mongoose";
 import { TCell } from "../types";
+import { TInvitee } from "./workspace.service";
 
 export interface INote {
     content: string;
     owner: string;
     createdAt: string;
+    read: boolean;
+    people: TInvitee[];
 }
 
 export interface IRow {
