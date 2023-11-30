@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as rowController from "../controllers/row.controller";
 import verifyToken from "../middleware/authJWT";
+import { notesUpload } from "..";
 
 const router = Router();
 

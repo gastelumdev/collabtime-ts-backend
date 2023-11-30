@@ -87,14 +87,13 @@ export const updateRow = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId})
     const noteCreator = await User.findOne({_id: (<any>req).user._id});
 
-    console.log("ROWS FROM DB", row?.notesList);
-    console.log("ROWS FROM REQ", req.body.notesList)
-
+    // if there are more notes in the req body than in the db, then there is a new note
+    // in which we want to notify the user and update the frontend via sockets
     if (row?.notesList.length !== req.body.notesList.length) {
-        console.log("NOTES ARE UNEVEN");
-        console.log(row?.notesList.length, req.body.notesList.length);
+        console.log(req.body);
+        console.log("FILE NAME", req.file);
         for (const member of workspace?.members || []) {
-            const user = await User.findOne({email: member.email});
+            const user = await User.findOne({email: member.email})
             io.emit(user?._id || "", {message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`});
             io.emit("update row", {message: ""});
             const notification =  new Notification({
