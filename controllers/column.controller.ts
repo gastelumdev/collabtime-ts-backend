@@ -92,6 +92,7 @@ export const updateColumn = async (req: Request, res: Response) => {
 
         for (const cell of cells) {
             cell.name = req.body.name;
+            cell.labels = req.body.labels;
             cell.save();
         }
         
