@@ -12,6 +12,8 @@ export const upload = async (req: Request, res: Response) => {
             const cldRes = await handleUpload(dataURI);
             console.log("CLOUD RES", cldRes)
             res.send(cldRes);
+        } else {
+            res.send({url: undefined})
         }
         
 
