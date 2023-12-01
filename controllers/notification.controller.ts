@@ -20,11 +20,8 @@ export const getNotifications = async (req: Request, res: Response) => {
         }
 
         const filteredNotifications = notifications.filter((item) => {
-            console.log("ITEM", item.assignedTo, user?._id)
             return item.assignedTo?.toString() == user?._id.toString() || item.assignedTo == null
         })
-
-        console.log("FILTERED NOTIFICATIONS", filteredNotifications)
         
         // console.log(notifications)
         res.send(filteredNotifications);

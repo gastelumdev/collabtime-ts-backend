@@ -55,6 +55,40 @@ export const updateCell = async (req: Request, res: Response) => {
             notification.save();
         }
 
+        if (cell?.type === "status") {
+            
+            const row = await Row.findOne({_id: cell?.row});
+            const rowUser = await User.findOne({_id: row?.assignedTo});
+
+            io.emit(rowUser?._id || "", {message: `Status has changed from ${cell.value} to ${req.body.value} in your ${dataCollection?.name} assignment in ${workspace?.name}`, priority: "Low"});
+
+            const notification = new Notification({
+                message: `Status has changed from ${cell.value} to ${req.body.value} in your ${dataCollection?.name} assignment in ${workspace?.name}`,
+                workspaceId: workspace?._id,
+                assignedTo: rowUser?._id,
+                priority: "Low",
+            })
+
+            notification.save();
+
+            for (const member of workspace?.members || []) {
+                const workspaceMember = await User.findOne({email: member.email});
+
+                io.emit(workspaceMember?._id || "", {message: `Status has changed from ${cell.value} to ${req.body.value} in your ${dataCollection?.name} assignment in ${workspace?.name}`, priority: "Low"});
+
+                let memberNotification = new Notification({
+                    message: `Status has changed from ${cell.value} to ${req.body.value} in your ${dataCollection?.name} assignment in ${workspace?.name}`,
+                    workspaceId: workspace?._id,
+                    assignedTo: workspaceMember?._id,
+                    priority: "Low",
+                })
+
+                memberNotification.save();
+            }
+
+            
+        }
+
         io.emit("update")
 
         const cellResponse = await Cell.findByIdAndUpdate(req.params.id, req.body);
