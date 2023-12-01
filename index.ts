@@ -5,15 +5,16 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import bodyparser from 'body-parser';
 import multer from 'multer';
+import {v2 as cloudinary} from 'cloudinary';
 import connection from './config/db';
-import authRouter from "./routes/auth.routes"
-import workspaceRouter from "./routes/workspace.routes"
-import notificationRouter from "./routes/notifications.routes"
+import authRouter from "./routes/auth.routes";
+import workspaceRouter from "./routes/workspace.routes";
+import notificationRouter from "./routes/notifications.routes";
 import dataCollectionRouter from './routes/dataCollection.routes';
 import columnRouter from "./routes/column.routes";
 import rowRouter from "./routes/row.routes";
 import cellRouter from "./routes/cell.routes";
-import uploadRouter from "./routes/upload.routes"
+import uploadRouter from "./routes/upload.routes";
 import path from 'path';
 
 dotenv.config();
@@ -23,26 +24,36 @@ const app: Express = express();
 const port = process.env.PORT;
 const db_uri = process.env.MONGODB_URI;
 
-connection(db_uri || "")
+connection(db_uri || "");
 
 const corsOptions = {
   origin: process.env.CORS_URL
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/images")
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
-  }
-})
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads/images");
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname));
+//   }
+// });
+
+const storage = multer.memoryStorage();
+
+// const fileFilter = (req: any, file: any, cb: any) => {
+//     if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+//       cb(null, true)
+//     } else {
+//       cb(new Error("Image uploaded is not of type jpg/jpeg or png."), false);
+//     }
+// }
 
 export const notesUpload = multer({ storage: storage});
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(express.static("uploads"))
+app.use(express.static("uploads"));
 app.use(cors(corsOptions));
 app.use(notesUpload.single("file"));
 // app.use(notesUpload.array("files"));
