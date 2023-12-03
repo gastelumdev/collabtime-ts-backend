@@ -45,9 +45,9 @@ const persistedDiskStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     const filename = file.originalname;
     const filenameSplit = filename.split(".");
-    filenameSplit.pop();
+    const ext = filenameSplit.pop();
     const noExtFilename = filenameSplit.join(".");
-    cb(null, noExtFilename + "_" + uuid);
+    cb(null, noExtFilename + "_" + uuid + "." + ext);
   }
 });
 
@@ -62,9 +62,9 @@ const localDiskStorage = multer.diskStorage({
   filename: (req, file, cb) => {
     const filename = file.originalname;
     const filenameSplit = filename.split(".");
-    filenameSplit.pop();
+    const ext = filenameSplit.pop();
     const noExtFilename = filenameSplit.join(".");
-    cb(null, noExtFilename + "_" + uuid);
+    cb(null, noExtFilename + "_" + uuid + "." + ext);
   }
 });
 
