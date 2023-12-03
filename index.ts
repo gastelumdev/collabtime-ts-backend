@@ -155,7 +155,7 @@ server.listen(port, () => {
   console.log("[ws-server]: Server is running on port " + port)
   if (process.env.APP_ENVIRONMENT === "production") {
     const source = "/var/data/uploads/";
-    const destination = "/opt/render/project/src/uploads/"
+    const destination = "/opt/render/project/src/uploads/docs/"
     sh(`mkdir -p ${destination}`);
     sh(`cp -r ${source} ${destination}`)
   }
