@@ -153,7 +153,7 @@ io.on("connection", (socket) => {
 
 server.listen(port, () => {
   console.log("[ws-server]: Server is running on port " + port)
-  if (process.env.APP_EVIRONMENT === "production") {
+  if (process.env.APP_ENVIRONMENT === "production") {
     const source = "/var/data/uploads/";
     const destination = "/opt/render/project/src/uploads/"
     sh(`mkdir -p ${destination}`);
