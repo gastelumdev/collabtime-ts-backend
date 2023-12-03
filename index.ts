@@ -16,6 +16,12 @@ import rowRouter from "./routes/row.routes";
 import cellRouter from "./routes/cell.routes";
 import uploadRouter from "./routes/upload.routes";
 import path from 'path';
+import verifyToken from './middleware/authJWT';
+import fs from "fs";
+import shell from "child_process";
+import { v1 as uuidv1 } from 'uuid';
+const sh = shell.execSync;
+const uuid = uuidv1();
 
 dotenv.config();
 
@@ -30,16 +36,42 @@ const corsOptions = {
   origin: process.env.CORS_URL
 }
 
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads/images");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname));
-//   }
-// });
+const persistedDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("FILE", file)
+    console.log(process.env.PERSISTED_ASSETS_DIR)
+    cb(null, process.env.PERSISTED_ASSETS_DIR || "");
+  },
+  filename: (req, file, cb) => {
+    const filename = file.originalname;
+    const filenameSplit = filename.split(".");
+    filenameSplit.pop();
+    const noExtFilename = filenameSplit.join(".");
+    cb(null, noExtFilename + "_" + uuid);
+  }
+});
+
+export const persistedDocUpload = multer({storage: persistedDiskStorage});
+
+const localDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("FILE", file)
+    console.log(process.env.ASSETS_DIR)
+    cb(null, process.env.ASSETS_DIR || "");
+  },
+  filename: (req, file, cb) => {
+    const filename = file.originalname;
+    const filenameSplit = filename.split(".");
+    filenameSplit.pop();
+    const noExtFilename = filenameSplit.join(".");
+    cb(null, noExtFilename + "_" + uuid);
+  }
+});
+
+export const localDocUpload = multer({storage: localDiskStorage});
 
 const storage = multer.memoryStorage();
+export const notesUpload = multer({ storage: storage});
 
 // const fileFilter = (req: any, file: any, cb: any) => {
 //     if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
@@ -49,18 +81,55 @@ const storage = multer.memoryStorage();
 //     }
 // }
 
-export const notesUpload = multer({ storage: storage});
+// export const dc = docUpload.single("docs");
+// console.log(dc)
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("uploads"));
 app.use(cors(corsOptions));
-app.use(notesUpload.single("file"));
+// app.use(notesUpload.single("file"));
+// app.use(docUpload.single("docs"));
 // app.use(notesUpload.array("files"));
 
 app.get('/', (req: Request, res: Response) => {
   res.send({title: 'Express + TypeScript Server!'})
 });
+
+export const uploadDoc = async (req: Request, res: Response) => {
+  console.log("UPLOAD", req.file);
+  try {
+      // res.send({filename: req.file?.filename})
+      if (req.file) {
+          
+          res.send({url: "success"});
+      } else {
+          res.send({url: undefined})
+      }
+  } catch (error) {
+      console.log(error)
+      res.status(400).send({success: false})
+  }
+}
+
+export const uploadPersistedDoc = async (req: Request, res: Response) => {
+  console.log("UPLOAD", req.file);
+  try {
+      // res.send({filename: req.file?.filename})
+      if (req.file) {
+          
+          res.send({url: "success"});
+      } else {
+          res.send({url: undefined})
+      }
+  } catch (error) {
+      console.log(error)
+      res.status(400).send({success: false})
+  }
+}
+
+uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.single("docs"),uploadDoc);
+uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.single("docs"), uploadPersistedDoc);
 
 app.use(authRouter);
 app.use(workspaceRouter);
@@ -84,6 +153,12 @@ io.on("connection", (socket) => {
 
 server.listen(port, () => {
   console.log("[ws-server]: Server is running on port " + port)
+  if (process.env.APP_EVIRONMENT === "production") {
+    const source = "/var/data/uploads/";
+    const destination = "/opt/render/project/src/uploads/"
+    sh(`mkdir -p ${destination}`);
+    sh(`cp -r ${source} ${destination}`)
+  }
 })
 
 // app.listen(port, () => {
