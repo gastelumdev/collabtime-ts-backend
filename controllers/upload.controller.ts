@@ -31,17 +31,29 @@ export const upload = async (req: Request, res: Response) => {
 export const uploadDoc = async (req: Request, res: Response) => {
     console.log("UPLOAD", req.file);
     try {
-        // res.send({filename: req.file?.filename})
         if (req.file) {
             
-            res.send({url: "success"});
+            res.send({url: `${process.env.APP_URL}/docs/${req.file.filename}`, originalname: req.file.originalname, file: req.file});
         } else {
             res.send({url: undefined})
         }
-        
-
     } catch (error) {
         console.log(error)
         res.status(400).send({success: false})
     }
-}
+  }
+  
+  export const uploadPersistedDoc = async (req: Request, res: Response) => {
+    console.log("UPLOAD", req.file);
+    try {
+        if (req.file) {
+            
+            res.send({url: `${process.env.APP_URL}/docs/${req.file.filename}`});
+        } else {
+            res.send({url: undefined})
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({success: false})
+    }
+  }

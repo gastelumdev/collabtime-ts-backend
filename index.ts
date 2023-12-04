@@ -7,6 +7,7 @@ import bodyparser from 'body-parser';
 import multer from 'multer';
 import {v2 as cloudinary} from 'cloudinary';
 import connection from './config/db';
+import * as uploadController from "./controllers/upload.controller"
 import authRouter from "./routes/auth.routes";
 import workspaceRouter from "./routes/workspace.routes";
 import notificationRouter from "./routes/notifications.routes";
@@ -15,6 +16,7 @@ import columnRouter from "./routes/column.routes";
 import rowRouter from "./routes/row.routes";
 import cellRouter from "./routes/cell.routes";
 import uploadRouter from "./routes/upload.routes";
+import documentRouter from "./routes/document.routes";
 import path from 'path';
 import verifyToken from './middleware/authJWT';
 import fs from "fs";
@@ -88,48 +90,13 @@ app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("uploads"));
 app.use(cors(corsOptions));
-// app.use(notesUpload.single("file"));
-// app.use(docUpload.single("docs"));
-// app.use(notesUpload.array("files"));
 
 app.get('/', (req: Request, res: Response) => {
   res.send({title: 'Express + TypeScript Server!'})
 });
 
-export const uploadDoc = async (req: Request, res: Response) => {
-  console.log("UPLOAD", req.file);
-  try {
-      // res.send({filename: req.file?.filename})
-      if (req.file) {
-          
-          res.send({url: "success"});
-      } else {
-          res.send({url: undefined})
-      }
-  } catch (error) {
-      console.log(error)
-      res.status(400).send({success: false})
-  }
-}
-
-export const uploadPersistedDoc = async (req: Request, res: Response) => {
-  console.log("UPLOAD", req.file);
-  try {
-      // res.send({filename: req.file?.filename})
-      if (req.file) {
-          
-          res.send({url: "success"});
-      } else {
-          res.send({url: undefined})
-      }
-  } catch (error) {
-      console.log(error)
-      res.status(400).send({success: false})
-  }
-}
-
-uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.single("docs"),uploadDoc);
-uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.single("docs"), uploadPersistedDoc);
+uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.single("docs"), uploadController.uploadDoc);
+uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.single("docs"), uploadController.uploadPersistedDoc);
 
 app.use(authRouter);
 app.use(workspaceRouter);
@@ -139,6 +106,7 @@ app.use(columnRouter);
 app.use(rowRouter);
 app.use(cellRouter);
 app.use(uploadRouter);
+app.use(documentRouter);
 
 
 const server = http.createServer(app);
