@@ -29,7 +29,6 @@ export const upload = async (req: Request, res: Response) => {
 }
 
 export const uploadDoc = async (req: Request, res: Response) => {
-    console.log("UPLOAD", req.file);
     try {
         if (req.file) {
             
