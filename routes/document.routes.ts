@@ -7,5 +7,6 @@ const router = Router();
 router.get("/workspaces/:workspaceId/documents", verifyToken, documentController.getDocuments);
 router.post("/workspaces/:workspaceId/documents", verifyToken, documentController.createDocument);
 router.post("/workspaces/:workspaceId/documents/update", verifyToken, documentController.updateDocument);
+router.post("/workspaces/:workspaceId/documents/delete", verifyToken, documentController.deleteDocument);
 
 export default router;

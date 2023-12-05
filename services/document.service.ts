@@ -1,7 +1,9 @@
 import { Document, Schema, Model } from "mongoose";
+import { IUser } from "./auth.service";
 
 export interface IDocument {
     workspace: Schema.Types.ObjectId;
+    createdBy: IUser | null;
     filename: string;
     type: string;
     originalname?: string;

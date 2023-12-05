@@ -3,6 +3,7 @@ import { IDocument, IDocumentDocument, IDocumentModel } from "../services/docume
 
 const documentSchema: Schema<IDocumentDocument> = new Schema({
     workspace: {type: Schema.Types.ObjectId},
+    createdBy: {type: {}},
     filename: {type: String},
     type: {type: String},
     originalname: {type: String},
