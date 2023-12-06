@@ -95,8 +95,8 @@ app.get('/', (req: Request, res: Response) => {
   res.send({title: 'Express + TypeScript Server!'})
 });
 
-uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.single("docs"), uploadController.uploadDoc);
-uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.single("docs"), uploadController.uploadPersistedDoc);
+uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.array("docs", 50), uploadController.uploadDoc);
+uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.array("docs", 50), uploadController.uploadPersistedDoc);
 
 app.use(authRouter);
 app.use(workspaceRouter);

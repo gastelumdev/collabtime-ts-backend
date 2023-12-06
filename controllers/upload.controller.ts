@@ -30,9 +30,13 @@ export const upload = async (req: Request, res: Response) => {
 
 export const uploadDoc = async (req: Request, res: Response) => {
     try {
-        if (req.file) {
-            
-            res.send({url: `${process.env.APP_URL}/docs/${req.file.filename}`, originalname: req.file.originalname, file: req.file});
+        if (req.files) {
+            let filesRes = []
+            for (const file of (<any>req).files) {
+                filesRes.push({url: `${process.env.APP_URL}/docs/${file.filename}`, originalname: file.originalname, file: file})
+            }
+            console.log(filesRes);
+            res.send({files: filesRes});
         } else {
             res.send({url: undefined})
         }
@@ -43,11 +47,15 @@ export const uploadDoc = async (req: Request, res: Response) => {
   }
   
   export const uploadPersistedDoc = async (req: Request, res: Response) => {
-    console.log("UPLOAD", req.file);
+    console.log("UPLOAD", req.files);
     try {
-        if (req.file) {
-            
-            res.send({url: `${process.env.APP_URL}/docs/${req.file.filename}`});
+        if (req.files) {
+            let filesRes = []
+            for (const file of (<any>req).files) {
+                filesRes.push({url: `${process.env.APP_URL}/docs/${file.filename}`, originalname: file.originalname, file: file})
+            }
+            console.log(filesRes);
+            res.send({files: filesRes});
         } else {
             res.send({url: undefined})
         }
