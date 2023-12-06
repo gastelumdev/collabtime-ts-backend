@@ -44,8 +44,11 @@ export const updateDocument = async (req: Request, res: Response) => {
 
 export const deleteDocument = async (req: Request, res: Response) => {
     try {
-        fs.unlinkSync(process.env.ROOT_DIR + req.body.file.filename)
-        fs.unlinkSync(process.env.PERSISTED_ROOT_DIR + req.body.file.filename)
+        if (req.body.file) {
+            fs.unlinkSync(process.env.ROOT_DIR + req.body.file.filename)
+            fs.unlinkSync(process.env.PERSISTED_ROOT_DIR + req.body.file.filename)
+        }
+        
         const document = await Document.findByIdAndDelete(req.body._id);
         res.send(document)
     } catch (error) {
