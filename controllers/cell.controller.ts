@@ -62,27 +62,31 @@ export const updateCell = async (req: Request, res: Response) => {
         }
 
         if (cell?.type === "priority") {
+            const enableEmail = false;
             const message = `Priority has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name}- ${workspace?.name}`
             const emailSubject = `Priority change in ${workspace?.name} - ${dataCollection?.name}`
-            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject});
+            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 
         if (cell?.type === "status") {
+            const enableEmail = false;
             const message = `Status has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name} - ${workspace?.name}`
             const emailSubject = `Status change in ${workspace?.name} - ${dataCollection?.name}`;
-            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject});
+            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 
         if (cell?.type === "label") {
+            const enableEmail = false;
             const message = `Label has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name} - ${workspace?.name}`
             const emailSubject = `Label change in ${workspace?.name} - ${dataCollection?.name}`;
-            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject});
+            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 
         if (cell?.type === "date") {
+            const enableEmail = false;
             const message = `Date has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name} - ${workspace?.name}`
             const emailSubject = `Date change in ${workspace?.name} - ${dataCollection?.name}`;
-            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject});
+            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 
         io.emit("update")
@@ -103,9 +107,10 @@ type TNotifyUserProps = {
     res: Response;
     message: string;
     emailSubject: string;
+    enableEmail: boolean;
 }
 
-const notifyUsers = async ({cell, workspace, dataCollection, recipients, req, res, message, emailSubject}: TNotifyUserProps) => {
+const notifyUsers = async ({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail}: TNotifyUserProps) => {
     const row = await Row.findOne({_id: cell?.row});
     const rowUser = await User.findOne({_id: row?.assignedTo});
 
@@ -135,17 +140,20 @@ const notifyUsers = async ({cell, workspace, dataCollection, recipients, req, re
         memberNotification.save();
     }
 
-    sendEmail({
-        email: recipients, 
-        subject: emailSubject,
-        payload: {
-            dataCollectionName: dataCollection?.name,
-            message,
-            link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`},
-        template: "./template/dataCollectionStatusChange.handlebars",
-        res: res
-    }, (res: Response) => {
-        console.log("SUCCESSFUL EMAIL");
-        // res.send({success: true})
-    })
+    if (enableEmail) {
+        sendEmail({
+            email: recipients, 
+            subject: emailSubject,
+            payload: {
+                dataCollectionName: dataCollection?.name,
+                message,
+                link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`},
+            template: "./template/dataCollectionStatusChange.handlebars",
+            res: res
+        }, (res: Response) => {
+            console.log("SUCCESSFUL EMAIL");
+            // res.send({success: true})
+        })
+    }
+    
 }
