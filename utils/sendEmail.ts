@@ -5,11 +5,12 @@ import path from "path";
 import { Response } from "express";
 
 interface IProps {
-    email: string;
+    email: string | string[];
     subject: string;
-    payload: IPayload;
+    payload: any;
     template: string;
     res: Response;
+    // cb: any;
 }
 
 interface IPayload {
@@ -17,7 +18,7 @@ interface IPayload {
     link?: string;
 }
 
-const setSendEmail = async ({email, subject, payload, template, res}: IProps) => {
+const sendEmail = async ({email, subject, payload, template, res}: IProps, cb: any) => {
   try {
     // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
@@ -42,7 +43,17 @@ const setSendEmail = async ({email, subject, payload, template, res}: IProps) =>
       };
     };
 
-    return {options: options(), transporter}
+    // return {options: options(), transporter}
+    transporter.sendMail(options(), (error: any, info: any) => {
+      if (error) {
+          throw new Error(error);
+      } else {
+          // res.status(200).json({
+          //     success: true,
+          // });
+          cb(res);
+      }
+  });
     
   } catch (error) {
      console.log(error)
@@ -59,4 +70,4 @@ sendEmail(
 );
 */
 
-export default setSendEmail;
+export default sendEmail;

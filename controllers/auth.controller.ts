@@ -7,7 +7,7 @@ import verifyToken from '../middleware/authJWT';
 import User from "../models/auth.model"
 import Token from '../models/token.model';
 import Notification from '../models/notification.model';
-import setSendEmail from '../utils/sendEmail';
+import sendEmail from '../utils/sendEmail';
 import { io } from "../index";
 
 export const register = async (req: Request, res: Response) => {
@@ -115,19 +115,19 @@ export const resetPasswordRequest = async (req: Request, res: Response, next: Ne
     console.log(resetToken)
 
     const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/passwordReset?token=${resetToken}&id=${user._id}`;
-    let sendEmail: any = await setSendEmail({email: user.email, subject: "Password Reset Request", payload: {name: user.firstname, link: link}, template: "./template/requestResetPassword.handlebars", res});
+    sendEmail({email: user.email, subject: "Password Reset Request", payload: {name: user.firstname, link: link}, template: "./template/requestResetPassword.handlebars", res}, (res: Response) => res.send({success: true}));
     
-    sendEmail.transporter.sendMail(sendEmail.options, (error: any, info: any) => {
-        if (error) {
-            console.log(error)
-          throw new Error(error);
-        } else {
-            console.log(info)
-          res.status(200).json({
-            success: true,
-          });
-        }
-      });
+    // sendEmail.transporter.sendMail(email.options, (error: any, info: any) => {
+    //     if (error) {
+    //         console.log(error)
+    //       throw new Error(error);
+    //     } else {
+    //         console.log(info)
+    //       res.status(200).json({
+    //         success: true,
+    //       });
+    //     }
+    //   });
 }
 
 export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
@@ -145,16 +145,16 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const user = await User.findById({_id: req.body.userId});
 
     try {
-        let sendEmail: any = await setSendEmail({email: user?.email || "", subject: "Password Reset Successfully", payload: {name: user?.firstname || "" }, template: "./template/resetPassword.handlebars", res });
-        sendEmail.transporter.sendMail(sendEmail.options, (error: any, info: any) => {
-            if (error) {
-              return error;
-            } else {
-              return res.status(200).json({
-                success: true,
-              });
-            }
-        });
+        sendEmail({email: user?.email || "", subject: "Password Reset Successfully", payload: {name: user?.firstname || "" }, template: "./template/resetPassword.handlebars", res }, (res: Response) => res.send({success: true}));
+        // sendEmail.transporter.sendMail(sendEmail.options, (error: any, info: any) => {
+        //     if (error) {
+        //       return error;
+        //     } else {
+        //       return res.status(200).json({
+        //         success: true,
+        //       });
+        //     }
+        // });
     } catch (error) {
         console.log(error)
         res.status(500).send({success: false})

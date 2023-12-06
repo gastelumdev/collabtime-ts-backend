@@ -13,6 +13,7 @@ import DataCollection from "../models/dataCollection.model";
 import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
+import sendEmail from "../utils/sendEmail";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: (<any>req).user._id});
@@ -161,33 +162,43 @@ export const inviteTeamMembers = async (req: Request, res: Response) => {
             for (const invitee of req.body.invitees) {
                 let user = await User.findOne({email: invitee.email});
                 try {
-                    const transporter = nodemailer.createTransport({
-                        host: process.env.EMAIL_HOST,
-                        port: 465,
-                        auth: {
-                          user: process.env.EMAIL_USER,
-                          pass: process.env.EMAIL_PASS, // naturally, replace both with your real credentials or an application-specific password
-                        },
-                    });
+                    // const transporter = nodemailer.createTransport({
+                    //     host: process.env.EMAIL_HOST,
+                    //     port: 465,
+                    //     auth: {
+                    //       user: process.env.EMAIL_USER,
+                    //       pass: process.env.EMAIL_PASS, // naturally, replace both with your real credentials or an application-specific password
+                    //     },
+                    // });
                   
-                    const source = fs.readFileSync(path.join(path.resolve() + "/utils", "./template/inviteTeamMember.handlebars"), "utf8");
-                    const compiledTemplate = handlebars.compile(source);
-                    const options ={
-                        from: process.env.EMAIL_USER,
-                        to: invitee.email,
-                        subject: "You've been invited to join a Collabtime workspace.",
-                        html: compiledTemplate({workspaceName: workspace.name, link: `${process.env.CLIENT_URL || "http://localhost:5173"}/joinWorkspace?workspaceId=${workspace._id}&id=${user?._id}`}),
-                    };
+                    // const source = fs.readFileSync(path.join(path.resolve() + "/utils", "./template/inviteTeamMember.handlebars"), "utf8");
+                    // const compiledTemplate = handlebars.compile(source);
+                    // const options ={
+                    //     from: process.env.EMAIL_USER,
+                    //     to: invitee.email,
+                    //     subject: "You've been invited to join a Collabtime workspace.",
+                    //     html: compiledTemplate({workspaceName: workspace.name, link: `${process.env.CLIENT_URL || "http://localhost:5173"}/joinWorkspace?workspaceId=${workspace._id}&id=${user?._id}`}),
+                    // };
 
-                    transporter.sendMail(options, (error: any, info: any) => {
-                        if (error) {
-                            throw new Error(error);
-                        } else {
-                            res.status(200).json({
-                                success: true,
-                            });
-                        }
-                    });
+                    // transporter.sendMail(options, (error: any, info: any) => {
+                    //     if (error) {
+                    //         throw new Error(error);
+                    //     } else {
+                    //         res.status(200).json({
+                    //             success: true,
+                    //         });
+                    //     }
+                    // });
+
+                    sendEmail({
+                        email: invitee.email, 
+                        subject: "You've been invited to join a Collabtime workspace.", 
+                        payload: {name: workspace.name, link: `${process.env.CLIENT_URL || "http://localhost:5173"}/joinWorkspace?workspaceId=${workspace._id}&id=${user?._id}`},
+                        template: "./template/inviteTeamMember.handlebars",
+                        res: res
+                    }, (res: Response) => {
+                        res.send({success: true})
+                    })
                 } catch (error) {
                     res.status(400).send({success: false})
                 }
