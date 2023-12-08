@@ -5,7 +5,7 @@ export interface IDocument {
     workspace: Schema.Types.ObjectId;
     createdBy: IUser | null;
     filename: string;
-    type: string;
+    type: string; // "upload" | "created"
     originalname?: string;
     url?: string;
     ext: string;
