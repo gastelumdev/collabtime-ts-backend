@@ -125,19 +125,24 @@ const notifyUsers = async ({cell, workspace, dataCollection, recipients, req, re
 
     notification.save();
 
+    console.log(workspace?.members)
+
     for (const member of workspace?.members || []) {
         const workspaceMember = await User.findOne({email: member.email});
 
-        io.emit(workspaceMember?._id || "", {message, priority: "Low"});
+        if (workspaceMember?.email !== rowUser?.email) {
+            console.log(workspaceMember?.email, rowUser?._id)
+            io.emit(workspaceMember?._id || "", {message, priority: "Low"});
 
-        let memberNotification = new Notification({
-            message,
-            workspaceId: workspace?._id,
-            assignedTo: workspaceMember?._id,
-            priority: "Low",
-        })
-
-        memberNotification.save();
+            let memberNotification = new Notification({
+                message,
+                workspaceId: workspace?._id,
+                assignedTo: workspaceMember?._id,
+                priority: "Low",
+            })
+    
+            memberNotification.save();
+        }
     }
 
     if (enableEmail) {
