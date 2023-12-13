@@ -139,7 +139,8 @@ export const createDataCollection = async (req: Request, res: Response) => {
 
 export const updateDataCollection = async (req: Request, res: Response) => {
     try {
-        const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body);
+        console.log("DATACOLLECTION", req.body)
+        const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body, {new: true});
         res.send(dataCollection);
     } catch (error) {
         res.status(400).send({success: false})
