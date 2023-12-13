@@ -18,6 +18,7 @@ import cellRouter from "./routes/cell.routes";
 import uploadRouter from "./routes/upload.routes";
 import documentRouter from "./routes/document.routes";
 import searchRouter from "./routes/search.routes";
+import tagRouter from "./routes/tag.routes";
 import path from 'path';
 import verifyToken from './middleware/authJWT';
 import fs from "fs";
@@ -110,6 +111,7 @@ app.use(cellRouter);
 app.use(uploadRouter);
 app.use(documentRouter);
 app.use(searchRouter);
+app.use(tagRouter);
 
 
 const server = http.createServer(app);

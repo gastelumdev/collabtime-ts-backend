@@ -8,6 +8,8 @@ const workspaceSchema: Schema<IWorkspaceDocument> = new Schema({
     invitees: {type: []},
     members: {type: []},
     owner: {type: Schema.Types.ObjectId},
+    workspaceTags: {type: []},
+    tags: {type: []},
     createdAt: {type: Date, default: Date.now}
 },{
     timestamps: true

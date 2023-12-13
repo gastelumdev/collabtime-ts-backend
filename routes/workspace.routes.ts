@@ -16,5 +16,6 @@ router.post("/workspaces/:id/joinWorkspace", workspaceController.joinWorkspace);
 router.post("/workspaces/:id/removeMember", verifyToken, workspaceController.removeMember);
 router.post("/workspaces/:id/removeInvitee", verifyToken, workspaceController.removeInvitee);
 router.post("/workspaces/callUpdate", verifyToken, workspaceController.callUpdate);
+router.post("/workspaces/:workspaceId/tagExists", verifyToken, workspaceController.tagExists);
 
 export default router;

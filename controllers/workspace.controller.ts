@@ -14,6 +14,7 @@ import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
 import sendEmail from "../utils/sendEmail";
+import { IWorkspace } from "../services/workspace.service";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: (<any>req).user._id});
@@ -27,6 +28,7 @@ export const getWorkspaces = async (req: Request, res: Response) => {
                 const workspace = await Workspace.findOne({_id: userWorkspace.id});
                 data.push(workspace);
             }
+            console.log(data)
             res.status(200).send(data);
         } catch (err) {
             console.log(err)
@@ -79,7 +81,11 @@ export const getOneWorkspace = async (req: Request, res: Response) => {
 
 export const updateWorkspace = async (req: Request, res: Response) => {
     try {
-        const workspace = await Workspace.findByIdAndUpdate(req.params.id, req.body);
+        
+        const newWorkspace: IWorkspace = req.body;
+        console.log("NEWWORKSPACE**************************", newWorkspace)
+        const workspace = await Workspace.findByIdAndUpdate(req.params.id, newWorkspace, {new: true});
+        console.log("UPDATEDWORKSPACE**************************", workspace)
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
@@ -98,7 +104,7 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
 
         if (workspace) {
             for (const member of workspace?.members) {
-                let currentMember: any = await User.findOne({email: member.email});
+                let currentMember: any = await User.findOne({email: member.email})
                 let workspaceMembers = currentMember?.workspaces.filter((item: any) => {
                     return !workspace._id.equals(item.id);
                 });
@@ -289,4 +295,40 @@ export const removeInvitee = async (req: Request, res: Response) => {
 
 export const callUpdate = async (req: Request, res: Response) => {
     res.send({success: true});
+}
+
+export const tagExists = async (req: Request, res: Response) => {
+    try {
+        const tag = req.body;
+
+        console.log(tag)
+
+        const workspaces = await Workspace.find({_id: req.params.workspaceId});
+        const dataCollections = await DataCollection.find({workspace: req.params.workspaceId});
+
+        let tagExists = false;
+
+        for (const workspace of workspaces) {
+            for (const workspaceTag of workspace.tags) {
+                if (tag.name === workspaceTag.name) {
+                    tagExists = true;
+                }
+            }
+        }
+
+        for (const dataCollection of dataCollections) {
+            for (const dataCollectionTag of dataCollection.tags) {
+                if (tag.name === dataCollectionTag.name) {
+                    tagExists = true;
+                }
+            }
+        }
+
+        console.log("TAGEXISTS", tagExists)
+        res.send({tagExists: tagExists});
+    } catch (error) {
+        res.status(400).send({success: false})
+    }
+
+
 }

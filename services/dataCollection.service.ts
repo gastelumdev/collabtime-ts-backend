@@ -1,4 +1,5 @@
 import { Document, Schema, Model } from "mongoose";
+import { ITag } from "./tag.service";
 
 export type TForm = {
     active: boolean;
@@ -14,6 +15,7 @@ export interface IDataCollection {
     form: TForm;
     columns: string[];
     rows: string[];
+    tags: ITag[];
     createdAt: Date;
 }
 

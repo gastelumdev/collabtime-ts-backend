@@ -9,6 +9,7 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     form: {type: {}},
     columns: {type: []},
     rows: {type: []},
+    tags: {type: []},
     createdAt: {type: Date, default: Date.now}
 },{
     timestamps: true

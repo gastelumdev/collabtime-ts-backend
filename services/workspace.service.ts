@@ -1,4 +1,5 @@
 import { Document, Schema, Model } from "mongoose";
+import { ITag } from "./tag.service";
 
 export type TAccess = {
     access: number;
@@ -23,6 +24,8 @@ export interface IWorkspace {
     invitees: TInvitee[];
     members: TInvitee[];
     owner: Schema.Types.ObjectId;
+    workspaceTags: ITag[];
+    tags: ITag[];
     createdAt: Date;
 }
 
