@@ -35,7 +35,7 @@ export const createDocument = async (req: Request, res: Response) => {
 
 export const updateDocument = async (req: Request, res: Response) => {
     try {
-        const document = await Document.findByIdAndUpdate(req.body._id, req.body);
+        const document = await Document.findByIdAndUpdate(req.body._id, req.body, {new: true});
         res.send(document);
     } catch (error) {
         res.status(400).send({success: false});

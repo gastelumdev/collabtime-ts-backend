@@ -10,7 +10,8 @@ const documentSchema: Schema<IDocumentDocument> = new Schema({
     url: {type: String},
     ext: {type: String},
     value: {type: String},
-    file: {type: {}}
+    file: {type: {}},
+    tags: {type: []},
 },{
     timestamps: true
 });
