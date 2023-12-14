@@ -1,6 +1,7 @@
 import { Document, Schema, Model } from "mongoose";
 import { TCell } from "../types";
 import { TInvitee } from "./workspace.service";
+import { ITag } from "./tag.service";
 
 export interface INote {
     content: string;
@@ -18,6 +19,7 @@ export interface IRow {
     notes: string;
     notesList: INote[];
     createdAt: Date;
+    tags: ITag[];
 }
 
 export interface IRowDocument extends IRow, Document {}

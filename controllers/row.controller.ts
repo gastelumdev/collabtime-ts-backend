@@ -109,7 +109,7 @@ export const updateRow = async (req: Request, res: Response) => {
     }
     
     try {
-        await Row.findByIdAndUpdate(req.params.id, req.body);
+        await Row.findByIdAndUpdate(req.params.id, req.body, {new: true});
         res.send(row)
     } catch (error) {
         res.status(400).send({success: false})
