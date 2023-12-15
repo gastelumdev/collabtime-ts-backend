@@ -19,6 +19,7 @@ import uploadRouter from "./routes/upload.routes";
 import documentRouter from "./routes/document.routes";
 import searchRouter from "./routes/search.routes";
 import tagRouter from "./routes/tag.routes";
+import messageRouter from "./routes/message.routes";
 import path from 'path';
 import verifyToken from './middleware/authJWT';
 import fs from "fs";
@@ -112,6 +113,7 @@ app.use(uploadRouter);
 app.use(documentRouter);
 app.use(searchRouter);
 app.use(tagRouter);
+app.use(messageRouter);
 
 
 const server = http.createServer(app);

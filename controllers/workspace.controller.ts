@@ -83,9 +83,7 @@ export const updateWorkspace = async (req: Request, res: Response) => {
     try {
         
         const newWorkspace: IWorkspace = req.body;
-        console.log("NEWWORKSPACE**************************", newWorkspace)
         const workspace = await Workspace.findByIdAndUpdate(req.params.id, newWorkspace, {new: true});
-        console.log("UPDATEDWORKSPACE**************************", workspace)
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
