@@ -10,7 +10,8 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     columns: {type: []},
     rows: {type: []},
     tags: {type: []},
-    createdAt: {type: Date, default: Date.now}
+    createdAt: {type: Date, default: Date.now},
+    asTemplate: {type: {}},
 },{
     timestamps: true
 });
