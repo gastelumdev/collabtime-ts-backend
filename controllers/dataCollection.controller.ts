@@ -113,17 +113,42 @@ export const createDataCollection = async (req: Request, res: Response) => {
         people.push(person);
     }
 
-    const initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people);
+    let initialColumns: any = [];
+    let initialColumnsFromUserTemplate: any = [];
+
+    if (dataCollection.template == "default" || dataCollection.template == "tasks") {
+        initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people);
+    } else {
+        const columns = await Column.find({dataCollection: dataCollection.template});
+        initialColumnsFromUserTemplate = columns;
+    }
+    
     console.log(initialColumns)
     const columnIds = [];
 
     let position = 1;
 
-    for (const initialColumn of initialColumns) {
+    for (const initialColumn of initialColumns || []) {
         const column = new Column(initialColumn);
         column.position = position;
         position++;
         columnIds.push(column._id);
+        column.save();
+    }
+
+    for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
+        const column = new Column({
+            dataCollection: dataCollection._id,
+            name: initialColumnFromUser.name,
+            type: initialColumnFromUser.type,
+            position: initialColumnFromUser.position,
+            permanent: initialColumnFromUser.permanent,
+            people: initialColumnFromUser.people,
+            labels: initialColumnFromUser.labels,
+            includeInForm: initialColumnFromUser.includeInForm,
+            includeInExport: initialColumnFromUser.includeInExport
+        });
+        console.log("NEW COLUMN", column)
         column.save();
     }
 
