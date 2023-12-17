@@ -59,8 +59,16 @@ export const createRow = async (req: Request, res: Response) => {
 
             io.emit(user?._id || "", {message: "You have been assigned to a data collection task."});
         } else if (column.type === "date") {
-            // value = (new Date(body[column.name])).toISOString();
-            value = body[column.name]
+            
+            if (body[column.name] === "") {
+                console.log(body[column.name])
+                
+                value = (new Date(body[column.name]));
+            } else {
+                value = body[column.name];
+            }
+            
+            
         } else {
             value = body[column.name];
         }
