@@ -59,9 +59,9 @@ export const createRow = async (req: Request, res: Response) => {
 
             io.emit(user?._id || "", {message: "You have been assigned to a data collection task."});
         } else if (column.type === "date") {
-            
-            if (body[column.name] === "") {
-                console.log(body[column.name])
+            console.log("DATE", body[column.name])
+            if (body[column.name] === undefined) {
+                
                 
                 value = (new Date(body[column.name]));
             } else {
@@ -73,6 +73,8 @@ export const createRow = async (req: Request, res: Response) => {
             value = body[column.name];
         }
         let cell = new Cell({dataCollection: column.dataCollection, row: row._id, name: column.name, type: column.type, value: value, labels: column.labels, people: people, position: column.position});
+        console.log("CELLDATE", value)
+        cell.value = value;
         row.cells.push(cell._id);
         try {
             cell.save();
