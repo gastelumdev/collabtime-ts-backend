@@ -9,7 +9,7 @@ interface IProps {
     subject: string;
     payload: any;
     template: string;
-    res: Response;
+    res?: Response;
     // cb: any;
 }
 

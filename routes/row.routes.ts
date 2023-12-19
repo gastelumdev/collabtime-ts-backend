@@ -11,5 +11,6 @@ router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/upd
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/delete/:id", verifyToken, rowController.deleteRow);
 router.post("/rows/callUpdate", verifyToken, rowController.callUpdate);
 router.post("/migrateRows", rowController.migrateRows);
+router.post("/addReminder", rowController.addReminder);
 
 export default router;

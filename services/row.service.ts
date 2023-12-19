@@ -16,10 +16,13 @@ export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[] | TCell[];
     assignedTo: Schema.Types.ObjectId | String;
+    createdBy: Schema.Types.ObjectId | string;
     notes: string;
     notesList: INote[];
     createdAt: Date;
     tags: ITag[];
+    reminder: boolean;
+    complete: boolean;
 }
 
 export interface IRowDocument extends IRow, Document {}

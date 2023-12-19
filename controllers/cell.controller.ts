@@ -51,7 +51,7 @@ export const updateCell = async (req: Request, res: Response) => {
                 subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
                 payload: {
                     dataCollectionName: dataCollection?.name,
-                    message: `You have been assigned an item in ${workspace?.name} - ${dataCollection?.name}`,
+                    message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`,
                     link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`},
                 template: "./template/dataCollectionStatusChange.handlebars",
                 res: res
@@ -72,6 +72,13 @@ export const updateCell = async (req: Request, res: Response) => {
             const enableEmail = false;
             const message = `Status has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name} - ${workspace?.name}`
             const emailSubject = `Status change in ${workspace?.name} - ${dataCollection?.name}`;
+
+            if (cell.value === "Done") {
+                const row = await Row.findOne({_id: cell.row});
+                if (row) row.complete = true;
+                row?.save()
+            }
+
             notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 

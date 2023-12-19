@@ -9,6 +9,7 @@ import { TCell, TUser } from "../types";
 import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
 import { io } from "../index";
+import sendEmail from "../utils/sendEmail";
 
 export const getRows = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
@@ -36,11 +37,13 @@ export const getRows = async (req: Request, res: Response) => {
 export const createRow = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
     const columns = await Column.find({dataCollection: dataCollection?._id});
+    // body is a row
     const body = req.body;
     let value;
 
     const workspace = await Workspace.findOne({_id: req.params.workspaceId});
 
+    // This will hold the members of the workspace to include in the cell
     const people: any = [];
 
     for (const member of workspace?.members || []) {
@@ -48,47 +51,108 @@ export const createRow = async (req: Request, res: Response) => {
         people.push(person);
     }
 
+    const defaultPerson = await User.findOne({_id: (<any>req).user._id});
+    console.log(defaultPerson);
+
+    // create a new row with the associated data collection id
     const row = new Row({dataCollection: dataCollection?._id});
+    // add the assignedTo key to the creator of the row.
+    const creator = (<any>req).user._id;
+    row.createdBy = creator;
     row.assignedTo = (<any>req).user._id;
 
+
+    // Go through all the columns to create cells for the row
     for (const column of columns) {
+        // If the column is a people type then get the user selected by the creator of the row
+        // and assign the first and last name to the value
+        // Notify by sockets update and by email that user that an assignment has been issued
         if (column.type == "people") {
-            const user = await User.findOne({_id: body[column.name]});
+            console.log("USERID", body[column.name])
+            const user = await User.findOne({_id: body[column.name] || defaultPerson?._id});
             console.log("USER", user);
+            row.assignedTo = user?._id || "";
             value = `${user?.firstname} ${user?.lastname}`;
 
-            io.emit(user?._id || "", {message: "You have been assigned to a data collection task."});
+            io.emit(user?._id || "", {message: "You have been assigned to a data collection task."})
+
+            // needs email ****************************
+            const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`;
+            sendEmail({
+                email: user?.email || "", 
+                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
+                payload: {
+                    message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`, 
+                    link: link,
+                    dataCollectionName: dataCollection?.name,
+                }, 
+                template: "./template/dataCollectionStatusChange.handlebars", 
+                res,
+            }, (res: Response) => console.log("Email sent."))
+
+        
+            // cron.schedule("0 6 * * * 1,2,3,4,5", () => {
+            //     sendEmail({
+            //         email: user?.email || "", 
+            //         subject: `Reminder - Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
+            //         payload: {
+            //             message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`, 
+            //             link: link,
+            //             dataCollectionName: dataCollection?.name,
+            //         }, 
+            //         template: "./template/dataCollectionStatusChange.handlebars", 
+            //         res,
+            //     }, (res: Response) => console.log("Email sent."));
+            // }, {name: row._id})
+
+            // console.log("CRON TASKS", cron.getTasks().get(row._id));
+
+        // Else if the type is date, then handle the input accordingly and assign it value
         } else if (column.type === "date") {
             console.log("DATE", body[column.name])
             if (body[column.name] === undefined) {
-                
-                
                 value = (new Date(body[column.name]));
             } else {
                 value = body[column.name];
             }
             
-            
+        // otherwise the value just equals the request body based on the column name
         } else {
             value = body[column.name];
         }
-        let cell = new Cell({dataCollection: column.dataCollection, row: row._id, name: column.name, type: column.type, value: value, labels: column.labels, people: people, position: column.position});
-        console.log("CELLDATE", value)
+
+        // create cell 
+        let cell = new Cell({
+            dataCollection: column.dataCollection, 
+            row: row._id, 
+            name: column.name, 
+            type: column.type, 
+            value: value, 
+            labels: column.labels, 
+            people: people, 
+            position: column.position
+        });
         cell.value = value;
+
+        // Add cell id to the rows list
         row.cells.push(cell._id);
+
+        // Save the cell
         try {
             cell.save();
         } catch(error) {
+            console.log("CELL ERROR", error)
             res.status(400).send({success:false});
         }
-        
     }
 
+    // Save the row
     try {
         row.save();
         res.send({success: true})
     } catch (error) {
-        res.status(400).send({success: false})
+        console.log("ROW ERROR", error)
+        res.status(400).send({success: false});
     }
 }
 
@@ -177,6 +241,26 @@ export const migrateRows = async (req: Request, res: Response) => {
         res.status(400).send({success: false})
     }
 }
+
+export const addReminder = async(req: Request, res: Response) => {
+    try {
+        const rows = await Row.find({});
+
+        for (const row of rows) {
+            
+            const thisRow = await Row.findOne({_id: row._id});
+            if (thisRow) {
+                thisRow.reminder = true;
+            }
+            thisRow?.save();
+            
+        }
+        res.send({success: true});
+    } catch (error) {
+        res.send({success: false});
+    }
+}
+
 
 export const callUpdate = async (req: Request, res: Response) => {
     res.send({success: true});

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import bodyparser from 'body-parser';
 import multer from 'multer';
+import cron from "node-cron";
 import {v2 as cloudinary} from 'cloudinary';
 import connection from './config/db';
 import * as uploadController from "./controllers/upload.controller"
@@ -25,6 +26,13 @@ import verifyToken from './middleware/authJWT';
 import fs from "fs";
 import shell from "child_process";
 import { v1 as uuidv1 } from 'uuid';
+import sendEmail from './utils/sendEmail';
+import DataCollection from './models/dataCollection.model';
+import Row from './models/row.models';
+import User from './models/auth.model';
+import Workspace from './models/workspace.model';
+import Cell from './models/cell.models';
+import setReminders from './utils/setReminders';
 const sh = shell.execSync;
 const uuid = uuidv1();
 
@@ -78,6 +86,29 @@ export const localDocUpload = multer({storage: localDiskStorage});
 const storage = multer.memoryStorage();
 export const notesUpload = multer({ storage: storage});
 
+// JOB SCHEDULES *********************************************************
+
+cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
+    setReminders()
+});
+
+cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
+    setReminders()
+})
+
+// HANDLEBAR EMAIL TEST *****************************************************************************
+// sendEmail({
+//     email: "gastelumdev@gmail.com" || "", 
+//     subject: `Collabtime - Here is a friendly reminder of your day ahead.`, 
+//     payload: {tasks: [
+//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"},
+//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"},
+//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"}
+//     ]}, 
+//     template: "./template/dailyReminders.handlebars",
+// }, (res: Response) => console.log("Email sent."));
+
+
 // const fileFilter = (req: any, file: any, cb: any) => {
 //     if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
 //       cb(null, true)
@@ -125,6 +156,8 @@ io.on("connection", (socket) => {
   console.log("Socket.io running")
   
 })
+
+
 
 server.listen(port, () => {
   console.log("[ws-server]: Server is running on port " + port)
