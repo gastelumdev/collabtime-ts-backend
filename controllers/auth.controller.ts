@@ -15,7 +15,6 @@ export const register = async (req: Request, res: Response) => {
 
     try {
         if (user) {
-            console.log(user);
             res.status(500).send({successful: false, message: "User already exists."});
         } else {
             const hash = await bcrypt.hash(req.body.password, Number(10));
@@ -42,15 +41,12 @@ export const login = async (req: Request, res: Response) => {
         email: req.body.email
     });
 
-    console.log(user)
-
     try {
         if (!user) {
             res.status(404).send({message: "Login failed. Try again."});
         } else {
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
             if (!passwordIsValid) {
-                console.log(passwordIsValid)
                 const notification = new Notification({
                     message: `${user.firstname} ${user.lastname} attempted to login.`,
                     dataSource: "Login",
@@ -83,8 +79,6 @@ export const login = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
     const user = await User.findOne({_id: req.params.id});
 
-    console.log("USER", user)
-
     try {
         if (user) {
             res.send(user);
@@ -97,9 +91,8 @@ export const getUser = async (req: Request, res: Response) => {
 }
 
 export const resetPasswordRequest = async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body.email)
     const user = await User.findOne({email: req.body.email});
-    console.log(user)
+    
     if (!user) throw new Error("User does not exist.");
     let token = await Token.findOne({userId: user._id});
     if (token) await token.deleteOne();
@@ -112,26 +105,12 @@ export const resetPasswordRequest = async (req: Request, res: Response, next: Ne
         createdAt: Date.now(),
     }).save();
 
-    console.log(resetToken)
-
     const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/passwordReset?token=${resetToken}&id=${user._id}`;
     sendEmail({email: user.email, subject: "Password Reset Request", payload: {name: user.firstname, link: link}, template: "./template/requestResetPassword.handlebars", res}, (res: Response) => res.send({success: true}));
-    
-    // sendEmail.transporter.sendMail(email.options, (error: any, info: any) => {
-    //     if (error) {
-    //         console.log(error)
-    //       throw new Error(error);
-    //     } else {
-    //         console.log(info)
-    //       res.status(200).json({
-    //         success: true,
-    //       });
-    //     }
-    //   });
 }
 
 export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req)
+    
     let passwordResetToken = await Token.findOne({userId: req.body.userId});
     if (!passwordResetToken) throw new Error("Invalid or expired password reset token.");
 
@@ -146,17 +125,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 
     try {
         sendEmail({email: user?.email || "", subject: "Password Reset Successfully", payload: {name: user?.firstname || "" }, template: "./template/resetPassword.handlebars", res }, (res: Response) => res.send({success: true}));
-        // sendEmail.transporter.sendMail(sendEmail.options, (error: any, info: any) => {
-        //     if (error) {
-        //       return error;
-        //     } else {
-        //       return res.status(200).json({
-        //         success: true,
-        //       });
-        //     }
-        // });
     } catch (error) {
-        console.log(error)
         res.status(500).send({success: false})
     }
 
@@ -165,7 +134,6 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 
 export const getAllUsers = async (req: Request, res: Response) => {
     const users = await User.find({});
-    console.log(users);
     try{
         res.send(users)
     } catch (error) {
