@@ -27,6 +27,7 @@ export const updateCell = async (req: Request, res: Response) => {
         if (cell?.type === "people") {
             const user = await User.findOne({_id: req.body.value});
             const row = await Row.findOne({_id: cell?.row});
+            const creator = await User.findOne({_id: row?.createdAt})
 
             if (row?.assignedTo) row.assignedTo = user?._id || "";
 
@@ -69,17 +70,36 @@ export const updateCell = async (req: Request, res: Response) => {
         }
 
         if (cell?.type === "status") {
-            const enableEmail = false;
-            const message = `Status has changed from ${cell.value} to ${req.body.value} in ${dataCollection?.name} - ${workspace?.name}`
-            const emailSubject = `Status change in ${workspace?.name} - ${dataCollection?.name}`;
+            console.log("STATUS*****************************")
+            const row = await Row.findOne({_id: cell?.row});
+            const creator = await User.findOne({_id: row?.createdBy})
 
-            if (cell.value === "Done") {
+            let enableEmail = false;
+            let taskName = "";
+
+            if (req.body.value === "Done") {
+                console.log("WERE IN DONE")
                 const row = await Row.findOne({_id: cell.row});
                 if (row) row.complete = true;
                 row?.save()
+
+
+
+                for (const rowCellId of row?.cells || []) {
+                    const rowCell = await Cell.findOne({_id: rowCellId});
+
+                    if (rowCell?.name === "task") {
+                        console.log("THIS IS A TASK")
+                        enableEmail = true;
+                        taskName = rowCell.value;
+                    }
+                }
             }
 
-            notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
+            const message = `${workspace?.name} - ${dataCollection?.name} task ${taskName} has been completed. `;
+            const emailSubject = `Status change in ${workspace?.name} - ${dataCollection?.name}`;
+
+            notifyUsers({cell, workspace, dataCollection, recipients: [creator?.email || ""], req, res, message, emailSubject, enableEmail});
         }
 
         if (cell?.type === "label") {

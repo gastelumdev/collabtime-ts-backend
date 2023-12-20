@@ -38,7 +38,7 @@ const setReminders = async () => {
 
                 sendEmail({
                     email: user?.email || "", 
-                    subject: `Collabtime - Here is a friendly reminder of your day ahead. **TEST**`, 
+                    subject: `Collabtime - Here is a friendly reminder of your day ahead.`, 
                     payload: {tasks: tasks}, 
                     template: "./template/dailyReminders.handlebars",
                 }, (res: Response) => console.log("Email sent."));

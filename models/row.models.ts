@@ -11,7 +11,8 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     createdAt: {type: Date, default: Date.now},
     tags: {type: []},
     reminder: {type: Boolean, default: true},
-    complete: {type: Boolean, default: false}
+    complete: {type: Boolean, default: false},
+    acknowledged: {type: Boolean, default: true},
 },{
     timestamps: true
 });

@@ -10,7 +10,8 @@ router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows", v
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/update/:id", verifyToken, rowController.updateRow)
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/delete/:id", verifyToken, rowController.deleteRow);
 router.post("/rows/callUpdate", verifyToken, rowController.callUpdate);
-router.post("/migrateRows", rowController.migrateRows);
-router.post("/addReminder", rowController.addReminder);
+router.post("/rows/acknowledge/:rowId", verifyToken, rowController.acknowledgeRow);
+// router.post("/migrateRows", rowController.migrateRows);
+// router.post("/addReminder", rowController.addReminder);
 
 export default router;

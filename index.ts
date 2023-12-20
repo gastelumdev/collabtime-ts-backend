@@ -86,6 +86,38 @@ export const localDocUpload = multer({storage: localDiskStorage});
 const storage = multer.memoryStorage();
 export const notesUpload = multer({ storage: storage});
 
+const setCrititcalReminders = async () => {
+    const rows = await Row.find({acknowledged: false, reminder: true});
+    console.log("ROWS", rows)
+
+    for (const row of rows) {
+        const dataCollection = await DataCollection.findOne({_id: row.dataCollection})
+        const workspace = await Workspace.findOne({_id: dataCollection?.workspace})
+        const cells = await Cell.find({row: row._id});
+        const user = await User.findOne({_id: row.createdBy});
+
+        for (const cell of cells) {
+            if (cell.type === "priority" && cell.value === "Critical") {
+                console.log(row)
+                const task = {
+                    message: `A critical assingment in ${workspace?.name} - ${dataCollection?.name} has not been acknowledged.`,
+                    dataCollectionName: dataCollection?.name,
+                    url: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`
+                };
+
+                sendEmail({
+                    email: user?.email || "", 
+                    subject: `Collabtime - A critical assignment has not been acknowledged.`, 
+                    payload: task,
+                    template: "./template/genericMessage.handlebars",
+                }, (res: Response) => console.log("Email sent."))
+            }
+        }
+    }
+}
+
+setCrititcalReminders()
+
 // JOB SCHEDULES *********************************************************
 
 cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
@@ -94,6 +126,10 @@ cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
 
 cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
     setReminders()
+})
+
+cron.schedule("0 15 * * * *", () => {
+    setCrititcalReminders()
 })
 
 // HANDLEBAR EMAIL TEST *****************************************************************************

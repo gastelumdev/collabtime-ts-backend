@@ -23,6 +23,7 @@ export interface IRow {
     tags: ITag[];
     reminder: boolean;
     complete: boolean;
+    acknowledged: boolean;
 }
 
 export interface IRowDocument extends IRow, Document {}
