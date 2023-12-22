@@ -9,6 +9,7 @@ const cellSchema: Schema<ICellDocument> = new Schema({
     position: {type: Number},
     labels: {type: []},
     people: {type: []},
+    docs: {type: []},
     value: {type: String},
     createdAt: {type: Date, default: Date.now},
 }, {

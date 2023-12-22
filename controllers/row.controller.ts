@@ -16,6 +16,7 @@ export const getRows = async (req: Request, res: Response) => {
     const rows = await Row.find({dataCollection: dataCollection?._id});
     const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position")
     const result = [];
+    
 
 
     let cells;
@@ -40,6 +41,7 @@ export const createRow = async (req: Request, res: Response) => {
     // body is a row
     const body = req.body;
     let value;
+    let docs = [];
 
     const workspace = await Workspace.findOne({_id: req.params.workspaceId});
 
@@ -55,11 +57,11 @@ export const createRow = async (req: Request, res: Response) => {
     console.log(defaultPerson);
 
     // create a new row with the associated data collection id
-    const row = new Row({dataCollection: dataCollection?._id});
+    const row = new Row({dataCollection: dataCollection?._id})
     // add the assignedTo key to the creator of the row.
     const creator = (<any>req).user._id;
     row.createdBy = creator;
-    row.assignedTo = (<any>req).user._id;
+    row.assignedTo = (<any>req).user._id
 
 
     // Go through all the columns to create cells for the row
@@ -89,7 +91,7 @@ export const createRow = async (req: Request, res: Response) => {
                 }, 
                 template: "./template/dataCollectionStatusChange.handlebars", 
                 res,
-            }, (res: Response) => console.log("Email sent."))
+            }, (res: Response) => console.log("Email sent."));
 
         
             // cron.schedule("0 6 * * * 1,2,3,4,5", () => {
@@ -122,9 +124,18 @@ export const createRow = async (req: Request, res: Response) => {
                 row.acknowledged = false;
             } 
             value = body[column.name];
+
+        } else if (column.type === "upload") {
+            console.log("UPLOAD BODY ***********************", body)
+            let count = 0;
+            for (const upload of body[column.name]) {
+                count++
+            }
+            value = String(count);
+            docs = body[column.name];
         // otherwise the value just equals the request body based on the column name
         } else {
-            value = body[column.name];
+            value = body[column.name]
         }
 
         // create cell 
@@ -134,8 +145,9 @@ export const createRow = async (req: Request, res: Response) => {
             name: column.name, 
             type: column.type, 
             value: value, 
-            labels: column.labels, 
-            people: people, 
+            labels: column.labels,
+            people: people,
+            docs: docs,
             position: column.position
         });
         cell.value = value;

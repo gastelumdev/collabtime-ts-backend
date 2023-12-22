@@ -1,5 +1,6 @@
 import { Document, Schema, Model } from "mongoose";
 import { TUser } from "../types";
+import { IDocument } from "./document.service";
 
 export type TLabel = {
     title: string;
@@ -14,6 +15,7 @@ export interface ICell {
     position: number;
     labels?: TLabel[];
     people?: TUser[];
+    docs?: IDocument[];
     value: string;
     createdAt: Date;
 }
