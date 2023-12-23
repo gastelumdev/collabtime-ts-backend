@@ -16,6 +16,7 @@ export interface ICell {
     labels?: TLabel[];
     people?: TUser[];
     docs?: IDocument[];
+    links: string[];
     value: string;
     createdAt: Date;
 }

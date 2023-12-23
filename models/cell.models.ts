@@ -10,6 +10,7 @@ const cellSchema: Schema<ICellDocument> = new Schema({
     labels: {type: []},
     people: {type: []},
     docs: {type: []},
+    links: {type: []},
     value: {type: String},
     createdAt: {type: Date, default: Date.now},
 }, {

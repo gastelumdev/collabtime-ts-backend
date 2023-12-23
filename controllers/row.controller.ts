@@ -42,6 +42,7 @@ export const createRow = async (req: Request, res: Response) => {
     const body = req.body;
     let value;
     let docs = [];
+    let links = [];
 
     const workspace = await Workspace.findOne({_id: req.params.workspaceId});
 
@@ -133,6 +134,9 @@ export const createRow = async (req: Request, res: Response) => {
             }
             value = String(count);
             docs = body[column.name];
+        } else if (column.type === "link") {
+            value = ""
+            links = body.links;
         // otherwise the value just equals the request body based on the column name
         } else {
             value = body[column.name]
@@ -148,6 +152,7 @@ export const createRow = async (req: Request, res: Response) => {
             labels: column.labels,
             people: people,
             docs: docs,
+            links: links,
             position: column.position
         });
         cell.value = value;
