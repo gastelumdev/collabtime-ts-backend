@@ -132,7 +132,7 @@ export const createRow = async (req: Request, res: Response) => {
             for (const upload of body[column.name]) {
                 count++
             }
-            value = String(count);
+            value = ""
             docs = body[column.name];
         } else if (column.type === "link") {
             value = ""
