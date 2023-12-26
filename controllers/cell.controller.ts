@@ -30,7 +30,7 @@ export const updateCell = async (req: Request, res: Response) => {
             
             const row = await Row.findOne({_id: cell?.row});
             console.log(row)
-            // const creator = await User.findOne({_id: row?.createdAt})
+            // const creator = await User.findOne({_id: row?.createdAt});
 
             if (row?.assignedTo) row.assignedTo = user?._id || "";
 

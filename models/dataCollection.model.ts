@@ -12,6 +12,7 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     tags: {type: []},
     createdAt: {type: Date, default: Date.now},
     asTemplate: {type: {}},
+    formRecipients: {type: []},
 },{
     timestamps: true
 });

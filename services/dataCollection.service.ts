@@ -17,7 +17,8 @@ export interface IDataCollection {
     rows: string[];
     tags: ITag[];
     createdAt: Date;
-    asTemplate: {active: boolean, name: string}
+    asTemplate: {active: boolean, name: string};
+    formRecipients: {sent: true, email: string}[];
 }
 
 export interface IDataCollectionDocument extends IDataCollection, Document {}

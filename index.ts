@@ -121,17 +121,23 @@ setCrititcalReminders()
 
 // JOB SCHEDULES *********************************************************
 
-cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
-    setReminders()
-});
 
-cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
-    setReminders()
-})
 
-cron.schedule("0 15 * * * *", () => {
-    setCrititcalReminders()
-})
+if (process.env.ENVIRONMENT === "PRODUCTION") {
+
+    cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
+        setReminders()
+    });
+    
+    cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
+        setReminders()
+    })
+    
+    cron.schedule("0 15 * * * *", () => {
+        setCrititcalReminders()
+    })
+}
+
 
 // const updatePeople = async () => {
 //     const workspaces = await Workspace.find({});

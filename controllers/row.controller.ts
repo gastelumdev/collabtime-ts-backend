@@ -124,14 +124,15 @@ export const createRow = async (req: Request, res: Response) => {
             if (body[column.name] === "Critical") {
                 row.acknowledged = false;
             } 
+            
             value = body[column.name];
 
         } else if (column.type === "upload") {
-            console.log("UPLOAD BODY ***********************", body)
-            let count = 0;
-            for (const upload of body[column.name]) {
-                count++
-            }
+            console.log("UPLOAD BODY ***********************", body.docs)
+            // let count = 0;
+            // for (const upload of body[column.name]) {
+            //     count++
+            // }
             value = ""
             docs = body[column.name];
         } else if (column.type === "link") {

@@ -197,3 +197,7 @@ export const getDataCollection = async (req: Request, res: Response) => {
         res.status(400).send({success: false});
     }
 }
+
+// export const sendForm = async (req: Request, res: Response) => {
+//     const 
+// }
