@@ -166,33 +166,6 @@ export const inviteTeamMembers = async (req: Request, res: Response) => {
             for (const invitee of req.body.invitees) {
                 let user = await User.findOne({email: invitee.email});
                 try {
-                    // const transporter = nodemailer.createTransport({
-                    //     host: process.env.EMAIL_HOST,
-                    //     port: 465,
-                    //     auth: {
-                    //       user: process.env.EMAIL_USER,
-                    //       pass: process.env.EMAIL_PASS, // naturally, replace both with your real credentials or an application-specific password
-                    //     },
-                    // });
-                  
-                    // const source = fs.readFileSync(path.join(path.resolve() + "/utils", "./template/inviteTeamMember.handlebars"), "utf8");
-                    // const compiledTemplate = handlebars.compile(source);
-                    // const options ={
-                    //     from: process.env.EMAIL_USER,
-                    //     to: invitee.email,
-                    //     subject: "You've been invited to join a Collabtime workspace.",
-                    //     html: compiledTemplate({workspaceName: workspace.name, link: `${process.env.CLIENT_URL || "http://localhost:5173"}/joinWorkspace?workspaceId=${workspace._id}&id=${user?._id}`}),
-                    // };
-
-                    // transporter.sendMail(options, (error: any, info: any) => {
-                    //     if (error) {
-                    //         throw new Error(error);
-                    //     } else {
-                    //         res.status(200).json({
-                    //             success: true,
-                    //         });
-                    //     }
-                    // });
 
                     sendEmail({
                         email: invitee.email, 
@@ -232,6 +205,29 @@ export const joinWorkspace = async (req: Request, res: Response) => {
             if (member) {
                 workspace.members.push(member as TInvitee);
                 user?.workspaces.push({id: workspace?._id, permissions: (member as TInvitee).permissions});
+
+                const dataCollections = await DataCollection.find({workspace: workspace._id});
+
+                for (const dataCollection of dataCollections) {
+                    const columns = await Column.find({dataCollection: dataCollection._id, type: "people"});
+                    const cells = await Cell.find({dataCollection: dataCollection._id, type: "people"});
+
+                    for (const column of columns) {
+                        const people: any = column.people;
+                        people?.push(user);
+                        const newColumn = {...column, people: people}
+
+                        await Column.findByIdAndUpdate(column._id, newColumn);
+                    }
+
+                    for (const cell of cells) {
+                        const people: any = cell.people;
+                        people?.push(user);
+                        const newCell = {...cell, people: people};
+
+                        await Cell.findByIdAndUpdate(cell._id, newCell);
+                    }
+                }
             }
         }
     
@@ -265,8 +261,39 @@ export const removeMember = async (req: Request, res: Response) => {
         const filteredMembers = workspace?.members.filter(item => item.email !== user?.email);
         const filteredWorkspaces = user?.workspaces.filter(item => !workspace?._id.equals(item.id));
 
-        if (workspace) workspace.members = filteredMembers || workspace?.members;
+        if (workspace) {
+            workspace.members = filteredMembers || workspace?.members;
+
+            const dataCollections = await DataCollection.find({workspace: workspace._id});
+
+            for (const dataCollection of dataCollections) {
+                const columns = await Column.find({dataCollection: dataCollection._id, type: "people"});
+                const cells = await Cell.find({dataCollection: dataCollection._id, type: "people"});
+
+                for (const column of columns) {
+                    const filteredPeople = column.people?.filter((item: any) => {
+                        return item.email !== user?.email;
+                    });
+                    const newColumn = {...column.toJSON(), people: filteredPeople};
+                    console.log("NEW COLUMN *****************************", newColumn);
+
+                    await Column.findByIdAndUpdate(column._id, newColumn);
+                }
+
+                for (const cell of cells) {
+                    const filteredPeople = cell.people?.filter((item) => {
+                        return item.email !== user?.email;
+                    });
+                    const newCell = {...cell.toJSON(), people: filteredPeople};
+
+                    await Cell.findByIdAndUpdate(cell._id, newCell);
+                }
+            }
+        }
         if (user) user.workspaces = filteredWorkspaces || user.workspaces;
+
+        
+
         workspace?.save();
         user?.save();
         res.send({success: true})

@@ -33,6 +33,7 @@ import User from './models/auth.model';
 import Workspace from './models/workspace.model';
 import Cell from './models/cell.models';
 import setReminders from './utils/setReminders';
+import Column from './models/column.model';
 const sh = shell.execSync;
 const uuid = uuidv1();
 
@@ -131,6 +132,43 @@ cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
 cron.schedule("0 15 * * * *", () => {
     setCrititcalReminders()
 })
+
+// const updatePeople = async () => {
+//     const workspaces = await Workspace.find({});
+//     for (const workspace of workspaces) {
+//         const dataCollections = await DataCollection.find({workspace: workspace._id});
+//         const workspaceMembers = workspace.members;
+//         let members = [];
+
+//         for (const workspaceMember of workspaceMembers) {
+//             const member = await User.findOne({email: workspaceMember.email});
+//             members.push(member);
+//         }
+
+//         for (const dataCollection of dataCollections) {
+//             const columns = await Column.find({dataCollection: dataCollection._id, type: "people"});
+//             const cells = await Cell.find({dataCollection: dataCollection._id, type: "people"});
+
+//             console.log("COLUMNS*****************", columns)
+
+//             for (const column of columns) {
+//                 const c = await Column.findByIdAndUpdate(column._id, {...column, people: members}, {new: true});
+//                 if (workspace._id.toString() === "6566428fedf7dc849a76e858") {
+//                     console.log("WORKSPACE MEMBERS", workspaceMembers);
+//                     console.log("MEMBERS", members)
+//                     console.log("UPDATED COLUMN", c)
+//                 }
+                
+//             }
+
+//             for (const cell of cells) {
+//                 await Cell.findByIdAndUpdate(cell._id, {...cell, people: members});
+//             }
+//         }
+//     }
+// }
+
+// updatePeople();
 
 // HANDLEBAR EMAIL TEST *****************************************************************************
 // sendEmail({

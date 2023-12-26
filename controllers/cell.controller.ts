@@ -25,9 +25,12 @@ export const updateCell = async (req: Request, res: Response) => {
 
 
         if (cell?.type === "people") {
+            
             const user = await User.findOne({_id: req.body.value});
+            
             const row = await Row.findOne({_id: cell?.row});
-            const creator = await User.findOne({_id: row?.createdAt})
+            console.log(row)
+            // const creator = await User.findOne({_id: row?.createdAt})
 
             if (row?.assignedTo) row.assignedTo = user?._id || "";
 
@@ -35,7 +38,9 @@ export const updateCell = async (req: Request, res: Response) => {
 
             console.log(user?._id.toString())
 
-            req.body.value = `${user?.firstname} ${user?.lastname}`
+            req.body.value = `${user?.firstname} ${user?.lastname}`;
+            console.log("CELL REQUEST BODY", req.body);
+            console.log("VALUE", req.body.value)
             io.emit(user?._id.toString() || "", {message: `You have been assigned a ${dataCollection?.name} assignment in ${workspace?.name}`, priority: "Low"});
 
             const notification = new Notification({
