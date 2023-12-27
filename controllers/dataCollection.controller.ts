@@ -7,6 +7,7 @@ import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import mongoose from "mongoose";
 import User from "../models/auth.model";
+import sendEmail from "../utils/sendEmail";
 
 const getDataCollectionTemplates = (template: string, dataCollectionId: string, people?: TUser[]) => {
     const itemName = {
@@ -198,6 +199,25 @@ export const getDataCollection = async (req: Request, res: Response) => {
     }
 }
 
-// export const sendForm = async (req: Request, res: Response) => {
-//     const 
-// }
+export const sendForm = async (req: Request, res: Response) => {
+    try {
+        console.log("EMAIL", req.body.email)
+        const dataCollection = await DataCollection.findOne({_id: req.params.id});
+        const workspace = await Workspace.findOne({_id: dataCollection?.workspace});
+
+        sendEmail({
+            email: [req.body.email],
+            subject: "Collabtime - You've been sent a request form.",
+            payload: {link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}/form`, workspaceName: workspace?.name, dataCollectionName: dataCollection?.name},
+            template: "./template/requestForm.handlebars",
+            res
+        }, () => {
+            console.log("Email sent")
+        });
+
+        res.send({success: true});
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({success: false})
+    }
+}

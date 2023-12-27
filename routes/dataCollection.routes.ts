@@ -9,5 +9,6 @@ router.post("/workspaces/:workspaceId/dataCollections", verifyToken, dataCollect
 router.post("/workspaces/:workspaceId/updateDataCollections/:id", verifyToken, dataCollectionController.updateDataCollection);
 router.post("/workspaces/:workspaceId/deleteDataCollections/:id", verifyToken, dataCollectionController.deleteDataCollection);
 router.get("/workspaces/:workspaceId/dataCollections/:id", verifyToken, dataCollectionController.getDataCollection);
+router.post("/workspaces/:workspaceId/dataCollections/:id/sendForm", verifyToken, dataCollectionController.sendForm);
 
 export default router;

@@ -159,6 +159,7 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
 
 //             for (const column of columns) {
 //                 const c = await Column.findByIdAndUpdate(column._id, {...column, people: members}, {new: true});
+//                 console.log(typeof workspace._id.toString())
 //                 if (workspace._id.toString() === "6566428fedf7dc849a76e858") {
 //                     console.log("WORKSPACE MEMBERS", workspaceMembers);
 //                     console.log("MEMBERS", members)
