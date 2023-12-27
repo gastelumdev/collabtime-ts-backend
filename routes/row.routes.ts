@@ -9,6 +9,7 @@ router.get("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows", ve
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows", verifyToken, rowController.createRow);
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/update/:id", verifyToken, rowController.updateRow)
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/delete/:id", verifyToken, rowController.deleteRow);
+router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/deleteRows", verifyToken, rowController.deleteRows);
 router.post("/rows/callUpdate", verifyToken, rowController.callUpdate);
 router.post("/rows/acknowledge/:rowId", verifyToken, rowController.acknowledgeRow);
 // router.post("/migrateRows", rowController.migrateRows);

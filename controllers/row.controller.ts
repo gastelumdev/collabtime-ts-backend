@@ -245,6 +245,26 @@ export const deleteRow = async (req: Request, res: Response) => {
     }
 }
 
+export const deleteRows = async (req: Request, res: Response) => {
+    console.log("BODY", req.body)
+    try {
+        for (const r of req.body) {
+            console.log("ROW", r)
+            const row = await Row.findOne({_id: r._id});
+            let cells: any = row?.cells;
+            for (const cell of cells || []) {
+                console.log(cell)
+                await Cell.findByIdAndDelete({_id: cell._id})
+            }
+            await Row.findByIdAndDelete({_id: row?._id});
+        }
+        
+        res.send({success: true});
+    } catch (error) {
+        res.status(400).send({success: false});
+    }
+}
+
 export const migrateRows = async (req: Request, res: Response) => {
     try {
         const rows = await Row.find({});
