@@ -128,7 +128,7 @@ export const createRow = async (req: Request, res: Response) => {
             value = body[column.name];
 
         } else if (column.type === "upload") {
-            console.log("UPLOAD BODY ***********************", body.docs)
+            console.log("UPLOAD BODY ***********************", body.docs);
             // let count = 0;
             // for (const upload of body[column.name]) {
             //     count++
@@ -246,10 +246,8 @@ export const deleteRow = async (req: Request, res: Response) => {
 }
 
 export const deleteRows = async (req: Request, res: Response) => {
-    console.log("BODY", req.body)
     try {
         for (const r of req.body) {
-            console.log("ROW", r)
             const row = await Row.findOne({_id: r._id});
             let cells: any = row?.cells;
             for (const cell of cells || []) {
