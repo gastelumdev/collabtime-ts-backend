@@ -17,6 +17,7 @@ export const updateCell = async (req: Request, res: Response) => {
         const cell = await Cell.findOne({_id: req.params.id});
         const workspace = await Workspace.findOne({_id: req.params.workspaceId});
         const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
+        const initiator = await User.findOne({_id: (<any>req).user._id});
         
         let recipients = [];
         for (const member of workspace?.members || []) {
@@ -121,7 +122,7 @@ export const updateCell = async (req: Request, res: Response) => {
             notifyUsers({cell, workspace, dataCollection, recipients, req, res, message, emailSubject, enableEmail});
         }
 
-        io.emit("update")
+        io.emit("update", {userId: initiator?._id})
 
         const cellResponse = await Cell.findByIdAndUpdate(req.params.id, req.body);
         res.send(cellResponse);
@@ -146,7 +147,7 @@ const notifyUsers = async ({cell, workspace, dataCollection, recipients, req, re
     const row = await Row.findOne({_id: cell?.row});
     const rowUser = await User.findOne({_id: row?.assignedTo});
 
-    io.emit(rowUser?._id || "", {message, priority: "Low"});
+    io.emit(rowUser?._id || "", {message, priority: "Low", userId: rowUser?._id});
 
     const notification = new Notification({
         message,
