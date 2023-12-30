@@ -12,18 +12,23 @@ import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 
 export const getRows = async (req: Request, res: Response) => {
+    // Number(req.query.skip)
     const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
-    const rows = await Row.find({dataCollection: dataCollection?._id});
+    const sort = Number(req.query.sort) === 1 ? 1 : -1;
+    const rows = await Row.find({dataCollection: dataCollection?._id}).sort({"createdAt": sort}).skip(Number(req.query.skip)).limit(Number(req.query.limit));
     const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position")
     const result = [];
-    
 
+    console.log("ROWS", rows)
+    
+    console.log("ROW LIMIT", req.query.limit);
+    console.log("SKIP", req.query.skip)
 
     let cells;
 
     for (const row of rows) {
         const rowCopy: any = row;
-        let cells = await Cell.find({row: row._id}).sort("position");
+        let cells = await Cell.find({row: row._id}).sort("position")
         rowCopy.cells = cells;
         result.push(rowCopy)
     }
@@ -356,7 +361,6 @@ export const addReminder = async (req: Request, res: Response) => {
                 thisRow.reminder = true;
             }
             thisRow?.save();
-            
         }
         res.send({success: true});
     } catch (error) {
@@ -364,6 +368,23 @@ export const addReminder = async (req: Request, res: Response) => {
     }
 }
 
+export const getTotalRows = async (req: Request, res: Response) => {
+    try {
+        const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
+        const rows = await Row.find({dataCollection: dataCollection?._id});
+
+        const numberOfPages = Math.ceil(rows?.length / Number(req.query.limit));
+        const pages = []
+        
+        for (let i = 1; i <= numberOfPages; i++) {
+            pages.push(i);
+        }
+
+        res.send(pages);
+    } catch (error) {
+        res.status(400).send({success: false});
+    }
+}
 
 export const callUpdate = async (req: Request, res: Response) => {
     res.send({success: true});
