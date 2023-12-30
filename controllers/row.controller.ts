@@ -12,58 +12,110 @@ import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 
 export const getRows = async (req: Request, res: Response) => {
-    // Number(req.query.skip)
-    const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
-    const sort = Number(req.query.sort) === 1 ? 1 : -1;
-    const rows = await Row.find({dataCollection: dataCollection?._id}).sort({"createdAt": sort}).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-    const columns = await Column.find({dataCollection: dataCollection?._id}).sort("position")
-    const result = [];
-
-    console.log("ROWS", rows)
-    
-    console.log("ROW LIMIT", req.query.limit);
-    console.log("SKIP", req.query.skip)
-
-    let cells;
-
-    for (const row of rows) {
-        const rowCopy: any = row;
-        let cells = await Cell.find({row: row._id}).sort("position")
-        rowCopy.cells = cells;
-        result.push(rowCopy)
-    }
 
     try {
-        res.send(result);
+        const sort = Number(req.query.sort) === 1 ? 1 : -1;
+        const sortBy: string = req.query.sortBy as string;
+        const skip = Number(req.query.skip);
+        const limit = Number(req.query.limit);
+
+        console.log("SORT", sort, sortBy)
+
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+
+        // const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
+        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ createdAt: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
+        // const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position")
+        const result = [];
+
+        console.log("ROWS", rows)
+
+        console.log("ROW LIMIT", req.query.limit);
+        console.log("SKIP", req.query.skip)
+
+        for (const row of rows) {
+            const rowCopy: any = row;
+            let cells = await Cell.find({ row: row._id }).sort("position")
+            rowCopy.cells = cells;
+            result.push(rowCopy)
+        }
+
+        if (sortBy === "createdAt") {
+            res.send(result);
+        } else {
+            const rows = await Row.find({ dataCollection: dataCollection?._id });
+            const cells = await Cell.find({ dataCollection: dataCollection?._id, name: sortBy }).sort({ value: sort });
+            // console.log(cells)
+            const cellIds = cells.map((cell) => {
+                return cell._id.toString();
+            })
+
+            // console.log(cellIds.length, rows.length)
+
+            const rowContainer = new Array(rows?.length).fill(null);
+            const sortedResult = [];
+
+
+            for (const row of rows) {
+                for (const cell of row.cells) {
+                    let cellCopy: any = cell;
+                    let i = cellIds.indexOf(cellCopy._id?.toString())
+                    // console.log(i);
+
+                    if (i !== -1) {
+                        rowContainer[i] = row;
+                    }
+                }
+            }
+
+            for (const row of rowContainer) {
+                let rowCopy: any;
+                if (row) {
+                    rowCopy = row;
+
+                    let cells = await Cell.find({ row: row._id }).sort("position")
+                    rowCopy.cells = cells;
+                    sortedResult.push(rowCopy);
+                }
+
+
+            }
+
+            console.log("SORTED RESULT", sortedResult.slice(skip, skip + limit))
+
+            res.send(sortedResult.slice(skip, skip + limit))
+        }
+
     } catch (error) {
-        res.status(400).send({success: false});
+        console.log(error)
+        res.status(400).send({ success: false });
     }
 }
 
 export const createRow = async (req: Request, res: Response) => {
-    const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
-    const columns = await Column.find({dataCollection: dataCollection?._id});
+    const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+    const columns = await Column.find({ dataCollection: dataCollection?._id });
     // body is a row
     const body = req.body;
     let value;
     let docs = [];
     let links = [];
 
-    const workspace = await Workspace.findOne({_id: req.params.workspaceId});
+    const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
 
     // This will hold the members of the workspace to include in the cell
     const people: any = [];
 
     for (const member of workspace?.members || []) {
-        let person = await User.findOne({email: member.email});
+        let person = await User.findOne({ email: member.email });
         people.push(person);
     }
 
-    const defaultPerson = await User.findOne({_id: (<any>req).user._id});
+    const defaultPerson = await User.findOne({ _id: (<any>req).user._id });
     console.log(defaultPerson);
 
     // create a new row with the associated data collection id
-    const row = new Row({dataCollection: dataCollection?._id})
+    const row = new Row({ dataCollection: dataCollection?._id })
     // add the assignedTo key to the creator of the row.
     const creator = (<any>req).user._id;
     row.createdBy = creator;
@@ -77,29 +129,29 @@ export const createRow = async (req: Request, res: Response) => {
         // Notify by sockets update and by email that user that an assignment has been issued
         if (column.type == "people") {
             console.log("USERID", body[column.name])
-            const user = await User.findOne({_id: body[column.name] || defaultPerson?._id});
+            const user = await User.findOne({ _id: body[column.name] || defaultPerson?._id });
             console.log("USER", user);
             row.assignedTo = user?._id || "";
             value = `${user?.firstname} ${user?.lastname}`;
-            
 
-            io.emit(user?._id || "", {message: "You have been assigned to a data collection task."})
+
+            io.emit(user?._id || "", { message: "You have been assigned to a data collection task." })
 
             // needs email ****************************
             const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}?acknowledgedRow=${row?._id}`;
             sendEmail({
-                email: user?.email || "", 
-                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
+                email: user?.email || "",
+                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
                 payload: {
-                    message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`, 
+                    message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`,
                     link: link,
                     dataCollectionName: dataCollection?.name,
-                }, 
-                template: "./template/dataCollectionStatusChange.handlebars", 
+                },
+                template: "./template/dataCollectionStatusChange.handlebars",
                 res,
             }, (res: Response) => console.log("Email sent."));
 
-        
+
             // cron.schedule("0 6 * * * 1,2,3,4,5", () => {
             //     sendEmail({
             //         email: user?.email || "", 
@@ -116,7 +168,7 @@ export const createRow = async (req: Request, res: Response) => {
 
             // console.log("CRON TASKS", cron.getTasks().get(row._id));
 
-        // Else if the type is date, then handle the input accordingly and assign it value
+            // Else if the type is date, then handle the input accordingly and assign it value
         } else if (column.type === "date") {
             console.log("DATE", body[column.name])
             if (body[column.name] === undefined) {
@@ -128,8 +180,8 @@ export const createRow = async (req: Request, res: Response) => {
         } else if (column.type === "priority") {
             if (body[column.name] === "Critical") {
                 row.acknowledged = false;
-            } 
-            
+            }
+
             value = body[column.name];
 
         } else if (column.type === "upload") {
@@ -143,18 +195,18 @@ export const createRow = async (req: Request, res: Response) => {
         } else if (column.type === "link") {
             value = ""
             links = body.links;
-        // otherwise the value just equals the request body based on the column name
+            // otherwise the value just equals the request body based on the column name
         } else {
             value = body[column.name]
         }
 
         // create cell 
         let cell = new Cell({
-            dataCollection: column.dataCollection, 
-            row: row._id, 
-            name: column.name, 
-            type: column.type, 
-            value: value, 
+            dataCollection: column.dataCollection,
+            row: row._id,
+            name: column.name,
+            type: column.type,
+            value: value,
             labels: column.labels,
             people: people,
             docs: docs,
@@ -169,36 +221,36 @@ export const createRow = async (req: Request, res: Response) => {
         // Save the cell
         try {
             cell.save();
-        } catch(error) {
+        } catch (error) {
             console.log("CELL ERROR", error)
-            res.status(400).send({success:false});
+            res.status(400).send({ success: false });
         }
     }
 
     // Save the row
     try {
         row.save();
-        res.send({success: true})
+        res.send({ success: true })
     } catch (error) {
         console.log("ROW ERROR", error)
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
 export const updateRow = async (req: Request, res: Response) => {
-    const row = await Row.findOne({_id: req.params.id});
-    const workspace = await Workspace.findOne({_id: req.params.workspaceId});
-    const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId})
-    const noteCreator = await User.findOne({_id: (<any>req).user._id});
+    const row = await Row.findOne({ _id: req.params.id });
+    const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+    const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
+    const noteCreator = await User.findOne({ _id: (<any>req).user._id });
 
     // if there are more notes in the req body than in the db, then there is a new note
     // in which we want to notify the user and update the frontend via sockets
     if (row?.notesList.length !== req.body.notesList.length) {
         for (const member of workspace?.members || []) {
-            const user = await User.findOne({email: member.email})
-            io.emit(user?._id || "", {message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`});
-            io.emit("update row", {message: ""});
-            const notification =  new Notification({
+            const user = await User.findOne({ email: member.email })
+            io.emit(user?._id || "", { message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
+            io.emit("update row", { message: "" });
+            const notification = new Notification({
                 message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
                 workspaceId: workspace?._id,
                 assignedTo: user?._id,
@@ -211,7 +263,7 @@ export const updateRow = async (req: Request, res: Response) => {
     }
 
     if (row?.acknowledged === false && req.body.acknowledged === true) {
-        const rowOwner = await User.findOne({_id: row.createdBy})
+        const rowOwner = await User.findOne({ _id: row.createdBy })
         sendEmail({
             email: rowOwner?.email || "",
             subject: `Collabtime Acknowledment - ${workspace?.name}`,
@@ -225,46 +277,46 @@ export const updateRow = async (req: Request, res: Response) => {
             console.log("Email sent");
         })
     }
-    
+
     try {
-        await Row.findByIdAndUpdate(req.params.id, req.body, {new: true});
+        await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.send(row)
     } catch (error) {
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
 }
 
 export const deleteRow = async (req: Request, res: Response) => {
-    const row = await Row.findOne({_id: req.params.id});
+    const row = await Row.findOne({ _id: req.params.id });
     let cells: any = row?.cells;
 
     try {
         for (const cell of cells || []) {
             console.log(cell)
-            await Cell.findByIdAndDelete({_id: cell._id})
+            await Cell.findByIdAndDelete({ _id: cell._id })
         }
-        await Row.findByIdAndDelete({_id: row?._id});
+        await Row.findByIdAndDelete({ _id: row?._id });
         res.send(row);
     } catch (error) {
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
 export const deleteRows = async (req: Request, res: Response) => {
     try {
         for (const r of req.body) {
-            const row = await Row.findOne({_id: r._id});
+            const row = await Row.findOne({ _id: r._id });
             let cells: any = row?.cells;
             for (const cell of cells || []) {
                 console.log(cell)
-                await Cell.findByIdAndDelete({_id: cell._id})
+                await Cell.findByIdAndDelete({ _id: cell._id })
             }
-            await Row.findByIdAndDelete({_id: row?._id});
+            await Row.findByIdAndDelete({ _id: row?._id });
         }
-        
-        res.send({success: true});
+
+        res.send({ success: true });
     } catch (error) {
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
@@ -279,14 +331,14 @@ export const migrateRows = async (req: Request, res: Response) => {
         //     await Row.findByIdAndUpdate(row._id, row);
         // }
 
-        
+
 
         for (const row of rows) {
-            const dataCollection = await DataCollection.findOne({_id: row?.dataCollection});
-            const workspace = await Workspace.findOne({_id: dataCollection?.workspace});
+            const dataCollection = await DataCollection.findOne({ _id: row?.dataCollection });
+            const workspace = await Workspace.findOne({ _id: dataCollection?.workspace });
             const members = workspace?.members;
             let newNotes = []
-            const thisRow = await Row.findOne({_id: row._id});
+            const thisRow = await Row.findOne({ _id: row._id });
             for (const note of row.notesList) {
                 note.people = members || [];
                 newNotes.push(note)
@@ -295,25 +347,25 @@ export const migrateRows = async (req: Request, res: Response) => {
                 thisRow.notesList = newNotes;
             }
             thisRow?.save();
-            
+
         }
-        res.send({success: true})
+        res.send({ success: true })
     } catch (error) {
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
 }
 
 export const acknowledgeRow = async (req: Request, res: Response) => {
     try {
-        const row = await Row.findOne({_id: req.params.rowId});
-        const dataCollection = await DataCollection.findOne({_id: row?.dataCollection})
-        const workspace = await Workspace.findOne({_id: dataCollection?.workspace});
-        const acknowledger = await User.findOne({_id: (<any>req).user._id});
-        const creator = await User.findOne({_id: row?.createdBy});
+        const row = await Row.findOne({ _id: req.params.rowId });
+        const dataCollection = await DataCollection.findOne({ _id: row?.dataCollection })
+        const workspace = await Workspace.findOne({ _id: dataCollection?.workspace });
+        const acknowledger = await User.findOne({ _id: (<any>req).user._id });
+        const creator = await User.findOne({ _id: row?.createdBy });
 
-        io.emit(creator?._id || "", {message: `${acknowledger?.firstname} ${acknowledger?.lastname} has acknowledged ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection assignment.`});
-        io.emit("update row", {message: ""});
-        const notification =  new Notification({
+        io.emit(creator?._id || "", { message: `${acknowledger?.firstname} ${acknowledger?.lastname} has acknowledged ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection assignment.` });
+        io.emit("update row", { message: "" });
+        const notification = new Notification({
             message: `${acknowledger?.firstname} ${acknowledger?.lastname} has acknowledged ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection assignment.`,
             workspaceId: workspace?._id,
             assignedTo: acknowledger?._id,
@@ -340,11 +392,11 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
 
         row?.save();
 
-        io.emit("update row", {message: ""});
+        io.emit("update row", { message: "" });
 
-        res.send({success: true});
+        res.send({ success: true });
     } catch (error) {
-        res.status(400).send({success: true});
+        res.status(400).send({ success: true });
     }
 }
 
@@ -355,37 +407,37 @@ export const addReminder = async (req: Request, res: Response) => {
         const rows = await Row.find({});
 
         for (const row of rows) {
-            
-            const thisRow = await Row.findOne({_id: row._id});
+
+            const thisRow = await Row.findOne({ _id: row._id });
             if (thisRow) {
                 thisRow.reminder = true;
             }
             thisRow?.save();
         }
-        res.send({success: true});
+        res.send({ success: true });
     } catch (error) {
-        res.send({success: false});
+        res.send({ success: false });
     }
 }
 
 export const getTotalRows = async (req: Request, res: Response) => {
     try {
-        const dataCollection = await DataCollection.findOne({_id: req.params.dataCollectionId});
-        const rows = await Row.find({dataCollection: dataCollection?._id});
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        const rows = await Row.find({ dataCollection: dataCollection?._id });
 
         const numberOfPages = Math.ceil(rows?.length / Number(req.query.limit));
         const pages = []
-        
+
         for (let i = 1; i <= numberOfPages; i++) {
             pages.push(i);
         }
 
         res.send(pages);
     } catch (error) {
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
 export const callUpdate = async (req: Request, res: Response) => {
-    res.send({success: true});
+    res.send({ success: true });
 }
