@@ -15,23 +15,21 @@ export const getRows = async (req: Request, res: Response) => {
 
     try {
         const sort = Number(req.query.sort) === 1 ? 1 : -1;
-        const sortBy: string = req.query.sortBy as string;
         const skip = Number(req.query.skip);
         const limit = Number(req.query.limit);
+
+        const sortBy: string = (req.query.sortBy === "createdAt" ? "createdAt" : `values.${req.query.sortBy}`) as string;
+
 
         console.log("SORT", sort, sortBy)
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
         // const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ createdAt: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-        // const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position")
+        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
+        // const testRows = await Row.find({ dataCollection: "657e338c55c487026aa4a1f0" }).sort({ "value.reread": sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
+        // console.log(testRows)
         const result = [];
-
-        console.log("ROWS", rows)
-
-        console.log("ROW LIMIT", req.query.limit);
-        console.log("SKIP", req.query.skip)
 
         for (const row of rows) {
             const rowCopy: any = row;
@@ -40,51 +38,53 @@ export const getRows = async (req: Request, res: Response) => {
             result.push(rowCopy)
         }
 
-        if (sortBy === "createdAt") {
-            res.send(result);
-        } else {
-            const rows = await Row.find({ dataCollection: dataCollection?._id });
-            const cells = await Cell.find({ dataCollection: dataCollection?._id, name: sortBy }).sort({ value: sort });
-            // console.log(cells)
-            const cellIds = cells.map((cell) => {
-                return cell._id.toString();
-            })
+        res.send(result);
 
-            // console.log(cellIds.length, rows.length)
+        // if (sortBy === "createdAt") {
+        //     res.send(result);
+        // } else {
+        //     const rows = await Row.find({ dataCollection: dataCollection?._id });
+        //     const cells = await Cell.find({ dataCollection: dataCollection?._id, name: sortBy }).sort({ value: sort });
+        //     // console.log(cells)
+        //     const cellIds = cells.map((cell) => {
+        //         return cell._id.toString();
+        //     })
 
-            const rowContainer = new Array(rows?.length).fill(null);
-            const sortedResult = [];
+        //     // console.log(cellIds.length, rows.length)
 
-
-            for (const row of rows) {
-                for (const cell of row.cells) {
-                    let cellCopy: any = cell;
-                    let i = cellIds.indexOf(cellCopy._id?.toString())
-                    // console.log(i);
-
-                    if (i !== -1) {
-                        rowContainer[i] = row;
-                    }
-                }
-            }
-
-            for (const row of rowContainer) {
-                let rowCopy: any;
-                if (row) {
-                    rowCopy = row;
-
-                    let cells = await Cell.find({ row: row._id }).sort("position")
-                    rowCopy.cells = cells;
-                    sortedResult.push(rowCopy);
-                }
+        //     const rowContainer = new Array(rows?.length).fill(null);
+        //     const sortedResult = [];
 
 
-            }
+        //     for (const row of rows) {
+        //         for (const cell of row.cells) {
+        //             let cellCopy: any = cell;
+        //             let i = cellIds.indexOf(cellCopy._id?.toString())
+        //             // console.log(i);
 
-            console.log("SORTED RESULT", sortedResult.slice(skip, skip + limit))
+        //             if (i !== -1) {
+        //                 rowContainer[i] = row;
+        //             }
+        //         }
+        //     }
 
-            res.send(sortedResult.slice(skip, skip + limit))
-        }
+        //     for (const row of rowContainer) {
+        //         let rowCopy: any;
+        //         if (row) {
+        //             rowCopy = row;
+
+        //             let cells = await Cell.find({ row: row._id }).sort("position")
+        //             rowCopy.cells = cells;
+        //             sortedResult.push(rowCopy);
+        //         }
+
+
+        //     }
+
+        //     // console.log("SORTED RESULT", sortedResult.slice(skip, skip + limit))
+
+        //     res.send(sortedResult.slice(skip, skip + limit))
+        // }
 
     } catch (error) {
         console.log(error)

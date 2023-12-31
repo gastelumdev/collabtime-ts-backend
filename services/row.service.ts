@@ -24,9 +24,10 @@ export interface IRow {
     reminder: boolean;
     complete: boolean;
     acknowledged: boolean;
+    values: any;
 }
 
-export interface IRowDocument extends IRow, Document {}
+export interface IRowDocument extends IRow, Document { }
 
 export interface IRowModel extends Model<IRowDocument> {
     buildRow(args: IRow): IRowDocument;
