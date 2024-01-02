@@ -14,21 +14,15 @@ import sendEmail from "../utils/sendEmail";
 export const getRows = async (req: Request, res: Response) => {
 
     try {
-        const sort = Number(req.query.sort) === 1 ? 1 : -1;
-        const skip = Number(req.query.skip);
-        const limit = Number(req.query.limit);
+        const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
+        const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
+        const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
 
-        const sortBy: string = (req.query.sortBy === "createdAt" ? "createdAt" : `values.${req.query.sortBy}`) as string;
-
-
-        console.log("SORT", sort, sortBy)
+        const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
-        // const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-        // const testRows = await Row.find({ dataCollection: "657e338c55c487026aa4a1f0" }).sort({ "value.reread": sort }).skip(Number(req.query.skip)).limit(Number(req.query.limit));
-        // console.log(testRows)
+        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(skip).limit(limit);
         const result = [];
 
         for (const row of rows) {
@@ -38,57 +32,13 @@ export const getRows = async (req: Request, res: Response) => {
             result.push(rowCopy)
         }
 
+        console.log("RESULT", result)
+
         res.send(result);
-
-        // if (sortBy === "createdAt") {
-        //     res.send(result);
-        // } else {
-        //     const rows = await Row.find({ dataCollection: dataCollection?._id });
-        //     const cells = await Cell.find({ dataCollection: dataCollection?._id, name: sortBy }).sort({ value: sort });
-        //     // console.log(cells)
-        //     const cellIds = cells.map((cell) => {
-        //         return cell._id.toString();
-        //     })
-
-        //     // console.log(cellIds.length, rows.length)
-
-        //     const rowContainer = new Array(rows?.length).fill(null);
-        //     const sortedResult = [];
-
-
-        //     for (const row of rows) {
-        //         for (const cell of row.cells) {
-        //             let cellCopy: any = cell;
-        //             let i = cellIds.indexOf(cellCopy._id?.toString())
-        //             // console.log(i);
-
-        //             if (i !== -1) {
-        //                 rowContainer[i] = row;
-        //             }
-        //         }
-        //     }
-
-        //     for (const row of rowContainer) {
-        //         let rowCopy: any;
-        //         if (row) {
-        //             rowCopy = row;
-
-        //             let cells = await Cell.find({ row: row._id }).sort("position")
-        //             rowCopy.cells = cells;
-        //             sortedResult.push(rowCopy);
-        //         }
-
-
-        //     }
-
-        //     // console.log("SORTED RESULT", sortedResult.slice(skip, skip + limit))
-
-        //     res.send(sortedResult.slice(skip, skip + limit))
-        // }
 
     } catch (error) {
         console.log(error)
-        res.status(400).send({ success: false });
+        res.status(400).send({ success: false })
     }
 }
 
@@ -121,6 +71,7 @@ export const createRow = async (req: Request, res: Response) => {
     row.createdBy = creator;
     row.assignedTo = (<any>req).user._id
 
+    const newCells: any = [];
 
     // Go through all the columns to create cells for the row
     for (const column of columns) {
@@ -218,22 +169,27 @@ export const createRow = async (req: Request, res: Response) => {
         // Add cell id to the rows list
         row.cells.push(cell._id);
 
+
         // Save the cell
         try {
             cell.save();
+
+            newCells.push(cell)
         } catch (error) {
             console.log("CELL ERROR", error)
-            res.status(400).send({ success: false });
+            res.status(400).send({ success: false })
         }
     }
 
     // Save the row
     try {
         row.save();
-        res.send({ success: true })
+
+        row.cells = newCells;
+        res.send(row)
     } catch (error) {
         console.log("ROW ERROR", error)
-        res.status(400).send({ success: false });
+        res.status(400).send({ success: false })
     }
 }
 
@@ -426,12 +382,14 @@ export const getTotalRows = async (req: Request, res: Response) => {
         const rows = await Row.find({ dataCollection: dataCollection?._id });
 
         const numberOfPages = Math.ceil(rows?.length / Number(req.query.limit));
+
         const pages = []
 
         for (let i = 1; i <= numberOfPages; i++) {
             pages.push(i);
         }
 
+        console.log("NUMBER OF PAGES", pages)
         res.send(pages);
     } catch (error) {
         res.status(400).send({ success: false });
