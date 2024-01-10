@@ -5,20 +5,20 @@ import path from "path";
 import { Response } from "express";
 
 interface IProps {
-    email: string | string[];
-    subject: string;
-    payload: any;
-    template: string;
-    res?: Response;
-    // cb: any;
+  email: string | string[];
+  subject: string;
+  payload: any;
+  template: string;
+  res?: Response;
+  // cb: any;
 }
 
 interface IPayload {
-    name: string;
-    link?: string;
+  name: string;
+  link?: string;
 }
 
-const sendEmail = async ({email, subject, payload, template, res}: IProps, cb: any) => {
+const sendEmail = async ({ email, subject, payload, template, res }: IProps, cb: any) => {
   try {
     // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
@@ -30,7 +30,7 @@ const sendEmail = async ({email, subject, payload, template, res}: IProps, cb: a
       },
     });
 
-    console.log(path.resolve())
+    console.log(email, subject, payload, template)
 
     const source = fs.readFileSync(path.join(path.resolve() + "/utils", template), "utf8");
     const compiledTemplate = handlebars.compile(source);
@@ -46,17 +46,17 @@ const sendEmail = async ({email, subject, payload, template, res}: IProps, cb: a
     // return {options: options(), transporter}
     transporter.sendMail(options(), (error: any, info: any) => {
       if (error) {
-          throw new Error(error);
+        throw new Error(error);
       } else {
-          // res.status(200).json({
-          //     success: true,
-          // });
-          cb(res);
+        // res.status(200).json({
+        //     success: true,
+        // });
+        cb(res);
       }
-  });
-    
+    });
+
   } catch (error) {
-     console.log(error)
+    console.log(error);
   }
 };
 

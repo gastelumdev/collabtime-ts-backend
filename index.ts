@@ -138,103 +138,31 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
   })
 }
 
-const addIndex = async () => {
-  const dataCollections = await DataCollection.find({});
+const convertRowCells = async () => {
+  const rows = await Row.find({ dataCollection: "6595a1e1d996eccc337aef6b" });
 
-  for (const dataCollection of dataCollections || []) {
-    // const dataCollection = await DataCollection.findOne({ _id: "657e338c55c487026aa4a1f0" });
-    const rows = await Row.find({ dataCollection: dataCollection?._id });
-
-
-
-    for (const row of rows) {
-      let values: any = {};
-      let newRow;
-      for (const cellId of row.cells) {
-        console.log("CELLID", cellId);
-        let cellQuery: any = await Cell.findOne({ _id: cellId });
-        if (cellQuery) {
-          const cell: any = cellQuery;
-          values[cell?.name] = cell.value === undefined ? "" : cell.value;
-          newRow = { ...row.toJSON(), values: { ...values } };
-          console.log(newRow)
-        }
-
+  for (const row of rows) {
+    const newCells: any = [];
+    for (const rowCell of row.cells) {
+      const cell: any = rowCell;
+      // console.log(cell.createdAt)
+      if (cell.createdAt === undefined) {
+        const fullCell = await Cell.findOne({ _id: cell });
+        // console.log(fullCell);
+        newCells.push(fullCell);
+      } else {
+        newCells.push(cell);
       }
-
-      await Row.findByIdAndUpdate(row?._id, newRow)
     }
+    row.cells = newCells;
 
+    const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
+
+    console.log(newRow?.cells);
   }
-
-  // const testRows = await Row.find({ dataCollection: "657e338c55c487026aa4a1f0" }).sort({ "values.reread": 1 });
-  // console.log(testRows)
 }
 
-// addIndex();
-
-
-// const updatePeople = async () => {
-//     const workspaces = await Workspace.find({});
-//     for (const workspace of workspaces) {
-//         const dataCollections = await DataCollection.find({workspace: workspace._id});
-//         const workspaceMembers = workspace.members;
-//         let members = [];
-
-//         for (const workspaceMember of workspaceMembers) {
-//             const member = await User.findOne({email: workspaceMember.email});
-//             members.push(member);
-//         }
-
-//         for (const dataCollection of dataCollections) {
-//             const columns = await Column.find({dataCollection: dataCollection._id, type: "people"});
-//             const cells = await Cell.find({dataCollection: dataCollection._id, type: "people"});
-
-//             console.log("COLUMNS*****************", columns)
-
-//             for (const column of columns) {
-//                 const c = await Column.findByIdAndUpdate(column._id, {...column, people: members}, {new: true});
-//                 console.log(typeof workspace._id.toString())
-//                 if (workspace._id.toString() === "6566428fedf7dc849a76e858") {
-//                     console.log("WORKSPACE MEMBERS", workspaceMembers);
-//                     console.log("MEMBERS", members)
-//                     console.log("UPDATED COLUMN", c)
-//                 }
-
-//             }
-
-//             for (const cell of cells) {
-//                 await Cell.findByIdAndUpdate(cell._id, {...cell, people: members});
-//             }
-//         }
-//     }
-// }
-
-// updatePeople();
-
-// HANDLEBAR EMAIL TEST *****************************************************************************
-// sendEmail({
-//     email: "gastelumdev@gmail.com" || "", 
-//     subject: `Collabtime - Here is a friendly reminder of your day ahead.`, 
-//     payload: {tasks: [
-//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"},
-//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"},
-//         {workspaceName: "Workspace 1", dataCollectionName: "DC 1", numberOfRows: String(4), url: "https://google.com"}
-//     ]}, 
-//     template: "./template/dailyReminders.handlebars",
-// }, (res: Response) => console.log("Email sent."));
-
-
-// const fileFilter = (req: any, file: any, cb: any) => {
-//     if (file.mimetype === "image/jpg" || file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-//       cb(null, true)
-//     } else {
-//       cb(new Error("Image uploaded is not of type jpg/jpeg or png."), false);
-//     }
-// }
-
-// export const dc = docUpload.single("docs");
-// console.log(dc)
+// convertRowCells()
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());

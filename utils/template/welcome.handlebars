@@ -1,11 +1,116 @@
 <html>
     <head>
+        <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
+            integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+            crossorigin="anonymous"
+        />
         <style>
+            body {
+                font-family: "Arial", sans-serif;
+                background-color: #f8f9fa;
+            }
 
+            h3 {
+                text-align: center;
+                font-size: 0.7rem;
+            }
+
+            #main-content {
+                margin-bottom: 40px;
+            }
+
+            .card {
+                border: none;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .card-header {
+                background-color: #015591;
+                color: #ffffff;
+                border-radius: 10px 10px 0 0;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+                margin-bottom: 0;
+            }
+
+            .card-body {
+                padding: 30px;
+            }
+
+            p {
+                line-height: 1.6;
+            }
+
+            .btn-success {
+                background-color: #28a745;
+                border-color: #28a745;
+            }
+
+            .btn-success:hover {
+                background-color: #218838;
+                border-color: #218838;
+            }
         </style>
     </head>
     <body>
-        <p>Hi {{name}},</p>
-        <p>Welcome to your new account</p>
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">Welcome to Collabtime</h3>
+                    </div>
+                    <div class="card-body">
+                    <div id="main-content">
+                        <p>Hello {{name}},</p>
+                        <p>
+                        We are excited to inform you that you have been invited to
+                        participate in the beta testing of our new web application,
+                        Collabtime. Your feedback is invaluable to us, and we
+                        appreciate your contribution to making our application even
+                        better.
+                        </p>
+                        <p>To get started, click below and login with the provided credentials:</p>
+                        <p>Email: {{email}}</p>
+                        <p>Password: {{password}}</p>
+                        <a href="https://collabtime.net" class="btn btn-success"
+                        >Access Collabtime</a
+                        >
+                    </div>
+                    <p>
+                        If you have any questions, feedback, or encounter any issues,
+                        please don't hesitate to contact us. Your input is crucial in
+                        helping us improve Collabtime.
+                    </p>
+                    <p>Thank you for being part of our beta testing community!</p>
+                    <p>Best regards,<br />from Omar Gastelum.</p>
+                    <a href="mailto:ogastelum@collabtime.co" class=""
+                        >ogastelum@collabtime.co</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <script
+            src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+            integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"
+            integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
+            crossorigin="anonymous"
+        ></script>
     </body>
 </html>
