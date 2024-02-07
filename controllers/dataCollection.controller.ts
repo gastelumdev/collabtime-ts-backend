@@ -83,7 +83,7 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
             date,
         ];
     }
-        
+
     return [
         itemName,
         assignedTo,
@@ -92,25 +92,25 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
 }
 
 
-export const getDataCollections = async(req: Request, res: Response) => {
-    const workspace = await Workspace.findOne({_id: req?.params.workspaceId});
-    const dataCollections = await DataCollection.find({workspace: workspace?._id});
+export const getDataCollections = async (req: Request, res: Response) => {
+    const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
+    const dataCollections = await DataCollection.find({ workspace: workspace?._id });
 
     try {
         res.send(dataCollections);
     } catch (error) {
-        res.send({success: false})
+        res.send({ success: false })
     }
 }
 
 export const createDataCollection = async (req: Request, res: Response) => {
-    const workspace = await Workspace.findOne({_id: req?.params.workspaceId});
-    const dataCollection = new DataCollection({...(req.body), workspace: workspace?._id});
+    const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
+    const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
 
     const people: any = [];
 
     for (const member of workspace?.members || []) {
-        let person = await User.findOne({email: member.email});
+        let person = await User.findOne({ email: member.email });
         people.push(person);
     }
 
@@ -120,12 +120,13 @@ export const createDataCollection = async (req: Request, res: Response) => {
     if (dataCollection.template == "default" || dataCollection.template == "tasks") {
         initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people);
     } else {
-        const columns = await Column.find({dataCollection: dataCollection.template});
+        const columns = await Column.find({ dataCollection: dataCollection.template });
         initialColumnsFromUserTemplate = columns;
     }
-    
+
     console.log(initialColumns)
     const columnIds = [];
+    const values: any = {}
 
     let position = 1;
 
@@ -135,6 +136,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
         position++;
         columnIds.push(column._id);
         column.save();
+        values[column.name] = "";
     }
 
     for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
@@ -151,25 +153,35 @@ export const createDataCollection = async (req: Request, res: Response) => {
         });
         console.log("NEW COLUMN", column)
         column.save();
+        values[column.name] = "";
     }
 
     dataCollection.columns = columnIds;
+
+    for (let i = 1; i <= 50; i++) {
+        const row = new Row({
+            dataCollection: dataCollection._id,
+            values: values,
+            position: i,
+        })
+        row.save();
+    }
 
     try {
         dataCollection.save();
         res.send(dataCollection);
     } catch (error) {
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
 export const updateDataCollection = async (req: Request, res: Response) => {
     try {
         console.log("DATACOLLECTION", req.body)
-        const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body, {new: true});
+        const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.send(dataCollection);
     } catch (error) {
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
 }
 
@@ -177,47 +189,47 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
     const dataCollectionId = new mongoose.Types.ObjectId(req?.params.id);
 
     try {
-        await Cell.deleteMany({dataCollection: dataCollectionId});
-        await Row.deleteMany({dataCollection: dataCollectionId});
-        await Column.deleteMany({dataCollection: dataCollectionId});
-        await DataCollection.findByIdAndDelete({_id: dataCollectionId});
-        res.send({success: true});
+        await Cell.deleteMany({ dataCollection: dataCollectionId });
+        await Row.deleteMany({ dataCollection: dataCollectionId });
+        await Column.deleteMany({ dataCollection: dataCollectionId });
+        await DataCollection.findByIdAndDelete({ _id: dataCollectionId });
+        res.send({ success: true });
     } catch (error) {
         console.log(error)
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
-    
+
 }
 
 export const getDataCollection = async (req: Request, res: Response) => {
-    const dataCollection = await DataCollection.findOne({_id: req.params.id});
+    const dataCollection = await DataCollection.findOne({ _id: req.params.id });
 
     try {
         res.send(dataCollection)
     } catch (error) {
-        res.status(400).send({success: false});
+        res.status(400).send({ success: false });
     }
 }
 
 export const sendForm = async (req: Request, res: Response) => {
     try {
         console.log("EMAIL", req.body.email)
-        const dataCollection = await DataCollection.findOne({_id: req.params.id});
-        const workspace = await Workspace.findOne({_id: dataCollection?.workspace});
+        const dataCollection = await DataCollection.findOne({ _id: req.params.id });
+        const workspace = await Workspace.findOne({ _id: dataCollection?.workspace });
 
         sendEmail({
             email: [req.body.email],
             subject: "Collabtime - You've been sent a request form.",
-            payload: {link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}/form`, workspaceName: workspace?.name, dataCollectionName: dataCollection?.name},
+            payload: { link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}/form`, workspaceName: workspace?.name, dataCollectionName: dataCollection?.name },
             template: "./template/requestForm.handlebars",
             res
         }, () => {
             console.log("Email sent")
         });
 
-        res.send({success: true});
+        res.send({ success: true });
     } catch (error) {
         console.log(error)
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
 }

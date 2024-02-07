@@ -12,6 +12,7 @@ router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/del
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/deleteRows", verifyToken, rowController.deleteRows);
 router.post("/rows/callUpdate", verifyToken, rowController.callUpdate);
 router.post("/rows/acknowledge/:rowId", verifyToken, rowController.acknowledgeRow);
+router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/reorder", verifyToken, rowController.reorderRows);
 router.get("/workspaces/:workspaceId/dataCollections/:dataCollectionId/getTotalRows", verifyToken, rowController.getTotalRows);
 // router.post("/migrateRows", rowController.migrateRows);
 // router.post("/addReminder", rowController.addReminder);

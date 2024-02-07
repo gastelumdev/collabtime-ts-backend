@@ -8,5 +8,6 @@ router.get("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns",
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns", verifyToken, columnController.createColumn);
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns/update/:id", verifyToken, columnController.updateColumn)
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns/delete/:id", verifyToken, columnController.deleteColumn)
+router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns/reorderColumns", verifyToken, columnController.reorderColumns)
 
 export default router;

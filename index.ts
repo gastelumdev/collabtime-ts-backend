@@ -34,6 +34,11 @@ import Workspace from './models/workspace.model';
 import Cell from './models/cell.models';
 import setReminders from './utils/setReminders';
 import Column from './models/column.model';
+import { addValues, convertRowCells, fullfillMissingRows } from './utils/helpers';
+
+// fullfillMissingRows();
+
+// const __dirname = path.resolve();
 const sh = shell.execSync;
 const uuid = uuidv1();
 
@@ -138,31 +143,9 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
   })
 }
 
-const convertRowCells = async () => {
-  const rows = await Row.find({ dataCollection: "6595a1e1d996eccc337aef6b" });
-
-  for (const row of rows) {
-    const newCells: any = [];
-    for (const rowCell of row.cells) {
-      const cell: any = rowCell;
-      // console.log(cell.createdAt)
-      if (cell.createdAt === undefined) {
-        const fullCell = await Cell.findOne({ _id: cell });
-        // console.log(fullCell);
-        newCells.push(fullCell);
-      } else {
-        newCells.push(cell);
-      }
-    }
-    row.cells = newCells;
-
-    const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
-
-    console.log(newRow?.cells);
-  }
-}
 
 // convertRowCells()
+// addValues()
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());

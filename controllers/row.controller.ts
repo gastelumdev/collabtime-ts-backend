@@ -10,6 +10,7 @@ import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
+import { addBlankRows, checkIfLastRow } from "../utils/rows";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -22,19 +23,19 @@ export const getRows = async (req: Request, res: Response) => {
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
-        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ [sortBy]: sort }).skip(skip).limit(limit);
-        const result = [];
+        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ position: sort }).skip(skip).limit(limit);
+        // const result = [];
 
-        for (const row of rows) {
-            const rowCopy: any = row;
-            let cells = await Cell.find({ row: row._id }).sort("position")
-            rowCopy.cells = cells;
-            result.push(rowCopy)
-        }
+        // for (const row of rows) {
+        //     const rowCopy: any = row;
+        //     let cells = await Cell.find({ row: row._id }).sort("position")
+        //     rowCopy.cells = cells;
+        //     result.push(rowCopy)
+        // }
 
-        console.log("RESULT", result)
+        // console.log("RESULT", result)
 
-        res.send(result);
+        res.send(rows);
 
     } catch (error) {
         console.log(error)
@@ -42,152 +43,180 @@ export const getRows = async (req: Request, res: Response) => {
     }
 }
 
+// export const createRow = async (req: Request, res: Response) => {
+//     const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+//     const columns = await Column.find({ dataCollection: dataCollection?._id });
+//     // body is a row
+//     const body = req.body;
+//     let value;
+//     let docs = [];
+//     let links = [];
+
+//     const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+
+//     // This will hold the members of the workspace to include in the cell
+//     const people: any = [];
+
+//     for (const member of workspace?.members || []) {
+//         let person = await User.findOne({ email: member.email });
+//         people.push(person);
+//     }
+
+//     const defaultPerson = await User.findOne({ _id: (<any>req).user._id });
+//     console.log(defaultPerson);
+
+//     // create a new row with the associated data collection id
+//     const row = new Row({ dataCollection: dataCollection?._id })
+//     // add the assignedTo key to the creator of the row.
+//     const creator = (<any>req).user._id;
+//     row.createdBy = creator;
+//     row.assignedTo = (<any>req).user._id
+
+//     const newCells: any = [];
+
+//     // Go through all the columns to create cells for the row
+//     for (const column of columns) {
+//         // If the column is a people type then get the user selected by the creator of the row
+//         // and assign the first and last name to the value
+//         // Notify by sockets update and by email that user that an assignment has been issued
+//         if (column.type == "people") {
+//             console.log("USERID", body[column.name])
+//             const user = await User.findOne({ _id: body[column.name] || defaultPerson?._id });
+//             console.log("USER", user);
+//             row.assignedTo = user?._id || "";
+//             value = `${user?.firstname} ${user?.lastname}`;
+
+
+//             io.emit(user?._id || "", { message: "You have been assigned to a data collection task." })
+
+//             // needs email ****************************
+//             const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}?acknowledgedRow=${row?._id}`;
+//             sendEmail({
+//                 email: user?.email || "",
+//                 subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
+//                 payload: {
+//                     message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`,
+//                     link: link,
+//                     dataCollectionName: dataCollection?.name,
+//                 },
+//                 template: "./template/dataCollectionStatusChange.handlebars",
+//                 res,
+//             }, (res: Response) => console.log("Email sent."));
+
+
+//             // cron.schedule("0 6 * * * 1,2,3,4,5", () => {
+//             //     sendEmail({
+//             //         email: user?.email || "", 
+//             //         subject: `Reminder - Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
+//             //         payload: {
+//             //             message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`, 
+//             //             link: link,
+//             //             dataCollectionName: dataCollection?.name,
+//             //         }, 
+//             //         template: "./template/dataCollectionStatusChange.handlebars", 
+//             //         res,
+//             //     }, (res: Response) => console.log("Email sent."));
+//             // }, {name: row._id})
+
+//             // console.log("CRON TASKS", cron.getTasks().get(row._id));
+
+//             // Else if the type is date, then handle the input accordingly and assign it value
+//         } else if (column.type === "date") {
+//             console.log("DATE", body[column.name])
+//             if (body[column.name] === undefined) {
+//                 value = (new Date(body[column.name]));
+//             } else {
+//                 value = body[column.name];
+//             }
+
+//         } else if (column.type === "priority") {
+//             if (body[column.name] === "Critical") {
+//                 row.acknowledged = false;
+//             }
+
+//             value = body[column.name];
+
+//         } else if (column.type === "upload") {
+//             console.log("UPLOAD BODY ***********************", body.docs);
+//             // let count = 0;
+//             // for (const upload of body[column.name]) {
+//             //     count++
+//             // }
+//             value = ""
+//             docs = body[column.name];
+//         } else if (column.type === "link") {
+//             value = ""
+//             links = body.links;
+//             // otherwise the value just equals the request body based on the column name
+//         } else {
+//             value = body[column.name]
+//         }
+
+//         // create cell 
+//         let cell = new Cell({
+//             dataCollection: column.dataCollection,
+//             row: row._id,
+//             name: column.name,
+//             type: column.type,
+//             value: value,
+//             labels: column.labels,
+//             people: people,
+//             docs: docs,
+//             links: links,
+//             position: column.position
+//         });
+//         cell.value = value;
+
+//         // Add cell id to the rows list
+//         row.cells.push(cell._id);
+
+
+//         // Save the cell
+//         try {
+//             cell.save();
+
+//             newCells.push(cell)
+//         } catch (error) {
+//             console.log("CELL ERROR", error)
+//             res.status(400).send({ success: false })
+//         }
+//     }
+
+//     // Save the row
+//     try {
+//         row.save();
+
+//         row.cells = newCells;
+//         res.send(row)
+//     } catch (error) {
+//         console.log("ROW ERROR", error)
+//         res.status(400).send({ success: false })
+//     }
+// }
+
 export const createRow = async (req: Request, res: Response) => {
-    const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
-    const columns = await Column.find({ dataCollection: dataCollection?._id });
-    // body is a row
-    const body = req.body;
-    let value;
-    let docs = [];
-    let links = [];
-
-    const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
-
-    // This will hold the members of the workspace to include in the cell
-    const people: any = [];
-
-    for (const member of workspace?.members || []) {
-        let person = await User.findOne({ email: member.email });
-        people.push(person);
-    }
-
-    const defaultPerson = await User.findOne({ _id: (<any>req).user._id });
-    console.log(defaultPerson);
-
-    // create a new row with the associated data collection id
-    const row = new Row({ dataCollection: dataCollection?._id })
-    // add the assignedTo key to the creator of the row.
-    const creator = (<any>req).user._id;
-    row.createdBy = creator;
-    row.assignedTo = (<any>req).user._id
-
-    const newCells: any = [];
-
-    // Go through all the columns to create cells for the row
-    for (const column of columns) {
-        // If the column is a people type then get the user selected by the creator of the row
-        // and assign the first and last name to the value
-        // Notify by sockets update and by email that user that an assignment has been issued
-        if (column.type == "people") {
-            console.log("USERID", body[column.name])
-            const user = await User.findOne({ _id: body[column.name] || defaultPerson?._id });
-            console.log("USER", user);
-            row.assignedTo = user?._id || "";
-            value = `${user?.firstname} ${user?.lastname}`;
 
 
-            io.emit(user?._id || "", { message: "You have been assigned to a data collection task." })
-
-            // needs email ****************************
-            const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}?acknowledgedRow=${row?._id}`;
-            sendEmail({
-                email: user?.email || "",
-                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
-                payload: {
-                    message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`,
-                    link: link,
-                    dataCollectionName: dataCollection?.name,
-                },
-                template: "./template/dataCollectionStatusChange.handlebars",
-                res,
-            }, (res: Response) => console.log("Email sent."));
-
-
-            // cron.schedule("0 6 * * * 1,2,3,4,5", () => {
-            //     sendEmail({
-            //         email: user?.email || "", 
-            //         subject: `Reminder - Assignment in ${workspace?.name} - ${dataCollection?.name}`, 
-            //         payload: {
-            //             message: `Hi ${user?.firstname}, you have been assigned a ${dataCollection?.name} task.`, 
-            //             link: link,
-            //             dataCollectionName: dataCollection?.name,
-            //         }, 
-            //         template: "./template/dataCollectionStatusChange.handlebars", 
-            //         res,
-            //     }, (res: Response) => console.log("Email sent."));
-            // }, {name: row._id})
-
-            // console.log("CRON TASKS", cron.getTasks().get(row._id));
-
-            // Else if the type is date, then handle the input accordingly and assign it value
-        } else if (column.type === "date") {
-            console.log("DATE", body[column.name])
-            if (body[column.name] === undefined) {
-                value = (new Date(body[column.name]));
-            } else {
-                value = body[column.name];
-            }
-
-        } else if (column.type === "priority") {
-            if (body[column.name] === "Critical") {
-                row.acknowledged = false;
-            }
-
-            value = body[column.name];
-
-        } else if (column.type === "upload") {
-            console.log("UPLOAD BODY ***********************", body.docs);
-            // let count = 0;
-            // for (const upload of body[column.name]) {
-            //     count++
-            // }
-            value = ""
-            docs = body[column.name];
-        } else if (column.type === "link") {
-            value = ""
-            links = body.links;
-            // otherwise the value just equals the request body based on the column name
-        } else {
-            value = body[column.name]
-        }
-
-        // create cell 
-        let cell = new Cell({
-            dataCollection: column.dataCollection,
-            row: row._id,
-            name: column.name,
-            type: column.type,
-            value: value,
-            labels: column.labels,
-            people: people,
-            docs: docs,
-            links: links,
-            position: column.position
-        });
-        cell.value = value;
-
-        // Add cell id to the rows list
-        row.cells.push(cell._id);
-
-
-        // Save the cell
-        try {
-            cell.save();
-
-            newCells.push(cell)
-        } catch (error) {
-            console.log("CELL ERROR", error)
-            res.status(400).send({ success: false })
-        }
-    }
-
-    // Save the row
     try {
-        row.save();
+        const user = await User.findOne({ _id: (<any>req).user._id });
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        const columns = await Column.find({ dataCollection: dataCollection?._id });
 
-        row.cells = newCells;
-        res.send(row)
+        let values: any = {};
+
+        for (const column of columns) {
+            values[column.name] = "";
+        }
+        const row = new Row(req.body);
+        row.values = values;
+
+        row.createdBy = user?._id || "";
+        row.dataCollection = dataCollection?._id || ""
+        await row.save();
+        res.send(row);
+
     } catch (error) {
+
         console.log("ROW ERROR", error)
         res.status(400).send({ success: false })
     }
@@ -218,6 +247,8 @@ export const updateRow = async (req: Request, res: Response) => {
         }
     }
 
+    // if existing row has not been acknowledged but the row been sent has,
+    // then send an email to the owner of the row
     if (row?.acknowledged === false && req.body.acknowledged === true) {
         const rowOwner = await User.findOne({ _id: row.createdBy })
         sendEmail({
@@ -235,15 +266,24 @@ export const updateRow = async (req: Request, res: Response) => {
     }
 
     try {
-        await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.send(row)
+        const row = await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const isLastRow = await checkIfLastRow(row);
+
+        let blankRows: any = [];
+
+        if (isLastRow) {
+            blankRows = await addBlankRows(row, dataCollection, noteCreator, 10);
+        }
+
+        res.send(blankRows)
     } catch (error) {
+        console.log({ error })
         res.status(400).send({ success: false })
     }
 }
 
 export const deleteRow = async (req: Request, res: Response) => {
-    const row = await Row.findOne({ _id: req.params.id });
+    const row = await Row.findOne({ _id: req.params.id })
     let cells: any = row?.cells;
 
     try {
@@ -353,6 +393,50 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
         res.send({ success: true });
     } catch (error) {
         res.status(400).send({ success: true });
+    }
+}
+
+export const reorderRows = async (req: Request, res: Response) => {
+    try {
+        const { draggedRowPosition, overRowPosition } = req.body;
+        console.log({ draggedRowPosition, overRowPosition })
+        const { dataCollectionId } = req.params;
+
+        const movedRow = await Row.find({ dataCollection: dataCollectionId, position: draggedRowPosition + 1 });
+
+        for (const row of movedRow) {
+            row.position = 0;
+            const r = await Row.findByIdAndUpdate(row._id, row, { new: true });
+        }
+
+        if (draggedRowPosition > overRowPosition) {
+            const rowsToIncrement = await Row.find({ dataCollection: dataCollectionId, $and: [{ position: { $gte: overRowPosition + 1 } }, { position: { $lt: draggedRowPosition + 1 } }] });
+
+            for (const row of rowsToIncrement) {
+                row.position = row.position + 1;
+                const r = await Row.findByIdAndUpdate(row._id, row, { new: true });
+            }
+
+
+        } else {
+            const rowsToDecrement = await Row.find({ dataCollection: dataCollectionId, $and: [{ position: { $lte: overRowPosition + 1 } }, { position: { $gt: draggedRowPosition + 1 } }] });
+
+            for (const row of rowsToDecrement) {
+                row.position = row.position - 1;
+                const r = await Row.findByIdAndUpdate(row._id, row, { new: true });
+            }
+        }
+
+        for (const row of movedRow) {
+            row.position = overRowPosition + 1;
+            const r = await Row.findByIdAndUpdate(row._id, row, { new: true });
+        }
+
+
+        res.send({ success: true })
+    } catch (err) {
+        console.log(err)
+        res.status(400).send({ success: false })
     }
 }
 

@@ -1,17 +1,18 @@
-import mongoose, {Schema, Types, model} from "mongoose";
+import mongoose, { Schema, Types, model } from "mongoose";
 import { IColumn, IColumnDocument, IColumnModel } from "../services/column.service";
 
 const columnSchema: Schema<IColumnDocument> = new Schema({
-    dataCollection: {type: Schema.Types.ObjectId},
-    name: {type: String},
-    type: {type: String},
-    position: {type: Number},
-    permanent: {type: Boolean},
-    people: {type: []},
-    labels: {type: []},
-    includeInForm: {type: Boolean},
-    includeInExport: {type: Boolean},
-    createdAt: {type: Date, default: Date.now},
+    dataCollection: { type: Schema.Types.ObjectId },
+    name: { type: String },
+    type: { type: String },
+    position: { type: Number },
+    width: { type: String },
+    permanent: { type: Boolean },
+    people: { type: [] },
+    labels: { type: [] },
+    includeInForm: { type: Boolean },
+    includeInExport: { type: Boolean },
+    createdAt: { type: Date, default: Date.now },
 }, {
     timestamps: true,
 });

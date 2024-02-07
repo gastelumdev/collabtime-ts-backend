@@ -3,17 +3,19 @@ import { IRow, IRowDocument, IRowModel } from "../services/row.service";
 
 const rowSchema: Schema<IRowDocument> = new Schema({
     dataCollection: { type: Schema.Types.ObjectId },
-    cells: { type: [] },
-    assignedTo: { type: Schema.Types.ObjectId },
-    createdBy: { type: Schema.Types.ObjectId },
-    notes: { type: String },
-    notesList: { type: [] },
+    cells: { type: [], default: [] },
+    assignedTo: { type: Schema.Types.ObjectId, default: null },
+    createdBy: { type: Schema.Types.ObjectId, default: null },
+    notes: { type: String, default: "" },
+    notesList: { type: [], default: [] },
     createdAt: { type: Date, default: Date.now },
-    tags: { type: [] },
+    tags: { type: [], default: [] },
     reminder: { type: Boolean, default: true },
     complete: { type: Boolean, default: false },
     acknowledged: { type: Boolean, default: true },
     values: { type: {} },
+    position: { type: Number },
+    docs: { type: [], default: [] },
 }, {
     timestamps: true
 });

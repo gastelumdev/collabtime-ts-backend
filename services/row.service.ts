@@ -2,6 +2,7 @@ import { Document, Schema, Model } from "mongoose";
 import { TCell } from "../types";
 import { TInvitee } from "./workspace.service";
 import { ITag } from "./tag.service";
+import { IDocument } from "./document.service";
 
 export interface INote {
     content: string;
@@ -25,6 +26,8 @@ export interface IRow {
     complete: boolean;
     acknowledged: boolean;
     values: any;
+    position: number;
+    docs: IDocument[];
 }
 
 export interface IRowDocument extends IRow, Document { }

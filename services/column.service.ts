@@ -10,6 +10,7 @@ export interface IColumn {
     name: string;
     type: string;
     position: number;
+    width: string;
     permanent: boolean;
     people?: string[];
     labels?: TLabel[];
@@ -18,7 +19,7 @@ export interface IColumn {
     createdAt: Date;
 }
 
-export interface IColumnDocument extends IColumn, Document {}
+export interface IColumnDocument extends IColumn, Document { }
 
 export interface IColumnModel extends Model<IColumnDocument> {
     buildColumn(args: IColumn): IColumnDocument;
