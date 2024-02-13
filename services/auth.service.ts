@@ -11,6 +11,8 @@ export interface IUser {
     lastname: string;
     email: string;
     password: string;
+    organization: string;
+    logoURL: string;
     role?: string;
     workspaces: IUserWorkspace[];
     created_at: Date;

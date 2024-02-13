@@ -143,9 +143,37 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
   })
 }
 
+const updateUsers = async () => {
+  const users = await User.find({ _id: "65c63f6b1a15510bc55bb432" });
 
-// convertRowCells()
-// addValues()
+  for (const user of users) {
+    console.log(user)
+    let newUser = await User.findByIdAndUpdate(user._id, { ...user, logoURL: "https://collabtime-ts-backend.onrender.com/docs/MVP%20Original%20Logo_551aecd0-c608-11ee-b41a-e97b0c5f0d41.png" }, { new: true })
+    console.log(newUser)
+  }
+}
+
+const changeAllRows = async () => {
+  const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
+
+  for (const dataCollection of dataCollections) {
+    const rows = await Row.find({ dataCollection: dataCollection._id });
+
+    for (const row of rows) {
+      const r: any = await Row.findById(row._id);
+      r.isParent = false;
+      r.parentRowId = null;
+      r.save();
+      console.log(r.isParent, r.parentRowId, r.position)
+    }
+  }
+}
+
+// changeAllRows()
+
+// updateUsers()
+// convertRowCells();;
+addValues()
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());

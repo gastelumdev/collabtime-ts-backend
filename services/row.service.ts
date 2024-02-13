@@ -28,6 +28,9 @@ export interface IRow {
     values: any;
     position: number;
     docs: IDocument[];
+    isParent: boolean;
+    parentRowId: Schema.Types.ObjectId | string | null;
+    isVisible: boolean;
 }
 
 export interface IRowDocument extends IRow, Document { }

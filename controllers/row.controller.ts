@@ -227,6 +227,7 @@ export const updateRow = async (req: Request, res: Response) => {
     const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
     const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
     const noteCreator = await User.findOne({ _id: (<any>req).user._id });
+    console.log({ value: req.body.values["task"], position: req.body.position })
 
     // if there are more notes in the req body than in the db, then there is a new note
     // in which we want to notify the user and update the frontend via sockets
@@ -398,8 +399,8 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
 
 export const reorderRows = async (req: Request, res: Response) => {
     try {
-        const { draggedRowPosition, overRowPosition } = req.body;
-        console.log({ draggedRowPosition, overRowPosition })
+        const { draggedRowPosition, overRowPosition, numberOfItems } = req.body;
+        console.log({ draggedRowPosition, overRowPosition, numberOfItems })
         const { dataCollectionId } = req.params;
 
         const movedRow = await Row.find({ dataCollection: dataCollectionId, position: draggedRowPosition + 1 });

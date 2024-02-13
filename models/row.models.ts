@@ -16,6 +16,9 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     values: { type: {} },
     position: { type: Number },
     docs: { type: [], default: [] },
+    isParent: { type: Boolean, default: false },
+    parentRowId: { type: Schema.Types.ObjectId, default: null },
+    isVisible: { type: Boolean, default: true },
 }, {
     timestamps: true
 });
