@@ -12,7 +12,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     tags: { type: [], default: [] },
     reminder: { type: Boolean, default: true },
     complete: { type: Boolean, default: false },
-    acknowledged: { type: Boolean, default: true },
+    acknowledged: { type: Boolean, default: false },
     values: { type: {} },
     position: { type: Number },
     docs: { type: [], default: [] },

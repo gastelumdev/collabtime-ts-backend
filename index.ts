@@ -93,6 +93,7 @@ const storage = multer.memoryStorage();
 export const notesUpload = multer({ storage: storage });
 
 const setCrititcalReminders = async () => {
+
   const rows = await Row.find({ acknowledged: false, reminder: true });
   console.log("ROWS", rows)
 
@@ -122,6 +123,21 @@ const setCrititcalReminders = async () => {
     }
   }
 }
+
+const updateRowAcknowledgements = async () => {
+  const rows = await Row.find({});
+
+  for (const row of rows) {
+    const rowQuery: any = await Row.findOne({ _id: row._id });
+
+    rowQuery.acknowledged = false;
+
+    rowQuery.save();
+    console.log("Row updated");
+  }
+}
+
+// updateRowAcknowledgements();
 
 // setCrititcalReminders()
 
