@@ -99,11 +99,12 @@ const setCrititcalReminders = async () => {
   for (const row of rows) {
     const dataCollection = await DataCollection.findOne({ _id: row.dataCollection })
     const workspace = await Workspace.findOne({ _id: dataCollection?.workspace })
+    const columns = await Column.find({ dataCollection: dataCollection?._id })
     const cells = await Cell.find({ row: row._id });
     const user = await User.findOne({ _id: row.createdBy });
 
-    for (const cell of cells) {
-      if (cell.type === "priority" && cell.value === "Critical") {
+    for (const column of columns) {
+      if (column.type === "priority" && row.values[column.name] === "Critical") {
         console.log(row)
         const task = {
           message: `A critical assingment in ${workspace?.name} - ${dataCollection?.name} has not been acknowledged.`,
@@ -122,13 +123,13 @@ const setCrititcalReminders = async () => {
   }
 }
 
-setCrititcalReminders()
+// setCrititcalReminders()
 
 // JOB SCHEDULES *********************************************************
 
 
 
-if (process.env.ENVIRONMENT === "PRODUCTION") {
+if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
     setReminders()

@@ -11,6 +11,7 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
+import { IRow } from "../services/row.service";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -222,51 +223,127 @@ export const createRow = async (req: Request, res: Response) => {
     }
 }
 
-export const updateRow = async (req: Request, res: Response) => {
-    const row = await Row.findOne({ _id: req.params.id });
-    const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
-    const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
-    const noteCreator = await User.findOne({ _id: (<any>req).user._id });
+const sendCriticalRowEmail = async (row: IRow) => {
+    const dataCollection = await DataCollection.findOne({ _id: row.dataCollection });
+    const workspace = await Workspace.findOne({ _id: dataCollection?.workspace });
+    const columns = await Column.find({ dataCollection: row.dataCollection });
+    let priority = "";
+    let email = "";
 
-    // if there are more notes in the req body than in the db, then there is a new note
-    // in which we want to notify the user and update the frontend via sockets
-    if (row?.notesList.length !== req.body.notesList.length) {
-        for (const member of workspace?.members || []) {
-            const user = await User.findOne({ email: member.email })
-            io.emit(user?._id || "", { message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
-            io.emit("update row", { message: "" });
-            const notification = new Notification({
-                message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
-                workspaceId: workspace?._id,
-                assignedTo: user?._id,
-                dataSource: "",
-                priority: "Low",
-                read: false,
-            })
-            notification.save();
+    for (const column of columns) {
+        if (column.type === "priority") {
+            priority = row.values[column.name];
+        }
+        if (column.type === "people") {
+            email = row.values[column.name].split(" - ").pop();
         }
     }
 
-    // if existing row has not been acknowledged but the row been sent has,
-    // then send an email to the owner of the row
-    if (row?.acknowledged === false && req.body.acknowledged === true) {
-        const rowOwner = await User.findOne({ _id: row.createdBy })
-        sendEmail({
-            email: rowOwner?.email || "",
-            subject: `Collabtime Acknowledment - ${workspace?.name}`,
-            payload: {
-                message: `${workspace?.name} - ${dataCollection?.name} assignment has been acknowledged by ${noteCreator?.firstname} ${noteCreator?.lastname}`,
-                link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
-                dataCollectionName: dataCollection?.name
-            },
-            template: "./template/rowAcknowledgement.handlebars"
-        }, () => {
-            console.log("Email sent");
-        })
+    // console.log({ email, priority })
+    if (email !== "" && priority !== "") {
+        if (priority === "Critical") {
+            console.log({ email, priority })
+            const user = await User.findOne({ email: email });
+
+            // io.emit(user?._id || "", { message: "You have been assigned to a data collection task." })
+
+            // needs email ****************************
+            const link = `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}?acknowledgedRow=${(row as any)._id}`;
+            sendEmail({
+                email: email,
+                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
+                payload: {
+                    message: `Hi ${user?.firstname}, you have been assigned a critical item in ${workspace?.name} - ${dataCollection?.name}.`,
+                    link: link,
+                    dataCollectionName: dataCollection?.name,
+                },
+                template: "./template/dataCollectionStatusChange.handlebars",
+                // res,
+            }, (res: Response) => console.log("Email sent."));
+
+            io.emit(user?._id || "", {
+                message: `You have been assigned a critical item in ${workspace?.name} - ${dataCollection?.name}.`,
+                priority: "Critical"
+            });
+            io.emit("update row", { message: "" });
+
+
+            // const notification = new Notification({
+            //     message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
+            //     workspaceId: workspace?._id,
+            //     assignedTo: user?._id,
+            //     dataSource: "",
+            //     priority: "Low",
+            //     read: false,
+            // })
+            // notification.save();
+        }
     }
+}
+
+export const updateRow = async (req: Request, res: Response) => {
+
 
     try {
-        const row = await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const row: any = await Row.findOne({ _id: req.params.id });
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
+        const noteCreator = await User.findOne({ _id: (<any>req).user._id });
+
+        // console.log({ newRow: req.body, prevRow: row })
+
+        if ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"])) {
+            const email = req.body.values["assigned_to"].split(" - ")[1];
+
+
+            console.log("Email is not blank, it is " + email)
+            const user = await User.findOne({ email: email });
+            io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
+            io.emit("update row", { message: "" });
+
+            sendCriticalRowEmail(req.body);
+        }
+
+        // if there are more notes in the req body than in the db, then there is a new note
+        // in which we want to notify the user and update the frontend via sockets
+        if (row?.notesList.length !== req.body.notesList.length) {
+            for (const member of workspace?.members || []) {
+                const user = await User.findOne({ email: member.email })
+                io.emit(user?._id || "", { message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
+                io.emit("update row", { message: "" })
+                const notification = new Notification({
+                    message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
+                    workspaceId: workspace?._id,
+                    assignedTo: user?._id,
+                    dataSource: "",
+                    priority: "Low",
+                    read: false,
+                })
+                notification.save();
+            }
+        }
+
+        // if existing row has not been acknowledged but the row been sent has,
+        // then send an email to the owner of the row
+        if (row?.acknowledged === false && req.body.acknowledged === true) {
+            const rowOwner = await User.findOne({ _id: row.createdBy })
+            sendEmail({
+                email: rowOwner?.email || "",
+                subject: `Collabtime Acknowledment - ${workspace?.name}`,
+                payload: {
+                    message: `${workspace?.name} - ${dataCollection?.name} assignment has been acknowledged by ${noteCreator?.firstname} ${noteCreator?.lastname}`,
+                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
+                    dataCollectionName: dataCollection?.name
+                },
+                template: "./template/rowAcknowledgement.handlebars"
+            }, () => {
+                console.log("Email sent");
+            })
+        }
+        if (req.body.createdBy === null) {
+            req.body.createdBy = noteCreator?._id
+        }
+        await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 
         let blankRows: any = [];
