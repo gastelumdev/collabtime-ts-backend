@@ -475,8 +475,8 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
 
 export const reorderRows = async (req: Request, res: Response) => {
     try {
-        const { draggedRowPosition, overRowPosition } = req.body;
-        console.log({ draggedRowPosition, overRowPosition })
+        const { draggedRowPosition, overRowPosition, numberOfItems } = req.body;
+        console.log({ draggedRowPosition, overRowPosition, numberOfItems })
         const { dataCollectionId } = req.params;
 
         const movedRow = await Row.find({ dataCollection: dataCollectionId, position: draggedRowPosition + 1 });
