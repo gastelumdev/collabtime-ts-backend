@@ -122,7 +122,7 @@ const setCrititcalReminders = async () => {
   }
 }
 
-setCrititcalReminders()
+// setCrititcalReminders()
 
 // JOB SCHEDULES *********************************************************
 

@@ -244,7 +244,7 @@ export const updateRow = async (req: Request, res: Response) => {
                 priority: "Low",
                 read: false,
             })
-            notification.save();
+            notification.save()
         }
     }
 
