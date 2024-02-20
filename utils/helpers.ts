@@ -4,7 +4,7 @@ import DataCollection from "../models/dataCollection.model";
 import Row from "../models/row.models";
 
 export const convertRowCells = async () => {
-    const dataCollections = await DataCollection.find({ _id: "65aefb9bdafe49be8c94df89" });
+    const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
 
     for (const dataCollection of dataCollections) {
         const rows = await Row.find({ dataCollection: dataCollection._id });
