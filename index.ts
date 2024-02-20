@@ -169,11 +169,11 @@ const changeAllRows = async () => {
   }
 }
 
-// changeAllRows()
+// changeAllRows();
 
 // updateUsers()
-// convertRowCells();;
-addValues()
+// convertRowCells()
+// addValues()
 
 app.use(bodyparser.urlencoded({ extended: false }));
 app.use(express.json());
