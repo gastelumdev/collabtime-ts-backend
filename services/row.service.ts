@@ -29,6 +29,7 @@ export interface IRow {
     position: number;
     docs: IDocument[];
     isParent: boolean;
+    showSubrows: boolean;
     parentRowId: Schema.Types.ObjectId | string | null;
     isVisible: boolean;
 }

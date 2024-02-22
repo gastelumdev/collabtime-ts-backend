@@ -282,7 +282,7 @@ const sendCriticalRowEmail = async (row: IRow) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
-
+    console.log("Row updated" + req.body._id)
 
     try {
         const row: any = await Row.findOne({ _id: req.params.id });
@@ -349,7 +349,9 @@ export const updateRow = async (req: Request, res: Response) => {
         let blankRows: any = [];
 
         if (isLastRow) {
-            blankRows = await addBlankRows(row, dataCollection, noteCreator, 10);
+            console.log("LAST ROW")
+            blankRows = await addBlankRows(req.body, dataCollection, noteCreator, 10);
+            console.log({ blankRows })
         }
 
         res.send(blankRows)

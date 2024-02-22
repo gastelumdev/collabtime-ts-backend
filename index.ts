@@ -180,16 +180,19 @@ const changeAllRows = async () => {
       const r: any = await Row.findById(row._id);
       r.isParent = false;
       r.parentRowId = null;
+      r.isVisible = true;
+      r.showSubrows = true;
       r.save();
       console.log(r.isParent, r.parentRowId, r.position)
     }
   }
 }
 
-// changeAllRows();
+// changeAllRows()
+// convertRowCells()
 
 // updateUsers()
-// convertRowCells()
+
 // addValues()
 
 app.use(bodyparser.urlencoded({ extended: false }));
