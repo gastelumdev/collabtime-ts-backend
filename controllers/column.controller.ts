@@ -155,13 +155,13 @@ export const deleteColumn = async (req: Request, res: Response) => {
     try {
 
 
-        const column = await Column.findOne({ _id: req?.params.id });
-        console.log(column);
+        const column = await Column.findOne({ name: req?.body.name });
+        console.log({ column });
         const name: any = column?.name;
         const dataCollection = column?.dataCollection;
         const { dataCollectionId } = req.params;
 
-        await Column.findByIdAndDelete({ _id: req?.params.id });
+        await Column.findByIdAndDelete(column?._id);
 
         // const cellsInThisColumn = await Cell.find({ name: name, dataCollection: dataCollection });
         const rows = await Row.find({ dataCollection: dataCollectionId });
@@ -172,7 +172,7 @@ export const deleteColumn = async (req: Request, res: Response) => {
             delete values[name];
             row.values = values;
             // console.log(row.values)
-            await Row.findByIdAndUpdate({ _id: row._id }, row);
+            await Row.findByIdAndUpdate({ _id: row._id }, row)
         }
         res.send({ success: true });
     } catch (error) {
