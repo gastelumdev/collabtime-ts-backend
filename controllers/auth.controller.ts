@@ -126,7 +126,10 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const user = await User.findById({ _id: req.body.userId });
 
     try {
-        sendEmail({ email: user?.email || "", subject: "Password Reset Successfully", payload: { name: user?.firstname || "" }, template: "./template/resetPassword.handlebars", res }, (res: Response) => res.send({ success: true }));
+        sendEmail({ email: user?.email || "", subject: "Password Reset Successfully", payload: { name: user?.firstname || "" }, template: "./template/resetPassword.handlebars", res }, (res: Response) => {
+            io.emit("passwordReset", { userId: user?._id, message: "Password Reset Successfully" })
+            res.send({ success: true });
+        });
     } catch (error) {
         res.status(500).send({ success: false })
     }
