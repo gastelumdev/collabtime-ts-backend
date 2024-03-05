@@ -10,6 +10,7 @@ const columnSchema: Schema<IColumnDocument> = new Schema({
     permanent: { type: Boolean },
     people: { type: [] },
     labels: { type: [] },
+    dataCollectionRef: { type: {} },
     includeInForm: { type: Boolean },
     includeInExport: { type: Boolean },
     createdAt: { type: Date, default: Date.now },

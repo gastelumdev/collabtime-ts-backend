@@ -14,6 +14,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     complete: { type: Boolean, default: false },
     acknowledged: { type: Boolean, default: false },
     values: { type: {} },
+    refs: { type: {}, default: {} },
     position: { type: Number },
     docs: { type: [], default: [] },
     isParent: { type: Boolean, default: false },

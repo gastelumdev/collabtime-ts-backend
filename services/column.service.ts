@@ -14,6 +14,7 @@ export interface IColumn {
     permanent: boolean;
     people?: string[];
     labels?: TLabel[];
+    dataCollectionRef?: any;
     includeInForm: boolean;
     includeInExport: boolean;
     createdAt: Date;

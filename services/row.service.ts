@@ -26,6 +26,7 @@ export interface IRow {
     complete: boolean;
     acknowledged: boolean;
     values: any;
+    refs: any;
     position: number;
     docs: IDocument[];
     isParent: boolean;

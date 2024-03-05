@@ -16,6 +16,7 @@ import { IRow } from "../services/row.service";
 export const getRows = async (req: Request, res: Response) => {
 
     try {
+        console.log(req.params.workspaceId)
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
@@ -41,6 +42,16 @@ export const getRows = async (req: Request, res: Response) => {
     } catch (error) {
         console.log(error)
         res.status(400).send({ success: false })
+    }
+}
+
+export const getRow = async (req: Request, res: Response) => {
+    try {
+        const row = await Row.findOne({ _id: req.params.rowId });
+
+        res.send(row);
+    } catch (error) {
+        res.status(400).send({ success: false });
     }
 }
 
@@ -203,6 +214,8 @@ export const createRow = async (req: Request, res: Response) => {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const columns = await Column.find({ dataCollection: dataCollection?._id });
 
+        console.log({ body: req.body })
+
         let values: any = {};
 
         for (const column of columns) {
@@ -282,7 +295,7 @@ const sendCriticalRowEmail = async (row: IRow) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
-    console.log("Row updated" + req.body._id)
+    console.log({ body: req.body, rowId: req.params.id })
 
     try {
         const row: any = await Row.findOne({ _id: req.params.id });
@@ -556,6 +569,86 @@ export const getTotalRows = async (req: Request, res: Response) => {
         res.send(pages);
     } catch (error) {
         res.status(400).send({ success: false });
+    }
+}
+
+export const getFormData = async (req: Request, res: Response) => {
+    try {
+        const { dataCollectionId } = req.params;
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionId })
+        const rows = await Row.find({ dataCollection: dataCollectionId });
+        const columns = await Column.find({ dataCollection: dataCollectionId });
+
+        let emptyRow: any;
+
+        for (const row of rows) {
+            let isEmpty = true;
+            for (const column of columns) {
+                if (row.values[column.name] !== "") {
+                    isEmpty = false;
+                    break;
+                }
+            }
+
+            if (isEmpty) {
+                emptyRow = row;
+                break;
+            }
+        }
+
+        emptyRow.dataCollection = dataCollection;
+
+        res.send({ columns, row: emptyRow, rows, dataCollection });
+
+
+    } catch (error) {
+        res.send({ success: false })
+    }
+
+
+}
+
+export const updateFormData = async (req: Request, res: Response) => {
+    try {
+        const row = await Row.findOne({ _id: req.body._id });
+        const columns = await Column.find({ dataCollection: row?.dataCollection });
+
+        let isEmpty = true;
+
+        for (const column of columns) {
+            if (row?.values[column.name] !== "") {
+                isEmpty = false;
+                break;
+            }
+        }
+
+        if (!isEmpty) {
+            const rows = await Row.find({ dataCollection: row?.dataCollection });
+
+            let emptyRow: any;
+
+            for (const row of rows) {
+                let isEmpty = true;
+                for (const column of columns) {
+                    if (row.values[column.name] !== "") {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+
+                if (isEmpty) {
+                    req.body._id = row._id;
+                    break;
+                }
+            }
+        }
+        console.log({ body: req.body })
+        const newRow = await Row.findByIdAndUpdate(req.body._id, { $set: { values: req.body.values, refs: req.body.refs } }, { new: true });
+        console.log({ newRow })
+        res.send(newRow);
+
+    } catch (error) {
+        res.send({ success: false })
     }
 }
 
