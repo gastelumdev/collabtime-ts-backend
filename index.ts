@@ -35,6 +35,7 @@ import Cell from './models/cell.models';
 import setReminders from './utils/setReminders';
 import Column from './models/column.model';
 import { addValues, convertRowCells, fullfillMissingRows } from './utils/helpers';
+import Notification from './models/notification.model';
 
 // fullfillMissingRows();
 
@@ -143,7 +144,12 @@ const updateRowAcknowledgements = async () => {
 
 // JOB SCHEDULES *********************************************************
 
-
+const deleteOldNotifications = async () => {
+  let today = new Date();
+  let priorDate = new Date(new Date().setDate(today.getDate() - 30));
+  console.log(priorDate.toISOString().split("T")[0])
+  await Notification.deleteMany({ "createdAt": { $lt: priorDate.toISOString().split("T")[0] } });
+}
 
 if (process.env.APP_ENVIRONMENT === "production") {
 
@@ -157,6 +163,10 @@ if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0,15,30,45 * * * *", () => {
     setCrititcalReminders()
+  })
+
+  cron.schedule("0 0 0 * * *", () => {
+    deleteOldNotifications()
   })
 }
 
