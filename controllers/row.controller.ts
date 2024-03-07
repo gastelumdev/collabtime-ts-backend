@@ -353,9 +353,23 @@ export const updateRow = async (req: Request, res: Response) => {
                 console.log("Email sent");
             })
         }
+
+        if (!row?.completed && row?.values["status"] !== undefined) {
+            if (row?.values["status"] !== req.body.values["status"]) {
+                if (req.body.values["status"] === "Done") {
+                    console.log("DONE")
+                    req.body.complete = true;
+                } else {
+                    req.body.complete = false;
+                }
+            }
+        }
+
         if (req.body.createdBy === null) {
             req.body.createdBy = noteCreator?._id
         }
+
+        console.log({ body: req.body })
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 

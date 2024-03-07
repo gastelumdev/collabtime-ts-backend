@@ -138,6 +138,27 @@ const updateRowAcknowledgements = async () => {
   }
 }
 
+const updateCompleted = async () => {
+  const dataCollections = await DataCollection.find({});
+
+  for (const dataCollection of dataCollections) {
+    const rows = await Row.find({ dataCollection: dataCollection._id });
+
+    for (const row of rows) {
+      if (!row.complete) {
+        if (row.values["status"] !== undefined && row.values["status"] === "Done") {
+          row.complete = true;
+        }
+      }
+
+      const newRow: any = await Row.findByIdAndUpdate(row._id, { $set: { complete: row.complete } }, { new: true });
+      console.log(newRow.complete);
+    }
+  }
+}
+
+// updateCompleted()
+
 // updateRowAcknowledgements();
 
 // setCrititcalReminders()
