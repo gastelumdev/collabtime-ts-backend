@@ -148,6 +148,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
             permanent: initialColumnFromUser.permanent,
             people: initialColumnFromUser.people,
             labels: initialColumnFromUser.labels,
+            dataCollectionRef: initialColumnFromUser.dataCollectionRef,
             includeInForm: initialColumnFromUser.includeInForm,
             includeInExport: initialColumnFromUser.includeInExport
         });
@@ -196,7 +197,7 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
         res.send({ success: true });
     } catch (error) {
         console.log(error)
-        res.status(400).send({ success: false })
+        res.status(400).send({ success: false });
     }
 
 }

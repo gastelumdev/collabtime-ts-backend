@@ -19,7 +19,7 @@ interface IPayload {
 }
 
 const sendEmail = async ({ email, subject, payload, template, res }: IProps, cb: any) => {
-  console.log(email)
+  console.log({ email })
   try {
     // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
@@ -31,7 +31,7 @@ const sendEmail = async ({ email, subject, payload, template, res }: IProps, cb:
       },
     });
 
-    console.log(email, subject, payload, template)
+    console.log(email, subject, payload, template);
 
     const source = fs.readFileSync(path.join(path.resolve() + "/utils", template), "utf8");
     const compiledTemplate = handlebars.compile(source);
@@ -59,7 +59,7 @@ const sendEmail = async ({ email, subject, payload, template, res }: IProps, cb:
 
 
   } catch (error) {
-    console.log(error);
+    console.log(error)
   }
 };
 
