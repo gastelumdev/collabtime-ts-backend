@@ -302,14 +302,44 @@ export const updateRow = async (req: Request, res: Response) => {
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
         const noteCreator = await User.findOne({ _id: (<any>req).user._id });
+        const columns: any = await Column.find({ dataCollection: dataCollection?._id, position: 1 })
 
-        // console.log({ newRow: req.body, prevRow: row })
+        const columnName = columns[0].name;
+
+
+        if (row.values[columnName] !== req.body.values[columnName]) {
+            const dataCollections = await DataCollection.find({ workspace: workspace?._id });
+
+            for (const dc of dataCollections) {
+                const rows = await Row.find({ dataCollection: dc._id });
+
+                for (const r of rows) {
+                    const refs = r.refs;
+                    let modify = false;
+
+                    for (const key in refs) {
+                        for (const i in refs[key]) {
+                            console.log({ rowId: row._id.toString(), refId: refs[key][i]._id })
+                            if (row._id.toString() === refs[key][i]._id) {
+                                // modifiedRef = { ...refs[key][i], values: { ...refs[key][i].values, [columnName]: req.body.values[columnName] } }
+                                r.refs[key][i] = req.body;
+                                modify = true;
+                            }
+                        }
+                    }
+
+                    if (modify) {
+                        console.log(r.refs["objective"][0].values)
+                        const newRow = await Row.findByIdAndUpdate(r._id, r, { new: true });
+                        console.log(newRow?.refs["objective"][0].values)
+                    }
+
+                }
+            }
+        }
 
         if ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"])) {
             const email = req.body.values["assigned_to"].split(" - ")[1];
-
-
-            console.log("Email is not blank, it is " + email)
             const user = await User.findOne({ email: email });
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
             io.emit("update row", { message: "" });
@@ -357,7 +387,6 @@ export const updateRow = async (req: Request, res: Response) => {
         if (!row?.completed && row?.values["status"] !== undefined) {
             if (row?.values["status"] !== req.body.values["status"]) {
                 if (req.body.values["status"] === "Done") {
-                    console.log("DONE")
                     req.body.complete = true;
                 } else {
                     req.body.complete = false;
@@ -369,16 +398,14 @@ export const updateRow = async (req: Request, res: Response) => {
             req.body.createdBy = noteCreator?._id
         }
 
-        console.log({ body: req.body })
+
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 
         let blankRows: any = [];
 
         if (isLastRow) {
-            console.log("LAST ROW")
             blankRows = await addBlankRows(req.body, dataCollection, noteCreator, 10);
-            console.log({ blankRows })
         }
 
         res.send(blankRows)
