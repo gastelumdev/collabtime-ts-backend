@@ -338,8 +338,10 @@ export const updateRow = async (req: Request, res: Response) => {
             }
         }
 
-        if ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"])) {
+        if (req.body.values["assigned_to"] && ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"]))) {
+            console.log("IN PRIORITY")
             const email = req.body.values["assigned_to"].split(" - ")[1];
+            console.log("AFTER FIRST SPLIT")
             const user = await User.findOne({ email: email });
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
             io.emit("update row", { message: "" });
@@ -362,7 +364,7 @@ export const updateRow = async (req: Request, res: Response) => {
                     priority: "Low",
                     read: false,
                 })
-                notification.save();
+                notification.save()
             }
         }
 
