@@ -157,6 +157,27 @@ const updateCompleted = async () => {
   }
 }
 
+const resetHiddenRows = async () => {
+  const dataCollections = await DataCollection.find({});
+
+  for (const dataCollection of dataCollections) {
+    const rows = await Row.find({ dataCollection: dataCollection._id });
+
+    for (const row of rows) {
+      if (!row.isVisible) {
+        row.isVisible = true;
+
+        const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
+        console.log(newRow);
+      }
+
+    }
+  }
+
+}
+
+// resetHiddenRows()
+
 // updateCompleted()
 
 // updateRowAcknowledgements();
