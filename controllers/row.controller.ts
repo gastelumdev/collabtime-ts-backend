@@ -406,9 +406,13 @@ export const updateRow = async (req: Request, res: Response) => {
 
         let blankRows: any = [];
 
+
+
         if (isLastRow) {
             blankRows = await addBlankRows(req.body, dataCollection, noteCreator, 10);
         }
+
+        console.log({ blankRows })
 
         res.send(blankRows)
     } catch (error) {
