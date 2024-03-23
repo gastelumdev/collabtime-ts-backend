@@ -390,8 +390,24 @@ export const updateRow = async (req: Request, res: Response) => {
             if (row?.values["status"] !== req.body.values["status"]) {
                 if (req.body.values["status"] === "Done") {
                     req.body.complete = true;
+
+                    const rows = await Row.find({ parentRowId: req.body._id });
+                    for (const row of rows) {
+                        row.complete = true;
+
+                        const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
+                        console.log(newRow);
+                    }
                 } else {
                     req.body.complete = false;
+
+                    const rows = await Row.find({ parentRowId: req.body._id });
+                    for (const row of rows) {
+                        row.complete = false;
+
+                        const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
+                        console.log(newRow);
+                    }
                 }
             }
         }
