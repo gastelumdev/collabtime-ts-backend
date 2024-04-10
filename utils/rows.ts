@@ -73,3 +73,22 @@ export const rowIsEmpty = (row: IRow) => {
 
     return isEmpty;
 }
+
+/**
+ * 
+ * @param rows 
+ * @returns {IRow}
+ * 
+ * Function goes though all the rows and returns the last non empty row
+ */
+export const lastNonEmptyRow = (rows: IRow[]) => {
+    let targetRow: IRow | null = null;
+
+    for (const currentRow of rows) {
+        if (!rowIsEmpty(currentRow)) {
+            targetRow = currentRow;
+        }
+    }
+
+    return targetRow;
+}
