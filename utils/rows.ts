@@ -1,5 +1,6 @@
 import Column from "../models/column.model";
 import Row from "../models/row.models";
+import { IRow } from "../services/row.service";
 
 export const checkIfLastRow = async (row: any) => {
     const rows = await Row.find({ dataCollection: row.dataCollection }).sort({ position: 1 });
@@ -51,4 +52,24 @@ export const addBlankRows = async (row: any, dataCollection: any, user: any, cou
     }
 
     return newRows;
+}
+
+/**
+ * 
+ * @param row 
+ * @returns {boolean}
+ * 
+ * Function goes through each value of a row and returns false if there is a value that is not empty.
+ */
+export const rowIsEmpty = (row: IRow) => {
+    let isEmpty: boolean = true;
+    const values: any = row.values;
+
+    for (const key in values) {
+        if (row.values[key] !== "") {
+            isEmpty = false;
+        }
+    }
+
+    return isEmpty;
 }
