@@ -4,51 +4,38 @@ import { IRow } from "../services/row.service";
 
 export const checkIfLastRow = async (row: any) => {
     const rows = await Row.find({ dataCollection: row.dataCollection }).sort({ position: 1 });
-    console.log(rows[rows.length - 1]._id.toString(), row._id.toString())
+
+    // if the id of the last row in the list is the same as the row being passed in
+    // return true else return false
     if (rows[rows.length - 1]._id.toString() === row._id.toString()) {
         return true;
     }
     return false;
 }
 
-export const addBlankRows = async (row: any, dataCollection: any, user: any, count: number) => {
+export const addBlankRows = async (dataCollection: any, user: any, count: number, lastRowPosition: number) => {
     const columns = await Column.find({ dataCollection: dataCollection?._id })
 
+    // This object will contain all the columns as keys with empty values
     const emptyRowValues: any = {};
-
     for (const column of columns) {
         emptyRowValues[column.name] = "";
     }
 
-    const lastRowValues = row?.values;
-    let lastRowPosition: any = row?.position;
-
-    let numberOfValues = 0;
-
-    for (const key in lastRowValues) {
-        console.log({ values: lastRowValues[key] })
-        if (lastRowValues[key] !== '') {
-            numberOfValues++;
-        }
-    }
-
     const newRows = []
+    for (let i = 1; i <= count; i++) {
+        console.log({ i })
+        lastRowPosition = lastRowPosition + 1;
+        const newRow = new Row({
+            dataCollection: dataCollection?._id,
+            position: lastRowPosition,
+            values: emptyRowValues,
+            createdBy: user?._id
+        })
 
-    if (numberOfValues >= 1) {
-        for (let i = 1; i <= count; i++) {
-            console.log({ i })
-            lastRowPosition = lastRowPosition + 1;
-            const newRow = new Row({
-                dataCollection: dataCollection?._id,
-                position: lastRowPosition,
-                values: emptyRowValues,
-                createdBy: user?._id
-            })
+        newRows.push(newRow)
 
-            newRows.push(newRow)
-
-            newRow.save();
-        }
+        newRow.save();
     }
 
     return newRows;
