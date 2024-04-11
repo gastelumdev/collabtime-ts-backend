@@ -249,12 +249,30 @@ export const updateRow = async (req: Request, res: Response) => {
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 
+
+
         let blankRows: any = [];
 
-
-
         if (isLastRow) {
-            blankRows = await addBlankRows(req.body, dataCollection, noteCreator, 10);
+
+            // Get the values and the position of the row passed in which is the last row in the list
+            const lastRowValues = req.body.values;
+            let lastRowPosition: any = req.body.position;
+
+            // Way to keep track of how many non empty values there is
+            let numberOfValues = 0;
+
+            // if any of the last row's values are not empty increase the number of values
+            for (const key in lastRowValues) {
+                console.log({ values: lastRowValues[key] })
+                if (lastRowValues[key] !== '') {
+                    numberOfValues++;
+                }
+            }
+            if (numberOfValues >= 1) {
+                blankRows = await addBlankRows(dataCollection, noteCreator, 10, lastRowPosition);
+            }
+
         }
 
         res.send(blankRows)
