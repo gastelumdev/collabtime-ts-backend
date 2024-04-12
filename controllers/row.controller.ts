@@ -313,6 +313,23 @@ export const deleteRows = async (req: Request, res: Response) => {
     }
 }
 
+export const getBlankRows = async (req: Request, res: Response) => {
+    try {
+        const { dataColletionId } = req.params;
+
+        const dataCollection = await DataCollection.findOne({ _id: dataColletionId });
+        const totalNumberOfRows = await Row.count();
+        const user = await User.findOne({ _id: (<any>req).user._id });
+        const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
+
+        const blankRows = addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
+
+        res.send(blankRows)
+    } catch (error) {
+        res.status(400).send({ success: false })
+    }
+}
+
 export const migrateRows = async (req: Request, res: Response) => {
     try {
         const rows = await Row.find({});
