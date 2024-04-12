@@ -17,7 +17,7 @@ router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/rows/reo
 router.get("/workspaces/:workspaceId/dataCollections/:dataCollectionId/getTotalRows", verifyToken, rowController.getTotalRows);
 router.get("/dataCollections/:dataCollectionId/form", rowController.getFormData);
 router.post("/dataCollections/:dataCollectionId/form", rowController.updateFormData)
-router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/getBlankRows", verifyToken, () => { })
+router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/getBlankRows", verifyToken, rowController.getBlankRows)
 // router.post("/migrateRows", rowController.migrateRows);
 // router.post("/addReminder", rowController.addReminder);
 
