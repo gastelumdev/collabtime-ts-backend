@@ -314,6 +314,7 @@ export const deleteRows = async (req: Request, res: Response) => {
 }
 
 export const getBlankRows = async (req: Request, res: Response) => {
+    console.log(req.body)
     try {
         const { dataColletionId } = req.params;
 
@@ -321,6 +322,7 @@ export const getBlankRows = async (req: Request, res: Response) => {
         const totalNumberOfRows = await Row.count();
         const user = await User.findOne({ _id: (<any>req).user._id });
         const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
+
 
         const blankRows = addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
 
