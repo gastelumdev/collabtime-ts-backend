@@ -316,15 +316,19 @@ export const deleteRows = async (req: Request, res: Response) => {
 export const getBlankRows = async (req: Request, res: Response) => {
     console.log(req.body)
     try {
-        const { dataColletionId } = req.params;
+        const { dataCollectionId, numberOfRowsToCreate } = req.body;
 
-        const dataCollection = await DataCollection.findOne({ _id: dataColletionId });
-        const totalNumberOfRows = await Row.count();
+        console.log({ params: req.params })
+
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
+        const totalNumberOfRows = await Row.count({ dataCollection: dataCollectionId });
         const user = await User.findOne({ _id: (<any>req).user._id });
-        const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
+        // const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
 
 
-        const blankRows = addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
+        const blankRows = await addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
+
+        console.log(blankRows)
 
         res.send(blankRows)
     } catch (error) {
