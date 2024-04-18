@@ -34,7 +34,6 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
         })
 
         newRows.push(newRow)
-        console.log(newRow)
         newRow.save();
     }
 
