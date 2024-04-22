@@ -16,7 +16,7 @@ export interface INote {
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[] | TCell[];
-    assignedTo: Schema.Types.ObjectId | String;
+    assignedTo: Schema.Types.ObjectId | String | null;
     createdBy: Schema.Types.ObjectId | string;
     notes: string;
     notesList: INote[];
