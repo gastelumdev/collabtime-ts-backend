@@ -177,6 +177,11 @@ export const updateRow = async (req: Request, res: Response) => {
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
             io.emit("update row", { message: "" });
 
+            row.assignedTo = user?._id.toString();
+            const newRow = await Row.findByIdAndUpdate(row._id, { $set: { assignedTo: user?._id.toString() } }, { new: true });
+            newRow?.save()
+            console.log({ newRow, userId: user?._id.toString() })
+
             sendCriticalRowEmail(req.body);
         }
 
