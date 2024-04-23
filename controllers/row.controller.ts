@@ -506,7 +506,7 @@ export const getFormData = async (req: Request, res: Response) => {
     try {
         const { dataCollectionId } = req.params;
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionId })
-        const rows = await Row.find({ dataCollection: dataCollectionId });
+        const rows = await Row.find({ dataCollection: dataCollectionId }).sort({ position: 1 });
         const columns = await Column.find({ dataCollection: dataCollectionId });
 
         let emptyRow: any;
@@ -524,9 +524,13 @@ export const getFormData = async (req: Request, res: Response) => {
                 emptyRow = row;
                 break;
             }
+
+            console.log({ nonEmptyRow: row })
         }
 
         emptyRow.dataCollection = dataCollection;
+
+        console.log(emptyRow);
 
         res.send({ columns, row: emptyRow, rows, dataCollection });
 
