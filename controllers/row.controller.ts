@@ -141,6 +141,7 @@ export const updateRow = async (req: Request, res: Response) => {
 
         const columnName = columns[0].name;
 
+        console.log({ location: "Before Update" })
 
         if (row.values[columnName] !== req.body.values[columnName]) {
             const dataCollections = await DataCollection.find({ workspace: workspace?._id });
@@ -251,10 +252,12 @@ export const updateRow = async (req: Request, res: Response) => {
         }
 
 
+
+
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 
-
+        console.log({ location: "After Update" })
 
         let blankRows: any = [];
 
