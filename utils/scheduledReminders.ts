@@ -17,7 +17,7 @@ const scheduleReminders = async () => {
                     const now = new Date();
 
                     console.log({ reminder: reminderDate.getTime(), now: now.getTime() })
-                    if (reminderDate.getTime() < now.getTime()) {
+                    if (reminderDate.getTime() > now.getTime()) {
                         console.log("Send email")
                         if (row.values.assigned_to !== undefined) {
                             const email = row.values.assigned_to.split(" - ")[1];
@@ -33,6 +33,7 @@ const scheduleReminders = async () => {
                                 });
 
                                 console.log({ newReminders });
+                                console.log({ columnName: column?.name })
 
                                 // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
                                 const newRow: any = await Row.findById(row._id);
