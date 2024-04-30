@@ -34,7 +34,11 @@ const scheduleReminders = async () => {
 
                                 console.log({ newReminders });
 
-                                const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
+                                // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
+                                const newRow: any = await Row.findById(row._id);
+                                newRow.reminders = newReminders;
+
+                                newRow.save();
                                 console.log({ newRow })
                             })
                         }
