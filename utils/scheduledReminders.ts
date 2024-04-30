@@ -4,10 +4,11 @@ import Row from "../models/row.models"
 import sendEmail from "./sendEmail";
 
 const scheduleReminders = async () => {
+    console.log("Running Scheduled Reminders")
     try {
-        const rows = await Row.find({ reminders: { $not: { $size: 0 } } });
+        const rows = await Row.find({ reminders: { $exists: true, $ne: [] } });
 
-
+        console.log(rows)
         for (const row of rows) {
             const column = await Column.findOne({ dataCollection: row.dataCollection, position: 1 });
             if (row.reminders.length > 0) {
