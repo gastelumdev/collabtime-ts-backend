@@ -211,10 +211,10 @@ if (process.env.APP_ENVIRONMENT === "production") {
     setReminders()
   })
 
-  cron.schedule("0 * * * * *", () => {
-    console.log("Another minute by")
-    scheduledReminders();
-  })
+  // cron.schedule("0 * * * * *", () => {
+  //   console.log("Another minute by")
+  //   scheduledReminders();
+  // })
 
   cron.schedule("0 0,15,30,45 * * * *", () => {
     setCrititcalReminders()
