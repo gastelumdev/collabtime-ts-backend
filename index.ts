@@ -196,10 +196,10 @@ const deleteOldNotifications = async () => {
 
 // scheduledReminders();
 
-// cron.schedule("0 * * * * *", () => {
-//   console.log("Another minute by")
-//   scheduledReminders();
-// })
+cron.schedule("0 * * * * *", () => {
+  console.log("Another minute by")
+  scheduledReminders();
+})
 
 if (process.env.APP_ENVIRONMENT === "production") {
 
