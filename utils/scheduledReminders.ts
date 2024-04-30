@@ -1,4 +1,5 @@
 import User from "../models/auth.model";
+import Column from "../models/column.model";
 import Row from "../models/row.models"
 import sendEmail from "./sendEmail";
 
@@ -6,7 +7,9 @@ const scheduleReminders = async () => {
     try {
         const rows = await Row.find({});
 
+
         for (const row of rows) {
+            const column = await Column.findOne({ dataCollection: row.dataCollection, position: 1 });
             if (row.reminders.length > 0) {
                 for (const reminder of row.reminders) {
                     const reminderDate = new Date(reminder);
@@ -21,7 +24,7 @@ const scheduleReminders = async () => {
                             sendEmail({
                                 email,
                                 subject: `Collabtime Reminder`,
-                                payload: { name: row.values.task },
+                                payload: { name: row.values[column?.name as string] },
                                 template: "./template/singleReminder.handlebars"
                             }, async (res: Response) => {
                                 const newReminders = row.reminders.filter((rem) => {
