@@ -25,16 +25,17 @@ const scheduleReminders = async () => {
                             sendEmail({
                                 email,
                                 subject: `Collabtime Reminder`,
-                                payload: { name: row.values[column?.name as string] },
+                                payload: { name: row.values[column?.name as string], reminder: reminder.split("T").join(" ") },
                                 template: "./template/singleReminder.handlebars"
                             }, async (res: Response) => {
                                 const newReminders = row.reminders.filter((rem) => {
                                     return rem !== reminder;
                                 });
 
-                                console.log(newReminders);
+                                console.log({ newReminders });
 
-                                await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
+                                const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
+                                console.log({ newRow })
                             })
                         }
                     }
