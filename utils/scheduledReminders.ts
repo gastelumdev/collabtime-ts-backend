@@ -5,7 +5,7 @@ import sendEmail from "./sendEmail";
 
 const scheduleReminders = async () => {
     try {
-        const rows = await Row.find({});
+        const rows = await Row.find({ reminders: { $not: { $size: 0 } } });
 
 
         for (const row of rows) {
