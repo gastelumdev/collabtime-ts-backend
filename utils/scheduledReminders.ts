@@ -3,6 +3,34 @@ import Column from "../models/column.model";
 import Row from "../models/row.models"
 import sendEmail from "./sendEmail";
 
+const checkDates = (reminder: string) => {
+    const reminderDate = reminder.split("T")[0]
+    const reminderTime = reminder.split("T")[1]
+    const reminderHours = Number(reminderTime.split(":")[0])
+    const reminderMinutes = Number(reminderTime.split(":")[1])
+    const reminderSeconds = ((reminderHours * 60) * 60) + (reminderMinutes * 60)
+
+    const now = new Date();
+    const nowDate = now.toISOString().slice(0, 16).split("T")[0]
+    const nowTime = now.toISOString().slice(0, 16).split("T")[1]
+    const nowHours = Number(nowTime.split(":")[0]);
+    const nowMinutes = Number(nowTime.split(":")[1]);
+    const nowSeconds = ((nowHours * 60) * 60) + (nowMinutes * 60)
+
+    console.log({ reminderDate, nowDate: now.toISOString() })
+    console.log({ nowSeconds, reminderSeconds })
+
+    if (reminderDate === nowDate) {
+        console.log("TODAY IS THE DAY.");
+        if (nowSeconds > reminderSeconds) {
+            return true;
+        }
+    }
+
+    return false;
+
+}
+
 const scheduleReminders = async () => {
     console.log("Running Scheduled Reminders")
     try {
@@ -16,8 +44,10 @@ const scheduleReminders = async () => {
                     const reminderDate = new Date(reminder);
                     const now = new Date();
 
+                    console.log(checkDates(reminder));
+
                     console.log({ reminder: reminderDate.getTime(), now: now.getTime() })
-                    if (reminderDate.getTime() < now.getTime()) {
+                    if (checkDates(reminder)) {
                         console.log("Send email")
                         if (row.values.assigned_to !== undefined) {
                             const email = row.values.assigned_to.split(" - ")[1];
@@ -33,7 +63,7 @@ const scheduleReminders = async () => {
                                 });
 
                                 console.log({ newReminders });
-                                console.log({ columnName: column?.name })
+                                console.log({ columnName: column?.name });
 
                                 // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
                                 const newRow: any = await Row.findById(row._id);
