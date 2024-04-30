@@ -23,6 +23,7 @@ export interface IRow {
     createdAt: Date;
     tags: ITag[];
     reminder: boolean;
+    reminders: string[];
     complete: boolean;
     acknowledged: boolean;
     values: any;
