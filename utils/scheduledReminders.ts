@@ -15,7 +15,7 @@ const checkDates = (reminder: string) => {
     const nowTime = now.toISOString().slice(0, 16).split("T")[1]
     const nowHours = Number(nowTime.split(":")[0]);
     const nowMinutes = Number(nowTime.split(":")[1]);
-    const nowSeconds = ((nowHours * 60) * 60) + (nowMinutes * 60)
+    const nowSeconds = (((nowHours - 7) * 60) * 60) + (nowMinutes * 60)
 
     console.log({ reminder, nowDate: now.toISOString() })
     console.log({ nowSeconds, reminderSeconds })
