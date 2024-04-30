@@ -22,7 +22,7 @@ const checkDates = (reminder: string) => {
 
     if (reminderDate === nowDate) {
         console.log("TODAY IS THE DAY.");
-        if (nowSeconds > reminderSeconds) {
+        if (nowSeconds >= reminderSeconds) {
             return true;
         }
     }
