@@ -8,7 +8,7 @@ import { ICell } from "../services/cell.service";
 import { TCell, TUser } from "../types";
 import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
-import { io } from "../socketServer";
+import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
 import { IRow } from "../services/row.service";
