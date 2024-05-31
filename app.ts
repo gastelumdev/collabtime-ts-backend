@@ -17,7 +17,7 @@ import searchRouter from "./routes/search.routes";
 import tagRouter from "./routes/tag.routes";
 import messageRouter from "./routes/message.routes";
 
-const app: Express = express();
+const app: any = express();
 
 const corsOptions = {
     origin: process.env.CORS_URL
