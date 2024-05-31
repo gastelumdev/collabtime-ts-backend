@@ -8,7 +8,7 @@ import User from "../models/auth.model"
 import Token from '../models/token.model';
 import Notification from '../models/notification.model';
 import sendEmail from '../utils/sendEmail';
-import { io } from "../socketServer";
+import { io } from "../index";
 
 export const register = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });

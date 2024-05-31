@@ -45,4 +45,4 @@ app.use(searchRouter);
 app.use(tagRouter);
 app.use(messageRouter);
 
-export default http.createServer(app);
+export default app;

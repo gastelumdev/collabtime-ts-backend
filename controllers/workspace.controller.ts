@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { IUser, IUserWorkspace } from "../services/auth.service"
 import { TInvitee, TUser, TWorkspace } from "../types"
-import { io } from "../socketServer";
+import { io } from "../index";
 import DataCollection from "../models/dataCollection.model";
 import Cell from "../models/cell.models";
 import Row from "../models/row.models";
@@ -28,7 +28,8 @@ export const getWorkspaces = async (req: Request, res: Response) => {
 
 export const createWorkspace = async (req: Request, res: Response) => {
     try {
-        const user = await User.findOne({ _id: (<any>req).user._id });
+        // const user = await User.findOne({ _id: (<any>req).user._id });
+        const user = (<any>req).user;
         const workspace = new Workspace({ ...(req.body), owner: (<any>req).user._id });
 
         workspace.members.push({ email: user?.email as string, permissions: 2 });

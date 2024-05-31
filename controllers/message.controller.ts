@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Message from "../models/message.model";
 import User from "../models/auth.model";
 import Workspace from "../models/workspace.model";
-import { io } from "../socketServer";
+import { io } from "../index";
 
 export const getMessages = async (req: Request, res: Response) => {
     try {
