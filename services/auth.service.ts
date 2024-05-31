@@ -1,4 +1,5 @@
 import { Document, Model } from "mongoose";
+import User from "../models/auth.model";
 
 export interface IUserWorkspace {
     id: string;

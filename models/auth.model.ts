@@ -32,5 +32,8 @@ const User = model<IUserDocument, IUserModel>("users", userSchema);
 
 export default User;
 
-console.log(User)
+export const getUserById = async (id: string) => {
+    const user = await User.findById(id);
+    return user;
+}
 

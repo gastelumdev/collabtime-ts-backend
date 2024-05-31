@@ -45,7 +45,7 @@ const uuid = uuidv1();
 
 dotenv.config();
 
-const app: Express = express();
+// const app: Express = express();
 
 const port = process.env.PORT;
 const db_uri = process.env.MONGODB_URI;
@@ -247,52 +247,47 @@ const changeAllRows = async () => {
 
 // addValues()
 
-app.use(bodyparser.urlencoded({ extended: false }));
-app.use(express.json());
-app.use(express.static("uploads"));
-app.use(cors(corsOptions));
+// app.use(bodyparser.urlencoded({ extended: false }));
+// app.use(express.json());
+// app.use(express.static("uploads"));
+// app.use(cors(corsOptions));
 
-app.get('/', (req: Request, res: Response) => {
-  res.send({ title: 'Express + TypeScript Server!' })
-});
+// app.get('/', (req: Request, res: Response) => {
+//   res.send({ title: 'Express + TypeScript Server!' })
+// });
 
 // uploadRouter.post("/upload", verifyToken, notesUpload.single("file"), uploadController.upload);
 uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.array("docs", 50), uploadController.uploadDoc);
 uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.array("docs", 50), uploadController.uploadPersistedDoc);
 
-app.use(authRouter);
-app.use(workspaceRouter);
-app.use(notificationRouter);
-app.use(dataCollectionRouter);
-app.use(columnRouter);
-app.use(rowRouter);
-app.use(cellRouter);
-app.use(uploadRouter);
-app.use(documentRouter);
-app.use(searchRouter);
-app.use(tagRouter);
-app.use(messageRouter);
+// app.use(authRouter);
+// app.use(workspaceRouter);
+// app.use(notificationRouter);
+// app.use(dataCollectionRouter);
+// app.use(columnRouter);
+// app.use(rowRouter);
+// app.use(cellRouter);
+// app.use(uploadRouter);
+// app.use(documentRouter);
+// app.use(searchRouter);
+// app.use(tagRouter);
+// app.use(messageRouter);
 
+// export default app;
 
-const server = http.createServer(app);
+import app from './app';
 
-export const io = new Server(server, { cors: { origin: process.env.CORS_URL } })
-
-io.on("connection", (socket) => {
-  socket.emit("con", { message: "a new client connected" })
-  console.log("Socket.io running")
-
-})
+// const server = http.createServer(app);
 
 
 
-server.listen(port, () => {
+app.listen(port, () => {
   console.log("[ws-server]: Server is running on port " + port)
   if (process.env.APP_ENVIRONMENT === "production") {
     const source = "/var/data/uploads/";
     const destination = "/opt/render/project/src/"
     sh(`mkdir -p ${destination}`);
-    sh(`cp -r ${source} ${destination}`)
+    sh(`cp -r ${source} ${destination}`);
   }
 })
 

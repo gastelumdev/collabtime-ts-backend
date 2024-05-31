@@ -1,71 +1,49 @@
 import { Request, Response } from "express"
 import Workspace from "../models/workspace.model"
-import User from "../models/auth.model"
+import User, { getUserById } from "../models/auth.model"
 import Notification from "../models/notification.model";
 import nodemailer from "nodemailer";
 import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
-import { IUser } from "../services/auth.service"
+import { IUser, IUserWorkspace } from "../services/auth.service"
 import { TInvitee, TUser, TWorkspace } from "../types"
-import { io } from "../index";
+import { io } from "../socketServer";
 import DataCollection from "../models/dataCollection.model";
 import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
 import sendEmail from "../utils/sendEmail";
-import { IWorkspace } from "../services/workspace.service";
+import { IWorkspace, getUserWorkspaces } from "../services/workspace.service";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
-    const user = await User.findOne({ _id: (<any>req).user._id });
-    const data = [];
-
-    io.emit("getWorkspaces-" + user?._id, { success: true })
-
-    if (user) {
-        try {
-            for (const userWorkspace of user.workspaces) {
-                const workspace = await Workspace.findOne({ _id: userWorkspace.id });
-                data.push(workspace);
-            }
-            console.log(data)
-            res.status(200).send(data);
-        } catch (err) {
-            console.log(err)
-            res.status(400).send({ success: false });
-        }
-
-    } else {
-        res.send({ success: false });
+    const user = await getUserById((<any>req).user._id as string);
+    try {
+        const data = await getUserWorkspaces(user?.workspaces as IUserWorkspace[]);
+        res.status(200).send(data);
+    } catch (err) {
+        res.status(400).send({ success: false });
     }
 }
 
 export const createWorkspace = async (req: Request, res: Response) => {
-    const user = await User.findOne({ _id: (<any>req).user._id });
-
-    if ((<any>req).user) {
+    try {
+        const user = await User.findOne({ _id: (<any>req).user._id });
         const workspace = new Workspace({ ...(req.body), owner: (<any>req).user._id });
 
-        if (workspace && user) {
-            workspace.members.push({ email: user.email, permissions: 2 });
+        workspace.members.push({ email: user?.email as string, permissions: 2 });
 
-            try {
-                await workspace.save();
-                const userWorkspaces = user.workspaces;
-                userWorkspaces.push({ id: workspace._id, permissions: 2 });
+        await workspace.save();
+        const userWorkspaces = user?.workspaces;
+        userWorkspaces?.push({ id: workspace._id, permissions: 2 });
 
-                await User.updateOne({ _id: (<any>req).user._id }, { $set: { workspaces: userWorkspaces } });
-                res.send(workspace);
-                io.emit("update", {});
+        await User.updateOne({ _id: (<any>req).user._id }, { $set: { workspaces: userWorkspaces } });
+        res.send(workspace);
+        io.emit("update", {});
 
-            } catch (error) {
-                res.status(400).send({ success: false, error: error });
-            }
-        }
-
-
+    } catch (error) {
+        res.status(400).send({ success: false, error: error });
     }
-
 }
 
 export const getOneWorkspace = async (req: Request, res: Response) => {

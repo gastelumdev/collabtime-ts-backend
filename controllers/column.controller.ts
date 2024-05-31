@@ -5,7 +5,7 @@ import Row from "../models/row.models";
 import Cell from "../models/cell.models";
 import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
-import { io } from "../index";
+import { io } from "../socketServer";
 
 export const getColumns = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Cell from "../models/cell.models";
 import User from "../models/auth.model";
-import { io } from "../index";
+import { io } from "../socketServer";
 import Notification from "../models/notification.model";
 import Workspace from "../models/workspace.model";
 import DataCollection from "../models/dataCollection.model";
