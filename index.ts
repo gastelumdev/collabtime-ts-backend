@@ -33,6 +33,7 @@ import User from './models/auth.model';
 import Workspace from './models/workspace.model';
 import Cell from './models/cell.models';
 import setReminders from './utils/setReminders';
+import scheduledReminders from './utils/scheduledReminders'
 import Column from './models/column.model';
 import { addValues, convertRowCells, fullfillMissingRows } from './utils/helpers';
 import Notification from './models/notification.model';
@@ -193,6 +194,13 @@ const deleteOldNotifications = async () => {
   await Notification.deleteMany({ "createdAt": { $lt: priorDate.toISOString().split("T")[0] } });
 }
 
+// scheduledReminders();
+
+// cron.schedule("0 * * * * *", () => {
+//   console.log("Another minute by")
+//   scheduledReminders();
+// })
+
 if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
@@ -201,6 +209,11 @@ if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 15 * * 1,2,3,4,5", () => {
     setReminders()
+  })
+
+  cron.schedule("0 * * * * *", () => {
+    console.log("Another minute by")
+    scheduledReminders();
   })
 
   cron.schedule("0 0,15,30,45 * * * *", () => {

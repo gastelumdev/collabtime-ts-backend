@@ -16,13 +16,14 @@ export interface INote {
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[] | TCell[];
-    assignedTo: Schema.Types.ObjectId | String;
+    assignedTo: Schema.Types.ObjectId | String | null;
     createdBy: Schema.Types.ObjectId | string;
     notes: string;
     notesList: INote[];
     createdAt: Date;
     tags: ITag[];
     reminder: boolean;
+    reminders: string[];
     complete: boolean;
     acknowledged: boolean;
     values: any;

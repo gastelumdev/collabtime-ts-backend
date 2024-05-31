@@ -33,7 +33,7 @@ const setReminders = async () => {
                         tasks.push({
                             workspaceName: workspace?.name,
                             dataCollectionName: dataCollection.name,
-                            numberOfRows: String(rows.length),
+                            numberOfRows: String(pendingRows.length),
                             url: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`
                         })
                     }

@@ -141,6 +141,7 @@ export const updateRow = async (req: Request, res: Response) => {
 
         const columnName = columns[0].name;
 
+        console.log({ location: "Before Update" })
 
         if (row.values[columnName] !== req.body.values[columnName]) {
             const dataCollections = await DataCollection.find({ workspace: workspace?._id });
@@ -176,6 +177,11 @@ export const updateRow = async (req: Request, res: Response) => {
             const user = await User.findOne({ email: email });
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
             io.emit("update row", { message: "" });
+
+            row.assignedTo = user?._id.toString();
+            const newRow = await Row.findByIdAndUpdate(row._id, { $set: { assignedTo: user?._id.toString() } }, { new: true });
+            newRow?.save()
+            console.log({ newRow, userId: user?._id.toString() })
 
             sendCriticalRowEmail(req.body);
         }
@@ -246,10 +252,12 @@ export const updateRow = async (req: Request, res: Response) => {
         }
 
 
+
+
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
         const isLastRow = await checkIfLastRow(row);
 
-
+        console.log({ location: "After Update" })
 
         let blankRows: any = [];
 
@@ -316,16 +324,17 @@ export const deleteRows = async (req: Request, res: Response) => {
 export const getBlankRows = async (req: Request, res: Response) => {
     console.log(req.body)
     try {
-        const { dataColletionId } = req.params;
+        const { dataCollectionId, numberOfRowsToCreate } = req.body;
 
-        const dataCollection = await DataCollection.findOne({ _id: dataColletionId });
-        const totalNumberOfRows = await Row.count();
+        console.log({ params: req.params })
+
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
+        const totalNumberOfRows = await Row.count({ dataCollection: dataCollectionId });
         const user = await User.findOne({ _id: (<any>req).user._id });
-        const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
+        // const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
 
 
         const blankRows = addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
-        // console.log(blankRows)
 
         res.send(blankRows)
     } catch (error) {
@@ -498,7 +507,7 @@ export const getFormData = async (req: Request, res: Response) => {
     try {
         const { dataCollectionId } = req.params;
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionId })
-        const rows = await Row.find({ dataCollection: dataCollectionId });
+        const rows = await Row.find({ dataCollection: dataCollectionId }).sort({ position: 1 });
         const columns = await Column.find({ dataCollection: dataCollectionId });
 
         let emptyRow: any;
@@ -516,9 +525,13 @@ export const getFormData = async (req: Request, res: Response) => {
                 emptyRow = row;
                 break;
             }
+
+            console.log({ nonEmptyRow: row })
         }
 
         emptyRow.dataCollection = dataCollection;
+
+        console.log(emptyRow);
 
         res.send({ columns, row: emptyRow, rows, dataCollection });
 
