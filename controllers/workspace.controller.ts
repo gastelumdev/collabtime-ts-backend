@@ -28,15 +28,7 @@ export const getWorkspaces = async (req: Request, res: Response) => {
 
 export const createWorkspace = async (req: Request, res: Response) => {
     try {
-        // const user = await User.findOne({ _id: (<any>req).user._id });
         const user = (<any>req).user;
-
-        // Delete After Testing ********************
-        // const workspace = new Workspace({ ...(req.body), owner: (<any>req).user._id });
-        // workspace.members.push({ email: user?.email as string, permissions: 2 });
-        // await workspace.save();
-
-        // Set the creator of the workspace as it's initial member
         const workspace: any = await createNewWorkspace(req.body, user);
 
         // Add the new workspace to the user's workspaces
