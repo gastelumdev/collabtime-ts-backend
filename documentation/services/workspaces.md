@@ -1,5 +1,3 @@
-## Workspaces Service Documentation
-
 ## `IWorkspace` Interface
 
 ### Description
@@ -18,6 +16,8 @@ Defines the structure of a workspace object.
 - `tags` (`ITag[]`): An array of general tags.
 - `createdAt` (`Date | null`): The date the workspace was created, or null if not set.
 
+</br>
+
 ## `IWorkspaceDocument` Interface
 
 ### Description
@@ -27,6 +27,8 @@ Extends the `IWorkspace` interface to include `Document` properties and methods 
 ### Properties
 
 Inherits all properties from `IWorkspace` and `Document`.
+
+</br>
 
 ## `IWorkspaceModel` Interface
 
@@ -38,6 +40,8 @@ Extends the `Model` interface from Mongoose to include a custom method for build
 
 - `buildWorkspace(args: IWorkspace): IWorkspaceDocument`: Creates and returns a new `IWorkspaceDocument` based on the provided `IWorkspace` object.
 
+</br>
+
 ## `TAccess` Type
 
 ### Description
@@ -47,6 +51,8 @@ Defines the structure for access levels within a workspace tool.
 ### Properties
 
 - `access` (`number`): The access level.
+
+</br>
 
 ## `TTools` Type
 
@@ -61,6 +67,8 @@ Defines the access levels for various tools within a workspace.
 - `docs` (`TAccess`): Access level for documents.
 - `messageBoard` (`TAccess`): Access level for the message board.
 
+</br>
+
 ## `TInvitee` Type
 
 ### Description
@@ -71,6 +79,21 @@ Defines the structure for an invitee or member of a workspace.
 
 - `email` (`string`): The email of the invitee or member.
 - `permissions` (`number`): The permissions level of the invitee or member.
+
+</br>
+
+## Imports
+
+### Modules
+
+- `Document`, `Schema`, `Model` from `"mongoose"`
+- `ITag` from `"./tag.service"`
+- `Workspace` from `"../models/workspace.model"`
+- `IUser`, `IUserWorkspace` from `"./auth.service"`
+- `TUser`, `TWorkspace` from `"../types"`
+- `User` from `"../models/auth.model"`
+
+</br>
 
 ## `getUserWorkspaces`
 
