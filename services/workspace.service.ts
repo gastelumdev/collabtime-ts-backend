@@ -1,7 +1,8 @@
 import { Document, Schema, Model } from "mongoose";
 import { ITag } from "./tag.service";
 import Workspace from "../models/workspace.model";
-import { IUserWorkspace } from "./auth.service";
+import { IUser, IUserWorkspace } from "./auth.service";
+import { TUser, TWorkspace } from "../types";
 
 export type TAccess = {
     access: number;
@@ -28,7 +29,7 @@ export interface IWorkspace {
     owner: Schema.Types.ObjectId;
     workspaceTags: ITag[];
     tags: ITag[];
-    createdAt: Date;
+    createdAt: Date | null;
 }
 
 export interface IWorkspaceDocument extends IWorkspace, Document { }
@@ -43,6 +44,12 @@ export const getUserWorkspaces = async (workspaceIds: IUserWorkspace[]) => {
         const workspace = await Workspace.findOne({ _id: userWorkspace.id });
         data.push(workspace);
     }
-
     return data;
+}
+
+export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser) => {
+    const workspace = new Workspace({ ...newWorkspace, owner: user._id });
+    workspace.members.push({ email: user?.email as string, permissions: 2 });
+    await workspace.save();
+    return workspace;
 }

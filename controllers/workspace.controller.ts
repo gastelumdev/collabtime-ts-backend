@@ -14,7 +14,7 @@ import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
 import sendEmail from "../utils/sendEmail";
-import { IWorkspace, getUserWorkspaces } from "../services/workspace.service";
+import { IWorkspace, createNewWorkspace, getUserWorkspaces } from "../services/workspace.service";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await getUserById((<any>req).user._id as string);
@@ -30,18 +30,22 @@ export const createWorkspace = async (req: Request, res: Response) => {
     try {
         // const user = await User.findOne({ _id: (<any>req).user._id });
         const user = (<any>req).user;
-        const workspace = new Workspace({ ...(req.body), owner: (<any>req).user._id });
 
-        workspace.members.push({ email: user?.email as string, permissions: 2 });
+        // Delete After Testing ********************
+        // const workspace = new Workspace({ ...(req.body), owner: (<any>req).user._id });
+        // workspace.members.push({ email: user?.email as string, permissions: 2 });
+        // await workspace.save();
 
-        await workspace.save();
+        // Set the creator of the workspace as it's initial member
+        const workspace: any = await createNewWorkspace(req.body, user);
+
+        // Add the new workspace to the user's workspaces
         const userWorkspaces = user?.workspaces;
         userWorkspaces?.push({ id: workspace._id, permissions: 2 });
-
         await User.updateOne({ _id: (<any>req).user._id }, { $set: { workspaces: userWorkspaces } });
-        res.send(workspace);
-        io.emit("update", {});
 
+        io.emit("update", {});
+        res.send(workspace);
     } catch (error) {
         res.status(400).send({ success: false, error: error });
     }

@@ -8,13 +8,13 @@ dotenv.config();
 const mongodb_uri = process.env.MONGODB_URI || "";
 let user: any;
 
-
+const baseURL = process.env.APP_URL as string;
 
 describe("Workspaces", () => {
     /* Connecting to the database before each test. */
     beforeEach(async () => {
         await mongoose.connect(mongodb_uri);
-        user = await request(app).post(`/login`).send({ email: process.env.TEST_EMAIL, password: process.env.TEST_PASSWORD })
+        user = await request(baseURL).post(`/login`).send({ email: process.env.TEST_EMAIL, password: process.env.TEST_PASSWORD })
     });
 
     /* Closing database connection after each test. */
@@ -24,7 +24,7 @@ describe("Workspaces", () => {
     describe("Get all a user's workspaces", () => {
         describe("given the user is logged in and the workpaces exist", () => {
             it("should return all products", async () => {
-                const res = await request(app).get(`/workspaces`).set('Accept', 'application/json').set('Authorization', `JWT ${user.body.accessToken}`);
+                const res = await request(baseURL).get(`/workspaces`).set('Accept', 'application/json').set('Authorization', `JWT ${user.body.accessToken}`);
 
                 expect(res.statusCode).toBe(200);
             })
