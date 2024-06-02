@@ -32,20 +32,28 @@ export interface IWorkspace {
     createdAt: Date | null;
 }
 
-export interface IWorkspaceDocument extends IWorkspace, Document { }
+export interface IWorkspaceDocument extends IWorkspace, Document {
+}
 
 export interface IWorkspaceModel extends Model<IWorkspaceDocument> {
     buildWorkspace(args: IWorkspace): IWorkspaceDocument;
 }
 
 /**
- * This asynchronous function retrieves workspace documents from the database
- * based on an array of user workspace objects.
+ * Retrieves a list of workspaces based on an array of user workspace objects.
  * 
- * @param {IUserWorkspace[]} userWorkspaceObjects - An array of objects containing user workspace details, 
- *        each object includes an `id` property representing the workspace ID.
+ * @param {IUserWorkspace[]} userWorkspaceObjects - An array of user workspace objects, where each object contains an `id` field representing the workspace ID.
  * 
- * @returns {Promise<Workspace[]>} - A promise that resolves to an array of workspace documents.
+ * @returns {Promise<IWorkspace[]>} - A promise that resolves to an array of workspace objects.
+ * 
+ * The function performs the following steps:
+ * 1. Initializes an empty array to store the retrieved workspaces.
+ * 2. Iterates over each user workspace object in the input array.
+ * 3. For each user workspace object, finds the corresponding workspace in the database using the workspace ID.
+ * 4. Adds the found workspace to the array of workspaces.
+ * 5. Returns the array of retrieved workspaces.
+ * 
+ * Note: The function assumes that the `Workspace` model has a `findOne` method that retrieves a workspace by its `_id`.
  */
 export const getUserWorkspaces = async (userWorkspaceObjects: IUserWorkspace[]) => {
     const workspaces = [];
@@ -57,23 +65,52 @@ export const getUserWorkspaces = async (userWorkspaceObjects: IUserWorkspace[]) 
 }
 
 /**
- * This asynchronous function creates a new workspace in the database.
+ * Creates a new workspace and associates it with the given user.
  * 
- * @param {IWorkspace} newWorkspace - An object containing the details of the new workspace to be created.
+ * @param {IWorkspace} newWorkspace - The new workspace object containing workspace details.
  * @param {IUser} user - The user object representing the owner of the new workspace.
  * 
- * @returns {Promise<Workspace>} - The newly created workspace object.
+ * @returns {Promise<IWorkspace>} - A promise that resolves to the newly created workspace object.
+ * 
+ * The function performs the following steps:
+ * 1. Creates a new `Workspace` instance with the provided workspace details, setting the owner to the user's `_id`.
+ * 2. Adds the user to the workspace's members list with a default permission level of 2.
+ * 3. Saves the new workspace to the database.
+ * 4. Returns the newly created workspace object.
+ * 
+ * Note: The function assumes that the `Workspace` model has a `members` array where each member object contains an `email` and `permissions` field.
  */
-export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser) => {
+export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser): Promise<IWorkspace> => {
     const workspace = new Workspace({ ...newWorkspace, owner: user._id });
     workspace.members.push({ email: user?.email as string, permissions: 2 });
     await workspace.save();
     return workspace;
 }
 
+
+/**
+ * Adds a workspace to a user's list of workspaces and updates the user in the database.
+ * 
+ * @param {IWorkspace & { _id: string }} workspace - The workspace object to be added, which includes an `_id` property.
+ * @param {IUser} user - The user object to which the workspace will be added.
+ * 
+ * @returns {Promise<any>} - A promise that resolves to the result of the database update operation.
+ * 
+ * The function performs the following steps:
+ * 1. Retrieves the user's current list of workspaces.
+ * 2. Adds the new workspace with a default permission level of 2 to the list.
+ * 3. Updates the user document in the database with the new list of workspaces.
+ * 
+ * Note: The function assumes that `user.workspaces` is an array. If `user.workspaces` is undefined, 
+ *       the optional chaining operator `?.` prevents errors during the push operation.
+ */
 export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }, user: IUser) => {
     const userWorkspaces = user?.workspaces;
     userWorkspaces?.push({ id: workspace._id, permissions: 2 });
-    const updatedUser = await User.updateOne({ _id: user._id }, { $set: { workspaces: userWorkspaces } });
+    const updatedUser: any = await User.findOne({ _id: user._id });
+    updatedUser.workspaces = userWorkspaces;
+    updatedUser.save();
+
+    console.log({ updatedUserInFunc: updatedUser });
     return updatedUser;
 }
