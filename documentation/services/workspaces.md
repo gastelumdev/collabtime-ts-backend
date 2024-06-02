@@ -1,3 +1,5 @@
+# Workspaces Service Documentation
+
 ## `IWorkspace` Interface
 
 ### Description
@@ -130,3 +132,41 @@ export const getUserWorkspaces = async (userWorkspaceObjects: IUserWorkspace[]) 
     return workspaces;
 }
 ```
+
+</br>
+
+## `createNewWorkspace`
+
+### Description
+
+This asynchronous function creates a new workspace in the database.
+
+### Parameters
+
+- `newWorkspace` (`IWorkspace`): An object containing the details of the new workspace to be created.
+- `user` (`IUser`): The user object representing the owner of the new workspace.
+
+### Returns
+
+- `Promise<Workspace>`: The newly created workspace object.
+
+### Code
+
+```typescript
+/**
+ * This asynchronous function creates a new workspace in the database.
+ * 
+ * @param {IWorkspace} newWorkspace - An object containing the details of the new workspace to be created.
+ * @param {IUser} user - The user object representing the owner of the new workspace.
+ * 
+ * @returns {Promise<Workspace>} - The newly created workspace object.
+ */
+export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser) => {
+    const workspace = new Workspace({ ...newWorkspace, owner: user._id });
+    workspace.members.push({ email: user?.email as string, permissions: 2 });
+    await workspace.save();
+    return workspace;
+}
+```
+
+</br>

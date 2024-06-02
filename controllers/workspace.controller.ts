@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import Workspace from "../models/workspace.model"
+import Workspace, { getWorkspaceById } from "../models/workspace.model"
 import User, { getUserById } from "../models/auth.model"
 import Notification from "../models/notification.model";
 import nodemailer from "nodemailer";
@@ -14,7 +14,7 @@ import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
 import sendEmail from "../utils/sendEmail";
-import { IWorkspace, createNewWorkspace, getUserWorkspaces } from "../services/workspace.service";
+import { IWorkspace, addWorkspaceToUser, createNewWorkspace, getUserWorkspaces } from "../services/workspace.service";
 
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await getUserById((<any>req).user._id as string);
@@ -30,11 +30,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
     try {
         const user = (<any>req).user;
         const workspace: any = await createNewWorkspace(req.body, user);
-
-        // Add the new workspace to the user's workspaces
-        const userWorkspaces = user?.workspaces;
-        userWorkspaces?.push({ id: workspace._id, permissions: 2 });
-        await User.updateOne({ _id: (<any>req).user._id }, { $set: { workspaces: userWorkspaces } });
+        addWorkspaceToUser(workspace, user);
 
         io.emit("update", {});
         res.send(workspace);
@@ -44,9 +40,8 @@ export const createWorkspace = async (req: Request, res: Response) => {
 }
 
 export const getOneWorkspace = async (req: Request, res: Response) => {
-    const workspace = await Workspace.findById(req.params.id);
-
     try {
+        const workspace = await getWorkspaceById(req.params.id);
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
