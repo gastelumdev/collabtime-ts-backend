@@ -3,7 +3,7 @@ import request from "supertest";
 import app from "../../app";
 import dotenv from 'dotenv';
 import { newWorkspace } from "../data";
-import Workspace, { getWorkspaceById } from "../../models/workspace.model";
+import Workspace, { getWorkspaceById, getWorkspaceByIdAndUpdate } from "../../models/workspace.model";
 
 dotenv.config();
 const mongodb_uri = process.env.MONGODB_URI || "";
@@ -30,7 +30,6 @@ describe("Workspaces models", () => {
     afterEach(async () => {
         await mongoose.connection.close();
         try {
-            console.log(accessToken)
             const req = await request(baseURL).post(`/workspaces/delete/${createdWorkspace._id.toString()}/`).set('Accept', 'application/json').set('Authorization', `JWT ${accessToken}`);
         } catch (err) {
             console.log(err)
@@ -44,5 +43,16 @@ describe("Workspaces models", () => {
             const testWorkspace = await getWorkspaceById(createdWorkspace._id);
             expect(testWorkspace?._id.toString()).toBe(createdWorkspace._id.toString());
         })
+    })
+
+    describe("getWorkspaceByIdAndUpdate", () => {
+        it("should update the workspace", async () => {
+            createdWorkspace.description = "Description test";
+            const workspaceToUpdate = createdWorkspace;
+            const updatedWorkspace = await getWorkspaceByIdAndUpdate(workspaceToUpdate._id.toString(), workspaceToUpdate);
+
+            expect(updatedWorkspace?.description).toBe("Description test");
+        })
+
     })
 })

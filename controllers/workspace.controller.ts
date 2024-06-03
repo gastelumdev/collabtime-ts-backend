@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import Workspace, { getWorkspaceById } from "../models/workspace.model"
+import Workspace, { getWorkspaceById, getWorkspaceByIdAndUpdate } from "../models/workspace.model"
 import User, { getUserById } from "../models/auth.model"
 import Notification from "../models/notification.model";
 import nodemailer from "nodemailer";
@@ -16,6 +16,23 @@ import Column from "../models/column.model";
 import sendEmail from "../utils/sendEmail";
 import { IWorkspace, addWorkspaceToUser, createNewWorkspace, getUserWorkspaces } from "../services/workspace.service";
 
+/**
+ * Retrieves and sends the workspaces associated with the authenticated user.
+ *
+ * This asynchronous function gets the authenticated user by their ID from the request object,
+ * then retrieves the workspaces associated with that user. If successful, it sends the workspaces
+ * data in the response with a status code of 200. If there is an error, it sends a response with a
+ * status code of 400 and a success flag set to false.
+ *
+ * @param {Request} req - The request object, expected to contain the authenticated user's ID.
+ * @param {Response} res - The response object used to send back the desired HTTP response.
+ * @returns {Promise<void>} - A promise that resolves when the response is sent.
+ * 
+ * @throws {Error} - If there is an error during the retrieval of user or workspaces.
+ *
+ * @example
+ * app.get('/workspaces', getWorkspaces);
+ */
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await getUserById((<any>req).user._id as string);
     try {
@@ -26,6 +43,24 @@ export const getWorkspaces = async (req: Request, res: Response) => {
     }
 }
 
+/**
+ * Creates a new workspace and associates it with the authenticated user.
+ *
+ * This asynchronous function creates a new workspace using the data provided in the request body
+ * and the authenticated user. It then associates the newly created workspace with the user and emits
+ * an update event via a socket. If the workspace is successfully created, it sends the workspace data
+ * in the response. If there is an error during the process, it sends a response with a status code of
+ * 400 and an error message.
+ *
+ * @param {Request} req - The request object, expected to contain the workspace data in the body and the authenticated user.
+ * @param {Response} res - The response object used to send back the desired HTTP response.
+ * @returns {Promise<void>} - A promise that resolves when the response is sent.
+ * 
+ * @throws {Error} - If there is an error during the creation of the workspace or associating it with the user.
+ *
+ * @example
+ * app.post('/workspaces', createWorkspace);
+ */
 export const createWorkspace = async (req: Request, res: Response) => {
     try {
         const user = (<any>req).user;
@@ -39,6 +74,23 @@ export const createWorkspace = async (req: Request, res: Response) => {
     }
 }
 
+/**
+ * Retrieves a single workspace by its ID and sends it in the response.
+ *
+ * This asynchronous function fetches a workspace document from the database using the ID
+ * provided in the request parameters. If the workspace is successfully retrieved, it sends
+ * the workspace data in the response. If there is an error during the process, it sends a response
+ * with a status code of 400 and the error message.
+ *
+ * @param {Request} req - The request object, expected to contain the workspace ID in the request parameters.
+ * @param {Response} res - The response object used to send back the desired HTTP response.
+ * @returns {Promise<void>} - A promise that resolves when the response is sent.
+ * 
+ * @throws {Error} - If there is an error during the retrieval of the workspace.
+ *
+ * @example
+ * app.get('/workspaces/:id', getOneWorkspace);
+ */
 export const getOneWorkspace = async (req: Request, res: Response) => {
     try {
         const workspace = await getWorkspaceById(req.params.id);
@@ -49,11 +101,26 @@ export const getOneWorkspace = async (req: Request, res: Response) => {
 
 }
 
+/**
+ * Updates an existing workspace with new data and sends the updated workspace in the response.
+ *
+ * This asynchronous function updates a workspace document in the database using the ID provided in the request parameters
+ * and the new workspace data provided in the request body. If the update is successful, it sends the updated workspace
+ * data in the response. If there is an error during the process, it sends a response with a status code of 400 and the error message.
+ *
+ * @param {Request} req - The request object, expected to contain the workspace ID in the request parameters and the new workspace data in the body.
+ * @param {Response} res - The response object used to send back the desired HTTP response.
+ * @returns {Promise<void>} - A promise that resolves when the response is sent.
+ * 
+ * @throws {Error} - If there is an error during the update of the workspace.
+ *
+ * @example
+ * app.put('/workspaces/:id', updateWorkspace);
+ */
 export const updateWorkspace = async (req: Request, res: Response) => {
     try {
-
         const newWorkspace: IWorkspace = req.body;
-        const workspace = await Workspace.findByIdAndUpdate(req.params.id, newWorkspace, { new: true });
+        const workspace = getWorkspaceByIdAndUpdate(req.params.id, newWorkspace);
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);

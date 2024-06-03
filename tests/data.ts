@@ -19,6 +19,5 @@ export const newWorkspace: any = {
     members: [],
     owner: "",
     workspaceTags: [],
-    tags: [],
-    createdAt: null
+    tags: []
 };

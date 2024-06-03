@@ -110,7 +110,5 @@ export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }
     const updatedUser: any = await User.findOne({ _id: user._id });
     updatedUser.workspaces = userWorkspaces;
     updatedUser.save();
-
-    console.log({ updatedUserInFunc: updatedUser });
     return updatedUser;
 }
