@@ -7,7 +7,7 @@ const router = Router()
 
 router.get("/workspaces", verifyToken, workspaceController.getWorkspaces);
 router.post("/workspaces", verifyToken, workspaceController.createWorkspace);
-router.get("/workspaces/:id", verifyToken, verifyWorkspace, workspaceController.getOneWorkspace);
+router.get("/workspaces/:id", verifyToken, workspaceController.getOneWorkspace);
 router.put("/workspaces/update/:id", verifyToken, workspaceController.updateWorkspace);
 router.post("/workspaces/delete/:id", verifyToken, workspaceController.deleteWorkspace);
 router.get("/workspaces/:id/users", verifyToken, workspaceController.getUsers);

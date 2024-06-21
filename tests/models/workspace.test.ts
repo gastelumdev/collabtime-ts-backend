@@ -34,7 +34,6 @@ describe("Workspaces models", () => {
         } catch (err) {
             console.log(err)
         }
-
     });
 
     describe("getWorkspaceById", () => {
