@@ -3,6 +3,7 @@ import { ITag } from "./tag.service";
 import Workspace from "../models/workspace.model";
 import { IUser, IUserWorkspace } from "./auth.service";
 import User from "../models/auth.model";
+import * as authModel from "../models/auth.model";
 
 export type TAccess = {
     access: number;
@@ -91,7 +92,7 @@ export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser):
 /**
  * Adds a workspace to a user's list of workspaces and updates the user in the database.
  * 
- * @param {IWorkspace & { _id: string }} workspace - The workspace object to be added, which includes an `_id` property.
+ * @param {IWorkspace} workspace - The workspace object to be added, which includes an `_id` property.
  * @param {IUser} user - The user object to which the workspace will be added.
  * 
  * @returns {Promise<any>} - A promise that resolves to the result of the database update operation.
@@ -111,4 +112,31 @@ export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }
     updatedUser.workspaces = userWorkspaces;
     updatedUser.save();
     return updatedUser;
+}
+
+/**
+ * Removes a workspace association from all members of the workspace.
+ *
+ * This function iterates through each member of the provided workspace and removes 
+ * the workspace association from each member's record. It uses the `authModel.getUserByEmail`
+ * method to retrieve each member and the `authModel.removeWorkspaceFromUser` method to update them.
+ *
+ * @param {IWorkspace & { _id: string }} workspace - The workspace object, including its ID and members list.
+ * @returns {Promise<Array>} - A promise that resolves to an array of updated user objects.
+ *
+ * @note This function is not part of automated testing and needs to have automated tests implemented.
+ */
+export const removeWorkspaceFromMembers = async (workspace: IWorkspace & { _id: string }) => {
+    // Holds the updated users to compare during testing
+    const updatedUsers = []
+    // Go through each member associated to the workspace and remove the association
+    for (const member of workspace?.members) {
+        // const currentMember: IUser | null = await User.findOne({ email: member.email });
+        const currentMember: IUser | null = await authModel.getUserByEmail(member.email);
+
+        const updatedUser = await authModel.removeWorkspaceFromUser(workspace?._id, currentMember as IUser);
+        updatedUsers.push(updatedUser);
+    }
+
+    return updatedUsers;
 }

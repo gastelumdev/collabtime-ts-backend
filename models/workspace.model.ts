@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { IWorkspace, IWorkspaceDocument, IWorkspaceModel } from "../services/workspace.service";
+import { IUser } from "../services/auth.service";
 
 const workspaceSchema: Schema<IWorkspaceDocument> = new Schema({
     name: { type: String, required: true },
@@ -55,4 +56,40 @@ export const getWorkspaceByIdAndUpdate = async (id: string, newWorkspace: IWorks
     const workspace = await Workspace.findByIdAndUpdate(id, newWorkspace, { new: true });
     console.log({ workspace })
     return workspace;
+}
+
+/**
+ * Retrieves a workspace by its ID and owner.
+ *
+ * This function fetches a single workspace document from the database 
+ * that matches the provided workspace ID and owner (user) ID. 
+ * It uses the `Workspace.findOne` method to perform the query.
+ *
+ * @param {string} workspaceId - The ID of the workspace to retrieve.
+ * @param {string} userId - The ID of the user who owns the workspace.
+ * @returns {Promise<Object|null>} - A promise that resolves to the workspace object if found,
+ *                                    or null if no workspace matches the criteria.
+ * 
+ * @note This function is not part of automated testing and needs to have automated tests implemented.
+ */
+export const getOneByIdBasedOnOwner = async (workspaceId: string, userId: string) => {
+    const workspace = await Workspace.findOne({ _id: workspaceId, owner: userId });
+    return workspace;
+}
+
+/**
+ * Deletes a workspace based on its ID and owner.
+ *
+ * This function deletes a workspace document from the database that matches
+ * the provided workspace ID and owner (user) ID. It uses the `Workspace.findByIdAndDelete` method
+ * to perform the deletion.
+ *
+ * @param {string} id - The ID of the workspace to delete.
+ * @param {string} userId - The ID of the owner (user) of the workspace.
+ * @returns {Promise<void>} - A promise that resolves once the workspace is successfully deleted.
+ *
+ * @note This function is not part of automated testing and needs to have automated tests implemented.
+ */
+export const getWorkspaceByIdAndDelete = async (id: string, userId: string) => {
+    await Workspace.findByIdAndDelete({ _id: id, owner: userId });
 }

@@ -21,6 +21,8 @@ describe("Workspaces", () => {
     afterEach(async () => {
         await mongoose.connection.close();
     });
+
+
     describe("Get all a user's workspaces", () => {
         describe("given the user is logged in and the workpaces exist", () => {
             it("should return all products", async () => {
@@ -29,6 +31,5 @@ describe("Workspaces", () => {
                 expect(res.statusCode).toBe(200);
             })
         })
-
     })
 })

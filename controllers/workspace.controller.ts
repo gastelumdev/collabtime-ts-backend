@@ -1,20 +1,26 @@
-import { Request, Response } from "express"
-import Workspace, { getWorkspaceById, getWorkspaceByIdAndUpdate } from "../models/workspace.model"
-import User, { getUserById } from "../models/auth.model"
+import { Request, Response } from "express";
+// Model Imports
+import Workspace from "../models/workspace.model";
+import * as workspaceModel from "../models/workspace.model";
+import User from "../models/auth.model";
+import * as authModel from "../models/auth.model";
 import Notification from "../models/notification.model";
-import nodemailer from "nodemailer";
-import handlebars from "handlebars";
-import fs from "fs";
-import path from "path";
-import { IUser, IUserWorkspace } from "../services/auth.service"
-import { TInvitee, TUser, TWorkspace } from "../types"
-import { io } from "../index";
 import DataCollection from "../models/dataCollection.model";
+import * as dataCollectionModel from "../models/dataCollection.model";
 import Cell from "../models/cell.models";
 import Row from "../models/row.models";
 import Column from "../models/column.model";
+// Service Imports
+import { IUser, IUserWorkspace } from "../services/auth.service"
+import { IWorkspace } from "../services/workspace.service";
+import * as workspaceService from "../services/workspace.service";
+import * as dataCollectionService from "../services/dataCollection.service";
+
+import { TInvitee } from "../types";
+
+import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
-import { IWorkspace, addWorkspaceToUser, createNewWorkspace, getUserWorkspaces } from "../services/workspace.service";
+
 
 /**
  * Retrieves and sends the workspaces associated with the authenticated user.
@@ -34,9 +40,9 @@ import { IWorkspace, addWorkspaceToUser, createNewWorkspace, getUserWorkspaces }
  * app.get('/workspaces', getWorkspaces);
  */
 export const getWorkspaces = async (req: Request, res: Response) => {
-    const user = await getUserById((<any>req).user._id as string);
+    const user = await authModel.getUserById((<any>req).user._id as string);
     try {
-        const data = await getUserWorkspaces(user?.workspaces as IUserWorkspace[]);
+        const data = await workspaceService.getUserWorkspaces(user?.workspaces as IUserWorkspace[]);
         res.status(200).send(data);
     } catch (err) {
         res.status(400).send({ success: false });
@@ -64,8 +70,8 @@ export const getWorkspaces = async (req: Request, res: Response) => {
 export const createWorkspace = async (req: Request, res: Response) => {
     try {
         const user = (<any>req).user;
-        const workspace: any = await createNewWorkspace(req.body, user);
-        addWorkspaceToUser(workspace, user);
+        const workspace: any = await workspaceService.createNewWorkspace(req.body, user);
+        workspaceService.addWorkspaceToUser(workspace, user);
 
         io.emit("update", {});
         res.send(workspace);
@@ -93,7 +99,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
  */
 export const getOneWorkspace = async (req: Request, res: Response) => {
     try {
-        const workspace = await getWorkspaceById(req.params.id);
+        const workspace = await workspaceModel.getWorkspaceById(req.params.id);
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
@@ -120,51 +126,52 @@ export const getOneWorkspace = async (req: Request, res: Response) => {
 export const updateWorkspace = async (req: Request, res: Response) => {
     try {
         const newWorkspace: IWorkspace = req.body;
-        const workspace = getWorkspaceByIdAndUpdate(req.params.id, newWorkspace);
+        const workspace = workspaceModel.getWorkspaceByIdAndUpdate(req.params.id, newWorkspace);
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
     }
 }
 
+/**
+ * Deletes a workspace and associated data based on the request parameters.
+ *
+ * This function handles the deletion of a workspace and all associated data:
+ * 1. Verifies if the requester (user) is the owner of the workspace.
+ * 2. Removes the workspace from the user's list of workspaces.
+ * 3. Removes the workspace from all the member's list of workspaces.
+ * 4. Deletes all data collections associated with the workspace.
+ * 5. Finally, deletes the workspace itself from the database.
+ *
+ * @param {Request} req - The HTTP request object containing parameters and user information.
+ * @param {Response} res - The HTTP response object used to send a response back to the client.
+ * @returns {Promise<void>} - A promise that resolves once the workspace and associated data are successfully deleted.
+ *
+ * @note This function is not part of automated testing and needs to have automated tests implemented.
+ */
 export const deleteWorkspace = async (req: Request, res: Response) => {
     try {
-        const workspace = await Workspace.findOne({ _id: req.params.id, owner: (<any>req).user._id });
-        const user = await User.findOne({ _id: (<any>req).user._id });
-        const userWorkspaces = user?.workspaces.filter((item) => {
-            return !workspace?._id.equals(item.id);
-        });
-        const dataCollections = await DataCollection.find({ workspace: workspace?._id });
-        await User.updateOne({ _id: user?._id }, { $set: { workspaces: userWorkspaces } });
+        const user = (<any>req).user;
+        // Get workspace by the id provided in the request and make sure that the owner matches
+        const workspace = await workspaceModel.getOneByIdBasedOnOwner(req.params.id, user._id);
 
         if (workspace) {
-            for (const member of workspace?.members) {
-                let currentMember: any = await User.findOne({ email: member.email })
-                let workspaceMembers = currentMember?.workspaces.filter((item: any) => {
-                    return !workspace._id.equals(item.id);
-                });
+            // Remove the workspace from the user's workspaces
+            await authModel.removeWorkspaceFromUser(workspace?._id, user);
+            // Go through each member associated to the workspace and remove the association
+            workspaceService.removeWorkspaceFromMembers(workspace);
+            // Get all the data collections in the workspace
+            await dataCollectionService.removeWorkspaceDataCollections(workspace);
 
-                if (currentMember) {
-                    currentMember.workspaces = workspaceMembers || user?.workspaces
-                    await User.updateOne({ email: member.email }, currentMember);
-                }
-            }
+            // Remove all data collections associated with a workspace
+            await workspaceModel.getWorkspaceByIdAndDelete(workspace?._id, user._id);
 
-            // Delete any data collections associated to the workspace
-            for (const dataCollection of dataCollections) {
-                const dataCollectionId = dataCollection._id;
-                await Cell.deleteMany({ dataCollection: dataCollectionId });
-                await Row.deleteMany({ dataCollection: dataCollectionId });
-                await Column.deleteMany({ dataCollection: dataCollectionId });
-                await DataCollection.findByIdAndDelete({ _id: dataCollectionId });
-            }
+            res.send(workspace);
+        } else {
+            res.status(401).send({ message: "You are not authorized." });
         }
-
-        await Workspace.findByIdAndDelete({ _id: req.params.id, owner: (<any>req).user._id });
-
-        res.send(workspace);
     } catch (error) {
-        res.status(400).send(error);
+        res.status(400).send({ message: "Something went wrong. Try again." });
     }
 }
 

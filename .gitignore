@@ -42,3 +42,6 @@ yarn.lock
 
 # uploads folder
 uploads
+
+# JSDoc
+out
