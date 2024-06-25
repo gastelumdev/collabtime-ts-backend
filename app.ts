@@ -17,32 +17,38 @@ import searchRouter from "./routes/search.routes";
 import tagRouter from "./routes/tag.routes";
 import messageRouter from "./routes/message.routes";
 
-const app: any = express();
+const createApp = () => {
+    const app: any = express();
 
-const corsOptions = {
-    origin: process.env.CORS_URL
+    const corsOptions = {
+        origin: process.env.CORS_URL
+    }
+
+    app.use(bodyparser.urlencoded({ extended: false }));
+    app.use(express.json());
+    app.use(express.static("uploads"));
+    app.use(cors(corsOptions));
+
+    app.get('/', (req: Request, res: Response) => {
+        res.send({ title: 'Express + TypeScript Server!' })
+    });
+
+    app.use(authRouter);
+    app.use(workspaceRouter);
+    app.use(notificationRouter);
+    app.use(dataCollectionRouter);
+    app.use(columnRouter);
+    app.use(rowRouter);
+    app.use(cellRouter);
+    app.use(uploadRouter);
+    app.use(documentRouter);
+    app.use(searchRouter);
+    app.use(tagRouter);
+    app.use(messageRouter);
+
+    return app;
 }
 
-app.use(bodyparser.urlencoded({ extended: false }));
-app.use(express.json());
-app.use(express.static("uploads"));
-app.use(cors(corsOptions));
 
-app.get('/', (req: Request, res: Response) => {
-    res.send({ title: 'Express + TypeScript Server!' })
-});
 
-app.use(authRouter);
-app.use(workspaceRouter);
-app.use(notificationRouter);
-app.use(dataCollectionRouter);
-app.use(columnRouter);
-app.use(rowRouter);
-app.use(cellRouter);
-app.use(uploadRouter);
-app.use(documentRouter);
-app.use(searchRouter);
-app.use(tagRouter);
-app.use(messageRouter);
-
-export default app;
+export default createApp;
