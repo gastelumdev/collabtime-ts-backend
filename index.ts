@@ -20,7 +20,7 @@ import setReminders from './utils/setReminders';
 import scheduledReminders from './utils/scheduledReminders'
 import Column from './models/column.model';
 import Notification from './models/notification.model';
-import createApp from './app';
+import app from './app';
 
 const sh = shell.execSync;
 const uuid = uuidv1();
@@ -139,7 +139,7 @@ if (process.env.APP_ENVIRONMENT === "production") {
 uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.array("docs", 50), uploadController.uploadDoc);
 uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.array("docs", 50), uploadController.uploadPersistedDoc);
 
-const server = http.createServer(createApp());
+const server = http.createServer(app);
 
 export const io = new Server(server, { cors: { origin: process.env.CORS_URL } })
 
