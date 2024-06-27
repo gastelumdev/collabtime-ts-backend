@@ -129,8 +129,6 @@ const sendCriticalRowEmail = async (row: IRow) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
-    console.log("ROW UPDATED")
-    console.log({ body: req.body, rowId: req.params.id })
 
     try {
         const row: any = await Row.findOne({ _id: req.params.id });
@@ -140,8 +138,6 @@ export const updateRow = async (req: Request, res: Response) => {
         const columns: any = await Column.find({ dataCollection: dataCollection?._id, position: 1 })
 
         const columnName = columns[0].name;
-
-        console.log({ location: "Before Update" })
 
         if (row.values[columnName] !== req.body.values[columnName]) {
             const dataCollections = await DataCollection.find({ workspace: workspace?._id });
@@ -166,11 +162,12 @@ export const updateRow = async (req: Request, res: Response) => {
                     if (modify) {
                         const newRow = await Row.findByIdAndUpdate(r._id, r, { new: true });
                     }
-
                 }
             }
         }
 
+
+        console.log({ rowAssignedTo: row.assignedTo, reqBodyAssignedTo: req.body.assignedTo })
         if (req.body.values["assigned_to"] && ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"]))) {
 
             const email = req.body.values["assigned_to"].split(" - ")[1];
@@ -178,12 +175,22 @@ export const updateRow = async (req: Request, res: Response) => {
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
             io.emit("update row", { message: "" });
 
-            row.assignedTo = user?._id.toString();
-            const newRow = await Row.findByIdAndUpdate(row._id, { $set: { assignedTo: user?._id.toString() } }, { new: true });
-            newRow?.save()
-            console.log({ newRow, userId: user?._id.toString() })
+            if (req.body.values["assigned_to"] !== row.values["assigned_to"]) {
 
-            sendCriticalRowEmail(req.body);
+                sendEmail({
+                    email: email,
+                    subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
+                    payload: {
+                        message: `${workspace?.name} - ${dataCollection?.name} assignment has been assigned by ${noteCreator?.firstname} ${noteCreator?.lastname}`,
+                        link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
+                        dataCollectionName: dataCollection?.name,
+                    },
+                    template: "./template/dataCollectionStatusChange.handlebars",
+                    // res,
+                }, (res: Response) => console.log("Email sent."));
+            }
+
+            // sendCriticalRowEmail(req.body);
         }
 
         // if there are more notes in the req body than in the db, then there is a new note
