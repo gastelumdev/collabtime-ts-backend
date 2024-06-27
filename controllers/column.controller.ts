@@ -61,31 +61,19 @@ export const createColumn = async (req: Request, res: Response) => {
         console.log(column)
         column.save()
 
-        for (const row of rows) {
-            row.values = { ...row.values, [column.name]: "" }
-            console.log(row.values)
-            // const cell = new Cell({
-            //     dataCollection: column.dataCollection,
-            //     row: row._id,
-            //     name: column.name,
-            //     type: column.type,
-            //     position: column.position,
-            //     labels: column.labels,
-            //     people: people,
-            //     value: value
-            // });
+        // for (const row of rows) {
+        //     row.values = { ...row.values, [column.name]: "" }
+        //     console.log(row.values)
 
-            // row.cells.push(cell._id);
+        //     try {
+        //         // cell.save()
+        //         await Row.findByIdAndUpdate({ _id: row._id }, row);
 
-            try {
-                // cell.save()
-                await Row.findByIdAndUpdate({ _id: row._id }, row);
-
-            } catch (error) {
-                // console.log(error)
-                res.status(400).send({ success: false });
-            }
-        }
+        //     } catch (error) {
+        //         // console.log(error)
+        //         res.status(400).send({ success: false });
+        //     }
+        // }
 
 
         res.send(column);
@@ -118,46 +106,6 @@ export const updateColumn = async (req: Request, res: Response) => {
 }
 
 export const deleteColumn = async (req: Request, res: Response) => {
-
-
-    // console.log("CELLS IN COLUMN", cellsInThisColumn)
-
-    // let result = [];
-    // let cellIds = [];
-
-    // try {
-    //     for (const cell of cellsInThisColumn) {
-    //         await Cell.findByIdAndDelete({ _id: cell._id })
-    //         cellIds.push(cell._id);
-    //     }
-
-    //     console.log(cellIds)
-
-    //     for (const row of rows) {
-
-    //         // console.log("ROW CELLS", row.cells );
-
-    //         for (const rowCell of row.cells) {
-    //             let isInArray = false;
-    //             for (const cellId of cellIds) {
-    //                 if (cellId.equals(rowCell)) {
-    //                     isInArray = true;
-    //                 }
-    //             }
-    //             if (!isInArray) result.push(rowCell);
-    //         }
-
-    //         console.log("RESULT", result)
-    //         const rowCopy: any = row;
-    //         rowCopy.cells = result;
-    //         result = [];
-    //         await Row.findByIdAndUpdate({ _id: rowCopy._id }, rowCopy);
-    //     }
-    // } catch (error) {
-    //     res.status(400).send({ success: false })
-    // }
-
-
     try {
 
 
@@ -169,19 +117,20 @@ export const deleteColumn = async (req: Request, res: Response) => {
 
         await Column.findByIdAndDelete(column?._id);
 
-        // const cellsInThisColumn = await Cell.find({ name: name, dataCollection: dataCollection });
         const rows = await Row.find({ dataCollection: dataCollectionId });
-        // console.log({ rows })
 
-        for (const row of rows) {
-            const rowCopy: any = await Row.findOne({ _id: row._id });
-            // console.log({ name })
+        const rowsWithValues = rows.filter((row) => {
+            return row.values[name] !== undefined && row.values[name] !== "";
+        });
+
+        console.log(rowsWithValues)
+
+        for (const row of rowsWithValues) {
+            // const rowCopy: any = await Row.findOne({ _id: row._id });
+            const rowCopy: any = row;
             let values = rowCopy.values;
             let refs = rowCopy.refs;
-            console.log({ refs })
             delete values[name];
-            delete refs[name];
-            console.log({ refs })
             rowCopy.values = values;
             rowCopy.refs = refs;
             console.log({ rowCopyRefs: rowCopy.refs })
@@ -194,6 +143,7 @@ export const deleteColumn = async (req: Request, res: Response) => {
         }
         res.send({ success: true });
     } catch (error) {
+        console.log(error)
         res.status(400).send({ success: false })
     }
 }

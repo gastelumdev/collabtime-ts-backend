@@ -525,13 +525,9 @@ export const getFormData = async (req: Request, res: Response) => {
                 emptyRow = row;
                 break;
             }
-
-            console.log({ nonEmptyRow: row })
         }
 
         emptyRow.dataCollection = dataCollection;
-
-        console.log(emptyRow);
 
         res.send({ columns, row: emptyRow, rows, dataCollection });
 
