@@ -11,7 +11,8 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
-import { IRow } from "../services/row.service";
+import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, updateRefs } from "../services/row.service";
+import { IWorkspace } from "../services/workspace.service";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -129,167 +130,30 @@ const sendCriticalRowEmail = async (row: IRow) => {
 }
 
 export const updateRow = async (req: Request, res: Response) => {
-
     try {
-        const row: any = await Row.findOne({ _id: req.params.id });
+        const row = await Row.findOne({ _id: req.params.id });
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
-        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId })
-        const noteCreator = await User.findOne({ _id: (<any>req).user._id });
-        const columns: any = await Column.find({ dataCollection: dataCollection?._id, position: 1 })
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        const assigner = await User.findOne({ _id: (<any>req).user._id });
 
-        const columnName = columns[0].name;
+        // Set the first user to interact with the row as the creator
+        if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
 
-        if (row.values[columnName] !== req.body.values[columnName]) {
-            const dataCollections = await DataCollection.find({ workspace: workspace?._id });
-
-            for (const dc of dataCollections) {
-                const rows = await Row.find({ dataCollection: dc._id });
-
-                for (const r of rows) {
-                    const refs = r.refs;
-                    let modify = false;
-
-                    for (const key in refs) {
-                        for (const i in refs[key]) {
-                            if (row._id.toString() === refs[key][i]._id) {
-                                // modifiedRef = { ...refs[key][i], values: { ...refs[key][i].values, [columnName]: req.body.values[columnName] } }
-                                r.refs[key][i] = req.body;
-                                modify = true;
-                            }
-                        }
-                    }
-
-                    if (modify) {
-                        const newRow = await Row.findByIdAndUpdate(r._id, r, { new: true });
-                    }
-                }
-            }
-        }
-
-
-        console.log({ rowAssignedTo: row.assignedTo, reqBodyAssignedTo: req.body.assignedTo })
-        if (req.body.values["assigned_to"] && ((req.body.values["assigned_to"] !== row.values["assigned_to"]) || (req.body.values["priority"] !== row.values["priority"]) || (req.body.values["status"] !== row.values["status"]))) {
-
-            const email = req.body.values["assigned_to"].split(" - ")[1];
-            const user = await User.findOne({ email: email });
-            io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
-            io.emit("update row", { message: "" });
-
-            if (req.body.values["assigned_to"] !== row.values["assigned_to"]) {
-
-                sendEmail({
-                    email: email,
-                    subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
-                    payload: {
-                        message: `${workspace?.name} - ${dataCollection?.name} assignment has been assigned by ${noteCreator?.firstname} ${noteCreator?.lastname}`,
-                        link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
-                        dataCollectionName: dataCollection?.name,
-                    },
-                    template: "./template/dataCollectionStatusChange.handlebars",
-                    // res,
-                }, (res: Response) => console.log("Email sent."));
-            }
-
-            // sendCriticalRowEmail(req.body);
-        }
-
-        // if there are more notes in the req body than in the db, then there is a new note
-        // in which we want to notify the user and update the frontend via sockets
-        if (row?.notesList.length !== req.body.notesList.length) {
-            for (const member of workspace?.members || []) {
-                const user = await User.findOne({ email: member.email })
-                io.emit(user?._id || "", { message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
-                io.emit("update row", { message: "" })
-                const notification = new Notification({
-                    message: `${noteCreator?.firstname} ${noteCreator?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
-                    workspaceId: workspace?._id,
-                    assignedTo: user?._id,
-                    dataSource: "",
-                    priority: "Low",
-                    read: false,
-                })
-                notification.save()
-            }
-        }
-
-        // if existing row has not been acknowledged but the row been sent has,
-        // then send an email to the owner of the row
-        if (row?.acknowledged === false && req.body.acknowledged === true) {
-            const rowOwner = await User.findOne({ _id: row.createdBy })
-            sendEmail({
-                email: rowOwner?.email || "",
-                subject: `Collabtime Acknowledment - ${workspace?.name}`,
-                payload: {
-                    message: `${workspace?.name} - ${dataCollection?.name} assignment has been acknowledged by ${noteCreator?.firstname} ${noteCreator?.lastname}`,
-                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
-                    dataCollectionName: dataCollection?.name
-                },
-                template: "./template/rowAcknowledgement.handlebars"
-            }, () => {
-                console.log("Email sent");
-            })
-        }
-
-        if (!row?.completed && row?.values["status"] !== undefined) {
-            if (row?.values["status"] !== req.body.values["status"]) {
-                if (req.body.values["status"] === "Done") {
-                    req.body.complete = true;
-
-                    const rows = await Row.find({ parentRowId: req.body._id });
-                    for (const row of rows) {
-                        row.complete = true;
-
-                        const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
-                    }
-                } else {
-                    req.body.complete = false;
-
-                    const rows = await Row.find({ parentRowId: req.body._id });
-                    for (const row of rows) {
-                        row.complete = false;
-
-                        const newRow = await Row.findByIdAndUpdate(row._id, row, { new: true });
-                    }
-                }
-            }
-        }
-
-        if (req.body.createdBy === null) {
-            req.body.createdBy = noteCreator?._id
-        }
-
-
-
-
+        // Updates references in all rows across all data collections in a workspace if a specific column value changes.
+        updateRefs(workspace, dataCollection, row, req.body);
+        // Handles changes to the "assigned_to" field of a row, sending notifications and emails if the assigned user changes.
+        handleAssignedTo(workspace, dataCollection, row, req.body, assigner);
+        // Handles the addition of a new note to a row, sending notifications and updating the frontend if the notes list changes.
+        handleNewNote(workspace, dataCollection, row, req.body, assigner);
+        // Handles the acknowledgment of a row, sending an email notification to the row's creator if the row is acknowledged.
+        handleAcknowledgedRow(workspace, dataCollection, row, req.body, assigner)
+        // Handles the completion status of a row and its child rows based on the "status" field.
+        handleCompletedRow(row, req.body)
+        // Update the row
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        const isLastRow = await checkIfLastRow(row);
-
-        console.log({ location: "After Update" })
-
-        let blankRows: any = [];
-
-        if (isLastRow) {
-
-            // Get the values and the position of the row passed in which is the last row in the list
-            const lastRowValues = req.body.values;
-            let lastRowPosition: any = req.body.position;
-
-            // Way to keep track of how many non empty values there is
-            let numberOfValues = 0;
-
-            // if any of the last row's values are not empty increase the number of values
-            for (const key in lastRowValues) {
-                console.log({ values: lastRowValues[key] })
-                if (lastRowValues[key] !== '') {
-                    numberOfValues++;
-                }
-            }
-            if (numberOfValues >= 1) {
-                blankRows = await addBlankRows(dataCollection, noteCreator, 10, lastRowPosition);
-            }
-
-        }
-
+        // Handles the update of the last row in a data collection, adding blank rows if necessary.
+        const blankRows = handleLastRowUpdate(dataCollection, row, req.body, assigner);
+        // Send the blank rows for the frontend to have
         res.send(blankRows)
     } catch (error) {
         res.status(400).send({ success: false })
@@ -341,7 +205,7 @@ export const getBlankRows = async (req: Request, res: Response) => {
         // const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
 
 
-        const blankRows = addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
+        const blankRows = await addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
 
         res.send(blankRows)
     } catch (error) {
