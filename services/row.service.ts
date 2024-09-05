@@ -26,7 +26,7 @@ export interface INote {
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[] | TCell[];
-    assignedTo: Schema.Types.ObjectId | String | null;
+    assignedTo: Schema.Types.ObjectId | String[] | null;
     createdBy: Schema.Types.ObjectId | string;
     notes: string;
     notesList: INote[];
@@ -109,28 +109,33 @@ export const updateRefs = async (workspace: IWorkspace & { _id: string } | null,
  * @param {IUser | null} assigner - The user who made the assignment change.
  */
 export const handleAssignedTo = async (workspace: IWorkspace & { _id: string } | null, dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
+    console.log(newRow)
     // If the assigned to, priority, or status change
-    if (newRow.values["assigned_to"] && (newRow.values["assigned_to"] !== row?.values["assigned_to"])) {
-        // Get the email out of the assigned_to value and find that user
-        const email = newRow.values["assigned_to"].split(" - ")[1];
-        const user = await User.findOne({ email: email });
-        // Emit a message to the frontend to trigger a toast notification and to update the row
-        io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
-        io.emit("update row", { message: "" });
-        // Send an email to the assignee.
-        sendEmail({
-            email: email,
-            subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
-            payload: {
-                message: `${workspace?.name} - ${dataCollection?.name} assignment has been assigned by ${assigner?.firstname} ${assigner?.lastname}`,
-                link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
-                dataCollectionName: dataCollection?.name,
-            },
-            template: "./template/dataCollectionStatusChange.handlebars",
-            // res,
-        }, (res: Response) => console.log("Email sent."));
+    if (newRow.values["assigned_to"] && (newRow.values["assigned_to"].length > row?.values["assigned_to"].length)) {
+        for (const assignee of newRow.values['assigned_to']) {
+            // Get the email out of the assigned_to value and find that user
+            const email = assignee.email;
+            console.log(email)
+            const user = await User.findOne({ email: email });
+            // Emit a message to the frontend to trigger a toast notification and to update the row
+            io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
+            io.emit("update row", { message: "" });
+            // Send an email to the assignee.
+            sendEmail({
+                email: email,
+                subject: `New Assignment in ${workspace?.name} - ${dataCollection?.name}`,
+                payload: {
+                    message: `${workspace?.name} - ${dataCollection?.name} assignment has been assigned by ${assigner?.firstname} ${assigner?.lastname}`,
+                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
+                    dataCollectionName: dataCollection?.name,
+                },
+                template: "./template/dataCollectionStatusChange.handlebars",
+                // res,
+            }, (res: Response) => console.log("Email sent."))
 
-        // sendCriticalRowEmail(req.body);
+            // sendCriticalRowEmail(req.body);
+        }
+
     }
 }
 

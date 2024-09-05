@@ -4,7 +4,7 @@ import { IRow, IRowDocument, IRowModel } from "../services/row.service";
 const rowSchema: Schema<IRowDocument> = new Schema({
     dataCollection: { type: Schema.Types.ObjectId },
     cells: { type: [], default: [] },
-    assignedTo: { type: Schema.Types.ObjectId, default: null },
+    assignedTo: { type: [], default: null },
     createdBy: { type: Schema.Types.ObjectId, default: null },
     notes: { type: String, default: "" },
     notesList: { type: [], default: [] },

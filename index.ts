@@ -112,6 +112,41 @@ const deleteOldNotifications = async () => {
   await Notification.deleteMany({ "createdAt": { $lt: priorDate.toISOString().split("T")[0] } });
 }
 
+const convertAssignedTo = async () => {
+  const rows = await Row.find({});
+  for (const row of rows) {
+    const assignedToArr = [];
+    let assigned_to = row.values['assigned_to'];
+    if (assigned_to !== undefined && assigned_to !== '' && typeof assigned_to == 'string') {
+
+
+      // console.log(assigned_to);
+      let splitValue: any = assigned_to.split(' - ');
+      let name = splitValue[0];
+      let email = splitValue[1];
+
+      if (email !== undefined) {
+        assignedToArr.push({ name: splitValue[0], email: splitValue[1] });
+      }
+
+      // if (row.values['assigned_to'].length > 0) {
+      //   splitValue = assigned_to.split(' - ');
+      // }
+
+
+    }
+    if (assignedToArr.length > 0) console.log(assignedToArr);
+
+    row.values = { ...row.values, assigned_to: assignedToArr };
+
+    const updatedRow = await Row.findByIdAndUpdate(row._id, { values: row.values }, { new: true });
+    console.log((updatedRow as any).values);
+  }
+
+};
+
+// convertAssignedTo();
+
 if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
