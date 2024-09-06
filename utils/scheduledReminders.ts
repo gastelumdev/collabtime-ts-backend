@@ -1,3 +1,4 @@
+import { io } from "..";
 import User from "../models/auth.model";
 import Column from "../models/column.model";
 import Row from "../models/row.models"
@@ -34,44 +35,49 @@ const checkDates = (reminder: string) => {
 const scheduleReminders = async () => {
     console.log("Running Scheduled Reminders")
     try {
-        const rows = await Row.find({ reminders: { $exists: true, $ne: [] } });
+        const rows = await Row.find({ reminder: true });
 
         console.log(rows)
         for (const row of rows) {
             const column = await Column.findOne({ dataCollection: row.dataCollection, position: 1 });
             if (row.reminders.length > 0) {
                 for (const reminder of row.reminders) {
-                    const reminderDate = new Date(reminder);
+                    const reminderDate = new Date(reminder.date);
                     const now = new Date();
 
-                    console.log(checkDates(reminder));
+                    console.log(checkDates(reminder.date));
 
                     console.log({ reminder: reminderDate.getTime(), now: now.getTime() })
-                    if (checkDates(reminder)) {
+                    if (checkDates(reminder.date)) {
                         console.log("Send email")
                         if (row.values.assigned_to !== undefined) {
-                            const email = row.values.assigned_to.split(" - ")[1];
+                            for (const assignee of row.values.assigned_to) {
+                                const email = assignee.email;
+                                const user = await User.find({ email });
 
-                            sendEmail({
-                                email,
-                                subject: `Collabtime Reminder`,
-                                payload: { name: row.values[column?.name as string], reminder: reminder.split("T").join(" ") },
-                                template: "./template/singleReminder.handlebars"
-                            }, async (res: Response) => {
-                                const newReminders = row.reminders.filter((rem) => {
-                                    return rem !== reminder;
-                                });
+                                io.emit((user as any)?._id || "", { message: `Reminder: ${reminder.title} from task "${row.values[column?.name as string]}"` });
+                                io.emit("update row", { message: "" });
 
-                                console.log({ newReminders });
-                                console.log({ columnName: column?.name });
+                                sendEmail({
+                                    email,
+                                    subject: `Collabtime Reminder`,
+                                    payload: { name: row.values[column?.name as string], reminder: reminder.date.split("T").join(" "), title: reminder.title, comments: reminder.comments },
+                                    template: "./template/singleReminder.handlebars"
+                                }, async (res: Response) => {
+                                    const newReminders = row.reminders.filter((rem) => {
+                                        return rem.date !== reminder.date;
+                                    });
 
-                                // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
-                                const newRow: any = await Row.findById(row._id);
-                                newRow.reminders = newReminders;
+                                    console.log({ newReminders });
+                                    console.log({ columnName: column?.name })
 
-                                newRow.save();
-                                console.log({ newRow })
-                            })
+                                    // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
+                                    const newRow: any = { ...row, reminder: newReminders.length > 0, reminders: newReminders };
+                                    const updatedRow = await Row.findByIdAndUpdate(row._id, { reminders: newRow.reminders, reminder: newRow.reminder }, { new: true });
+                                    console.log(updatedRow)
+                                })
+                            }
+
                         }
                     }
                 }

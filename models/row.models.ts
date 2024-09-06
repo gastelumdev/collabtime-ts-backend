@@ -10,7 +10,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     notesList: { type: [], default: [] },
     createdAt: { type: Date, default: Date.now },
     tags: { type: [], default: [] },
-    reminder: { type: Boolean, default: true },
+    reminder: { type: Boolean, default: false },
     reminders: { type: [], default: [] },
     complete: { type: Boolean, default: false },
     acknowledged: { type: Boolean, default: false },

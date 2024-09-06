@@ -23,6 +23,12 @@ export interface INote {
     images: string[];
 }
 
+export interface IReminder {
+    title: string;
+    date: string;
+    comments: string;
+}
+
 export interface IRow {
     dataCollection: Schema.Types.ObjectId;
     cells: string[] | TCell[];
@@ -33,7 +39,7 @@ export interface IRow {
     createdAt: Date;
     tags: ITag[];
     reminder: boolean;
-    reminders: string[];
+    reminders: IReminder[];
     complete: boolean;
     acknowledged: boolean;
     values: any;

@@ -22,7 +22,7 @@ const setReminders = async () => {
 
                     for (const row of rows) {
                         if (row.values["assigned_to"] !== undefined) {
-                            const email = row.values["assigned_to"].split(" - ")[1];
+                            const email = row.values["assigned_to"].email;
                             if (email === user?.email) {
                                 pendingRows.push(row);
                             }
