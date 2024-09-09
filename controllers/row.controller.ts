@@ -452,6 +452,26 @@ export const updateFormData = async (req: Request, res: Response) => {
     }
 }
 
+export const deleteValues = async (req: Request, res: Response) => {
+    const { dataCollectionId } = req.params;
+    const column = req.body;
+
+    const rows = await Row.find({ dataCollection: dataCollectionId });
+
+    for (const row of rows) {
+        const values = row.values;
+        delete values[column.name];
+
+        const newRow = { ...row, values };
+
+        await Row.findByIdAndUpdate(row._id, { values: newRow.values }, { new: true });
+
+        console.log(newRow)
+    }
+
+    res.send({ success: true });
+}
+
 export const callUpdate = async (req: Request, res: Response) => {
     res.send({ success: true });
 }
