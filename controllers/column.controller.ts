@@ -142,9 +142,19 @@ export const deleteColumn = async (req: Request, res: Response) => {
 
 
             // console.log(row.refs)
-            const newRow = await Row.findByIdAndUpdate(row._id, { $set: { values: rowCopy.values, refs: rowCopy.refs } }, { new: true });
-            console.log(newRow?.refs)
-            // console.log({ values: newRow?.values, refs: newRow?.refs })
+            await Row.findByIdAndUpdate(row._id, { $set: { values: rowCopy.values, refs: rowCopy.refs } }, { new: true });
+
+        }
+
+        const columns = await Column.find({ dataCollection: dataCollection }).sort({ position: 1 });
+        let position = 1;
+
+        for (const column of columns) {
+            let newColumn = { ...column, position };
+
+            const updatedColumn = await Column.findByIdAndUpdate(column._id, { position: newColumn.position });
+            console.log(updatedColumn)
+            position = position + 1;
         }
         res.send({ success: true });
     } catch (error) {
