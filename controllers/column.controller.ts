@@ -85,21 +85,26 @@ export const createColumn = async (req: Request, res: Response) => {
 
 export const updateColumn = async (req: Request, res: Response) => {
     try {
-        // const column = await Column.findOne({ _id: req.params.id });
-        // const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
-        // const cells = await Cell.find({ dataCollection: dataCollection?._id, name: column?.name })
+        const prevColumn: any = await Column.findById(req.params.id);
+        const newColumn: any = req.body;
+        const rows = await Row.find({ dataCollection: prevColumn?.dataCollection });
 
-        // console.log({ width: req.body.width, position: req.body.position });
+        for (const row of rows) {
+            const values = row.values;
 
-        // for (const cell of cells) {
-        //     cell.name = req.body.name;
-        //     cell.labels = req.body.labels;
-        //     cell.save();
-        // }
+            const value = values[prevColumn.name]
+            if (value !== undefined) {
+                values[newColumn.name] = value;
+                delete values[prevColumn.name];
 
-        const newColumn = await Column.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        console.log({ newColumn })
-        res.send(newColumn);
+                const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row, values }, { new: true });
+                console.log(updatedRow);
+            }
+        }
+
+        const updatedColumn = await Column.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        console.log({ updatedColumn })
+        res.send(updatedColumn);
     } catch (error) {
         res.status(400).send({ success: false })
     }

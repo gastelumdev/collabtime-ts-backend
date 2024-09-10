@@ -465,8 +465,6 @@ export const deleteValues = async (req: Request, res: Response) => {
         const newRow = { ...row, values };
 
         await Row.findByIdAndUpdate(row._id, { values: newRow.values }, { new: true });
-
-        console.log(newRow)
     }
 
     res.send({ success: true });
