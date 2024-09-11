@@ -85,22 +85,27 @@ export const createColumn = async (req: Request, res: Response) => {
 
 export const updateColumn = async (req: Request, res: Response) => {
     try {
+        console.log("UPDATED COLUMN")
         const prevColumn: any = await Column.findById(req.params.id);
         const newColumn: any = req.body;
-        const rows = await Row.find({ dataCollection: prevColumn?.dataCollection });
 
-        for (const row of rows) {
-            const values = row.values;
+        if (prevColumn.width === newColumn.width) {
+            const rows = await Row.find({ dataCollection: prevColumn?.dataCollection });
 
-            const value = values[prevColumn.name]
-            if (value !== undefined) {
-                values[newColumn.name] = value;
-                delete values[prevColumn.name];
+            for (const row of rows) {
+                const values = row.values;
 
-                const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row, values }, { new: true });
-                console.log(updatedRow);
+                const value = values[prevColumn.name]
+                if (value !== undefined) {
+                    values[newColumn.name] = value;
+                    delete values[prevColumn.name];
+
+                    const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row, values }, { new: true });
+                    console.log(updatedRow);
+                }
             }
         }
+
 
         const updatedColumn = await Column.findByIdAndUpdate(req.params.id, req.body, { new: true });
         console.log({ updatedColumn })
