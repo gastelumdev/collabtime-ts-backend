@@ -11,6 +11,7 @@ const userSchema: Schema<IUserDocument> = new Schema({
     organization: { type: String },
     logoURL: { type: String, default: "https://collabtime-ts-backend.onrender.com/docs/logo_551aecd0-c608-11ee-b41a-e97b0c5f0d41.png" },
     workspaces: [],
+    defaultWorkspaceId: { type: String, default: null },
     created_at: { type: Date, default: Date.now },
 });
 

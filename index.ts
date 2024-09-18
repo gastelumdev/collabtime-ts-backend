@@ -21,6 +21,7 @@ import scheduledReminders from './utils/scheduledReminders'
 import Column from './models/column.model';
 import Notification from './models/notification.model';
 import app from './app';
+import { Schema } from 'mongoose';
 
 const sh = shell.execSync;
 const uuid = uuidv1();
@@ -169,7 +170,51 @@ if (process.env.APP_ENVIRONMENT === "production") {
   cron.schedule("0 0 0 * * *", () => {
     deleteOldNotifications()
   })
+
+  cron.schedule("0 0 23 * * 7", () => {
+    changeRowPositions()
+  })
 }
+
+const changeRowPositions = async () => {
+  const dcs = await DataCollection.find({});
+
+  for (const dc of dcs) {
+    const rows = await Row.find({ dataCollection: dc._id }).sort({ position: 1 });
+
+    const increment = 1024;
+    let position = increment;
+
+    for (const row of rows) {
+      const newRow = { ...row, position };
+
+      const updatedRow = await Row.findByIdAndUpdate(row._id, { position: newRow.position }, { new: true });
+      console.log(updatedRow);
+
+      position = position + increment;
+    }
+  }
+
+}
+
+const addDefaultWorkspace = async () => {
+  const users = await User.find({});
+
+  for (const user of users) {
+    let newUser = { ...user }
+    if (user.workspaces[0] !== undefined) {
+      console.log({ userId: user.workspaces[0].id })
+      newUser = { ...newUser, defaultWorkspaceId: user.workspaces[0].id.toString() };
+    } else {
+      newUser = { ...newUser, defaultWorkspaceId: null }
+    }
+    console.log(newUser.defaultWorkspaceId)
+    const updatedUser = await User.findByIdAndUpdate(user._id, { defaultWorkspaceId: newUser.defaultWorkspaceId }, { new: true });
+    console.log(updatedUser);
+  }
+}
+
+// addDefaultWorkspace()
 
 uploadRouter.post("/uploadDocs", verifyToken, localDocUpload.array("docs", 50), uploadController.uploadDoc);
 uploadRouter.post("/uploadPersistedDocs", verifyToken, persistedDocUpload.array("docs", 50), uploadController.uploadPersistedDoc);

@@ -1,4 +1,4 @@
-import { Document, Model } from "mongoose";
+import { Document, Model, Schema } from "mongoose";
 import User from "../models/auth.model";
 import { TInvitee } from "../types";
 import { IWorkspace } from "./workspace.service";
@@ -18,6 +18,7 @@ export interface IUser {
     logoURL: string;
     role?: string;
     workspaces: IUserWorkspace[];
+    defaultWorkspaceId: string | null;
     created_at: Date;
 };
 
