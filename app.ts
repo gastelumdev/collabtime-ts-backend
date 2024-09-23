@@ -16,6 +16,7 @@ import documentRouter from "./routes/document.routes";
 import searchRouter from "./routes/search.routes";
 import tagRouter from "./routes/tag.routes";
 import messageRouter from "./routes/message.routes";
+import dataCollectionViewRouter from './routes/dataCollectionView.routes';
 
 
 const app: any = express();
@@ -45,7 +46,7 @@ app.use(documentRouter);
 app.use(searchRouter);
 app.use(tagRouter);
 app.use(messageRouter);
-
+app.use(dataCollectionViewRouter);
 
 
 

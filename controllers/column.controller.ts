@@ -8,11 +8,35 @@ import User from "../models/auth.model";
 import { io } from "../index";
 
 export const getColumns = async (req: Request, res: Response) => {
-    const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
-    const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position");
+
 
     try {
+        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position");
+
         res.send(columns);
+    } catch (error) {
+        res.status(400).send({ success: false });
+    }
+}
+
+export const getWorkspaceColumns = async (req: Request, res: Response) => {
+    // const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+    // const workspace = await Workspace.findOne({ _id: dataCollection?.workspace });
+
+    try {
+        const dataCollections = await DataCollection.find({ workspace: req.params.workspaceId });
+
+        const response = []
+
+        for (const dc of dataCollections) {
+            const columns = await Column.find({ dataCollection: dc._id });
+
+            for (const col of columns) {
+                response.push(col);
+            }
+        }
+        res.send(response);
     } catch (error) {
         res.status(400).send({ success: false });
     }

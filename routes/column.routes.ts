@@ -5,6 +5,7 @@ import verifyToken from "../middleware/authJWT";
 const router = Router();
 
 router.get("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns", verifyToken, columnController.getColumns);
+router.get("/workspaces/:workspaceId/workspaceColumns", verifyToken, columnController.getWorkspaceColumns);
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns", verifyToken, columnController.createColumn);
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns/update/:id", verifyToken, columnController.updateColumn)
 router.post("/workspaces/:workspaceId/dataCollections/:dataCollectionId/columns/delete", verifyToken, columnController.deleteColumn)

@@ -110,7 +110,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
     const people: any = [];
 
     for (const member of workspace?.members || []) {
-        let person = await User.findOne({ email: member.email });
+        let person = await User.findOne({ email: member.email })
         people.push(person);
     }
 
