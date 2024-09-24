@@ -284,3 +284,29 @@ export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _i
         return blankRows;
     }
 }
+
+export const handleRowEmptiness = async (newRow: IRow & { _id: string }) => {
+    if (!rowIsEmpty(newRow)) {
+        await Row.findByIdAndUpdate(newRow._id, { isEmpty: false }, { new: true });
+    } else {
+        await Row.findByIdAndUpdate(newRow._id, { isEmpty: true }, { new: true });
+    }
+}
+
+export const rowIsEmpty = (row: IRow & { _id: string }) => {
+    let isEmpty = true;
+    for (const key in row.values) {
+        const value = row.values[key]
+        if (typeof value === "string") {
+            if (value !== "") {
+                isEmpty = false;
+            }
+        } else {
+            if (value.length > 0) {
+                isEmpty = false;
+            }
+        }
+    }
+
+    return isEmpty;
+}

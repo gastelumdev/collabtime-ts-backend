@@ -11,7 +11,7 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
-import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, updateRefs } from "../services/row.service";
+import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, handleRowEmptiness, updateRefs } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
 
 export const getRows = async (req: Request, res: Response) => {
@@ -28,15 +28,10 @@ export const getRows = async (req: Request, res: Response) => {
         let rows;
 
         if (showEmptyRows) {
-            console.log("show empty rows")
             rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ position: sort }).skip(skip).limit(limit);
         } else {
-            console.log("dont show empty rows")
-            console.log({ dataCollection })
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
         }
-
-        console.log(rows.length)
 
         res.send(rows);
 
@@ -149,6 +144,9 @@ export const updateRow = async (req: Request, res: Response) => {
         // Set the first user to interact with the row as the creator
         if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
 
+        // Update the row
+        await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
         // Updates references in all rows across all data collections in a workspace if a specific column value changes.
         updateRefs(workspace, dataCollection, row, req.body);
         // Handles changes to the "assigned_to" field of a row, sending notifications and emails if the assigned user changes.
@@ -159,8 +157,9 @@ export const updateRow = async (req: Request, res: Response) => {
         handleAcknowledgedRow(workspace, dataCollection, row, req.body, assigner)
         // Handles the completion status of a row and its child rows based on the "status" field.
         handleCompletedRow(row, req.body)
-        // Update the row
-        await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Sets row to empty/non-empty based on its values
+        handleRowEmptiness(req.body);
+
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = handleLastRowUpdate(dataCollection, row, req.body, assigner);
         // Send the blank rows for the frontend to have
