@@ -50,6 +50,7 @@ export interface IRow {
     showSubrows: boolean;
     parentRowId: Schema.Types.ObjectId | string | null;
     isVisible: boolean;
+    isEmpty: boolean;
 }
 
 export interface IRowDocument extends IRow, Document { }

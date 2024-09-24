@@ -22,6 +22,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     parentRowId: { type: Schema.Types.ObjectId, default: null },
     showSubrows: { type: Boolean, default: true },
     isVisible: { type: Boolean, default: true },
+    isEmpty: { type: Boolean, default: true },
 }, {
     timestamps: true
 });

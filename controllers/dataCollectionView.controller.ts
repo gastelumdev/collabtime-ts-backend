@@ -48,20 +48,11 @@ export const updateDataCollectionView = async (req: Request, res: Response) => {
 
         const dataCollectionView = req.body;
 
-        // const columns = [];
-
-        // for (const col of dataCollectionView.columns) {
-        //     columns.push(col._id);
-        // }
-
-        const updatedDataCollectionView = await DataCollectionView.findByIdAndUpdate({ _id: dataCollectionView._id }, { ...dataCollectionView }, { new: true });
-
-        // console.log({ updatedDataCollectionView })
+        await DataCollectionView.findByIdAndUpdate({ _id: dataCollectionView._id }, { ...dataCollectionView }, { new: true });
 
         res.send({ success: true });
     }
     catch (err) {
-        // console.log(err)
         res.status(400).send({ success: false });
     }
 }

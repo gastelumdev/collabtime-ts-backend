@@ -120,8 +120,6 @@ const convertAssignedTo = async () => {
     let assigned_to = row.values['assigned_to'];
     if (assigned_to !== undefined && assigned_to !== '' && typeof assigned_to == 'string') {
 
-
-      // console.log(assigned_to);
       let splitValue: any = assigned_to.split(' - ');
       let name = splitValue[0];
       let email = splitValue[1];
@@ -129,12 +127,6 @@ const convertAssignedTo = async () => {
       if (email !== undefined) {
         assignedToArr.push({ name: splitValue[0], email: splitValue[1] });
       }
-
-      // if (row.values['assigned_to'].length > 0) {
-      //   splitValue = assigned_to.split(' - ');
-      // }
-
-
     }
     if (assignedToArr.length > 0) console.log(assignedToArr);
 
@@ -147,6 +139,34 @@ const convertAssignedTo = async () => {
 };
 
 // convertAssignedTo();
+
+const checkForEmptyRows = async () => {
+  const rows = await Row.find({}).sort({ position: 1 });
+
+
+
+  for (const row of rows) {
+    let isEmpty = true;
+    console.log({ values: row.values })
+    for (const key in row.values) {
+      const value = row.values[key]
+      if (typeof value === "string") {
+        if (value !== "") {
+          isEmpty = false;
+        }
+      } else {
+        if (value.length > 0) {
+          isEmpty = false;
+        }
+      }
+    }
+    console.log(isEmpty)
+    const updatedRow = await Row.findByIdAndUpdate(row._id, { isEmpty }, { new: true });
+    console.log(updatedRow?.isEmpty)
+  }
+}
+
+// checkForEmptyRows()
 
 if (process.env.APP_ENVIRONMENT === "production") {
 

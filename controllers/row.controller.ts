@@ -15,18 +15,28 @@ import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, hand
 import { IWorkspace } from "../services/workspace.service";
 
 export const getRows = async (req: Request, res: Response) => {
-
     try {
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
+        const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
-        const rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ position: sort }).skip(skip).limit(limit);
+        let rows;
 
+        if (showEmptyRows) {
+            console.log("show empty rows")
+            rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ position: sort }).skip(skip).limit(limit);
+        } else {
+            console.log("dont show empty rows")
+            console.log({ dataCollection })
+            rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
+        }
+
+        console.log(rows.length)
 
         res.send(rows);
 
