@@ -7,6 +7,7 @@ const dataCollectionViewSchema: Schema<IDataCollectionViewDocument> = new Schema
     workspace: { type: Schema.Types.ObjectId },
     dataCollection: { type: Schema.Types.ObjectId },
     columns: { type: [] },
+    viewers: { type: [] },
     createdAt: { type: Date, default: Date.now },
 }, {
     timestamps: true

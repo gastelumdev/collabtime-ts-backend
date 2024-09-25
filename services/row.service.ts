@@ -192,7 +192,7 @@ export const handleAcknowledgedRow = async (workspace: IWorkspace & { _id: strin
         const rowOwner = await User.findOne({ _id: row.createdBy })
         sendEmail({
             email: rowOwner?.email || "",
-            subject: `Collabtime Acknowledment - ${workspace?.name}`,
+            subject: `Collabtime Acknowledgment - ${workspace?.name}`,
             payload: {
                 message: `${workspace?.name} - ${dataCollection?.name} assignment has been acknowledged by ${assigner?.firstname} ${assigner?.lastname}`,
                 link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,

@@ -6,6 +6,7 @@ export interface IDataCollectionView {
     workspace: Schema.Types.ObjectId;
     dataCollection: Schema.Types.ObjectId;
     columns: any[];
+    viewers: string[];
     createdAt: Date;
 }
 

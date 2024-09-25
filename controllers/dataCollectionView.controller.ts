@@ -18,7 +18,11 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
                 columns.push(col);
             }
             dataCollectionViewCopy.columns = columns;
-            response.push(dataCollectionViewCopy);
+
+            if (dataCollectionViewCopy.viewers.includes((<any>req).user._id)) {
+                response.push(dataCollectionViewCopy);
+            }
+
         }
 
         console.log({ response })
