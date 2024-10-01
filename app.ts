@@ -17,6 +17,7 @@ import searchRouter from "./routes/search.routes";
 import tagRouter from "./routes/tag.routes";
 import messageRouter from "./routes/message.routes";
 import dataCollectionViewRouter from './routes/dataCollectionView.routes';
+import userGroupRouter from './routes/userGroup.routes'
 
 
 const app: any = express();
@@ -47,6 +48,7 @@ app.use(searchRouter);
 app.use(tagRouter);
 app.use(messageRouter);
 app.use(dataCollectionViewRouter);
+app.use(userGroupRouter);
 
 
 
