@@ -175,7 +175,7 @@ const checkForEmptyRows = async () => {
 import util from 'util';
 
 const createUserGroups = async () => {
-  const workspaces = await Workspace.find({ _id: "66170e4df53e134028c81fb9" });
+  const workspaces = await Workspace.find({});
 
   const adminPermissions = admin;
   const viewOnlyPermissions = viewOnly;
@@ -221,7 +221,7 @@ const createUserGroups = async () => {
       })
     }
 
-    console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
+    // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
 
     const views = await DataCollectionView.find({ workspace: workspace._id });
 
@@ -259,7 +259,7 @@ const createUserGroups = async () => {
       users: users
     })
 
-    console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
+    // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
     // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
 
     adminUserGroup.save()

@@ -9,6 +9,7 @@ import Token from '../models/token.model';
 import Notification from '../models/notification.model';
 import sendEmail from '../utils/sendEmail';
 import { io } from "../index";
+import Workspace from '../models/workspace.model';
 
 export const register = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
@@ -140,6 +141,25 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 export const getAllUsers = async (req: Request, res: Response) => {
     const users = await User.find({});
     try {
+        res.send(users)
+    } catch (error) {
+        res.status(400).send(error)
+    }
+
+}
+
+export const getAllWorkspaceUsers = async (req: Request, res: Response) => {
+
+    try {
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const members: any = workspace?.members;
+        let users = []
+
+        for (const member of members) {
+            const user = await User.findOne({ email: member.email });
+            users.push(user);
+        }
+
         res.send(users)
     } catch (error) {
         res.status(400).send(error)
