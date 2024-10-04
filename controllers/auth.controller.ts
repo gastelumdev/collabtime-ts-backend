@@ -10,6 +10,8 @@ import Notification from '../models/notification.model';
 import sendEmail from '../utils/sendEmail';
 import { io } from "../index";
 import Workspace from '../models/workspace.model';
+import { admin, viewOnly } from '../utils/defaultGroups';
+import UserGroup from '../models/userGroup.model';
 
 export const register = async (req: Request, res: Response) => {
     const user = await User.findOne({ email: req.body.email });
@@ -18,6 +20,8 @@ export const register = async (req: Request, res: Response) => {
         if (user) {
             res.status(500).send({ successful: false, message: "User already exists." });
         } else {
+
+
             const hash = await bcrypt.hash(req.body.password, Number(10));
             const user = new User({
                 firstname: req.body.firstname,
@@ -25,10 +29,40 @@ export const register = async (req: Request, res: Response) => {
                 email: req.body.email,
                 role: req.body.role,
                 password: hash,
-                workspaces: []
+                workspaces: [],
             });
 
             user.save();
+
+            const workspace = new Workspace({
+                name: "My Workspace",
+                invitees: [],
+                members: [{ email: req.body.email, permissions: 2 }],
+                owner: user._id,
+                tags: [],
+                workspaceTags: []
+            });
+
+            workspace.save();
+
+            await User.findByIdAndUpdate(user._id, { ...user.toObject(), defaultWorkspaceId: workspace._id.toString(), workspaces: [{ id: workspace.toObject()._id, permissions: 2 }] });
+
+            const adminUserGroup = new UserGroup({
+                name: "All Privileges",
+                workspace: workspace._id,
+                permissions: admin,
+                users: [user._id]
+            })
+
+            const viewOnlyUserGroup = new UserGroup({
+                name: "View Only",
+                workspace: workspace._id,
+                permissions: viewOnly,
+                users: []
+            })
+
+            adminUserGroup.save()
+            viewOnlyUserGroup.save()
 
             sendEmail({ email: req.body.email, subject: "Collabtime Beta Invitation.", payload: { name: user.firstname, email: user.email, password: req.body.password }, template: "./template/welcome.handlebars" }, (res: Response) => null);
 

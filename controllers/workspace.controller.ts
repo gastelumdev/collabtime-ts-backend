@@ -20,6 +20,7 @@ import { TInvitee } from "../types";
 
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
+import UserGroup from "../models/userGroup.model";
 
 
 /**
@@ -43,9 +44,10 @@ export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await authModel.getUserById((<any>req).user._id as string);
     try {
         const data = await workspaceService.getUserWorkspaces(user?.workspaces as IUserWorkspace[]);
+
         res.status(200).send(data);
     } catch (err) {
-        res.status(400).send({ success: false });
+        res.status(400).send({ success: false })
     }
 }
 
@@ -99,7 +101,9 @@ export const createWorkspace = async (req: Request, res: Response) => {
  */
 export const getOneWorkspace = async (req: Request, res: Response) => {
     try {
+        console.log("FETCHING WORKSPACE")
         const workspace = await workspaceModel.getWorkspaceById(req.params.id);
+        console.log(workspace)
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
@@ -276,19 +280,25 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         }
 
         try {
+            const userGroup: any = await UserGroup.findOne({ workspace: workspace?._id, name: "View Only" });
+            const newUserGroup = { ...userGroup, users: [...userGroup.users, user?._id] };
+
+            const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true });
+            console.log(updatedUserGroup)
+
             const notification = new Notification({
                 message: `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`,
                 workspaceId: workspace?._id,
                 dataSource: "",
                 priority: "Low",
             });
-            notification.save();
+            notification.save()
             workspace?.save();
             user?.save();
-            io.emit("update", `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`);
+            io.emit("update", `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`)
             res.send({ success: true });
         } catch (error) {
-            res.send({ success: true });
+            res.send({ success: true })
         }
     } else {
         res.status(400).send({ success: false });

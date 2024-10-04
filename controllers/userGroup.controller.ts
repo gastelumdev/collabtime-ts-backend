@@ -16,9 +16,9 @@ export const getUserGroups = async (req: Request, res: Response) => {
 
         let newUserGroups = []
 
-        // console.log({ userGroups })
-        // console.log({ dataCollections })
-        // console.log({ views })
+        console.log({ userGroups })
+        console.log({ dataCollections })
+        console.log({ views })
 
         for (const userGroup of userGroups) {
             let dataCollectionsResult = []
@@ -100,7 +100,12 @@ export const getUserGroups = async (req: Request, res: Response) => {
                 }
             }
 
+            if ((dataCollections.length !== userGroup.permissions.dataCollections.length) || (views.length !== userGroup.permissions.views.length)) {
+                changeMade = true;
+            }
+
             if (changeMade) {
+                console.log({ viewsResult })
                 const userGroupObj = userGroup.toObject()
                 const newUserGroup = { ...userGroupObj, permissions: { ...userGroupObj.permissions, dataCollections: dataCollectionsResult, views: viewsResult } }
 
@@ -115,6 +120,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
             }
         }
 
+        console.log(newUserGroups)
         res.send(newUserGroups);
     } catch (err) {
         res.status(400).send({ success: false })

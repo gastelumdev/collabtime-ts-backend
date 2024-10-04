@@ -22,7 +22,7 @@ import Column from './models/column.model';
 import Notification from './models/notification.model';
 import app from './app';
 import { Schema } from 'mongoose';
-import { admin, adminColumns, adminDataCollection, adminView, viewOnly, viewOnlyColumns, viewOnlyDataCollection, viewOnlyView } from './utils/defaultGroups';
+import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPermissions, noAccessDataCollectionPermissions, noAccessPermissions, noAccessViewPermissions, viewOnly, viewOnlyColumns, viewOnlyDataCollection, viewOnlyView } from './utils/defaultGroups';
 import UserGroup from './models/userGroup.model';
 import DataCollectionView from './models/dataCollectionView.model';
 
@@ -177,16 +177,21 @@ import util from 'util';
 const createUserGroups = async () => {
   const workspaces = await Workspace.find({});
 
+  // console.log(workspaces)
+
   const adminPermissions = admin;
   const viewOnlyPermissions = viewOnly;
 
   for (const workspace of workspaces) {
+
     const members = workspace.members;
     const users = [];
     const adminDataCollectionPermissionsResult = []
     const viewOnlyDataCollectionPermissionsResult = []
+    const noAccessDataCollectionPermissionsResult = []
     const adminViewPermissionsResult = []
     const viewOnlyViewPermissionsResult = []
+    const noAccessViewPermissionsResult = []
 
     for (const member of members) {
 
@@ -324,10 +329,79 @@ const createUserGroups = async () => {
 
     viewOnlyUserGroup.save()
 
+    // No Accsss
+
+    for (const dataCollection of dataCollections) {
+      const columns = await Column.find({ dataCollection: dataCollection._id });
+      let noAccessDataCollection: any = noAccessDataCollectionPermissions;
+
+      const columnPermissions = []
+
+      for (const column of columns) {
+        columnPermissions.push({
+          column: column._id,
+          name: column.name,
+          permissions: noAccessColumnPermissions
+        })
+      }
+
+      noAccessDataCollection = { ...noAccessDataCollectionPermissions, columns: columnPermissions }
+
+      noAccessDataCollectionPermissionsResult.push({
+        dataCollection: dataCollection._id,
+        name: dataCollection.name,
+        permissions: noAccessDataCollection
+      })
+    }
+
+    // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
+
+    // const views = await DataCollectionView.find({ workspace: workspace._id });
+
+    for (const view of views) {
+      let noAccessView: any = noAccessViewPermissions;
+
+      const columnPermissions = [];
+
+      for (const column of view.columns) {
+        const col = await Column.findOne({ _id: column._id });
+
+        columnPermissions.push({
+          column: col?._id,
+          name: col?.name,
+          permissions: noAccessColumnPermissions
+        })
+      }
+
+
+
+      noAccessView = { ...noAccessView, columns: columnPermissions };
+
+      noAccessViewPermissionsResult.push({
+        dataCollection: view.dataCollection,
+        view: view._id,
+        name: view.name,
+        permissions: noAccessView
+      })
+    }
+
+    const noAccessUserGroup = new UserGroup({
+      name: "No Access",
+      workspace: workspace._id,
+      permissions: { ...noAccessPermissions, dataCollections: noAccessDataCollectionPermissionsResult, views: noAccessViewPermissionsResult },
+      users: []
+    })
+
+    // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
+    // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
+
+    noAccessUserGroup.save()
+
+    console.log(noAccessUserGroup)
   }
 }
 
-// createUserGroups()
+// createUserGroups();
 
 if (process.env.APP_ENVIRONMENT === "production") {
 

@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import DataCollectionView from "../models/dataCollectionView.model";
 import Column from "../models/column.model";
 import mongoose from "mongoose";
+import UserGroup from "../models/userGroup.model";
+import { admin, adminColumns, adminView, viewOnly, viewOnlyColumns, viewOnlyView } from "../utils/defaultGroups";
+import util from 'util';
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
@@ -31,11 +34,31 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
 
 export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
-        const dataCollectionView = req.body;
+        const dataCollectionView: any = req.body;
 
         const newDataCollectionView = new DataCollectionView(dataCollectionView)
 
         newDataCollectionView.save();
+
+        const userGroups = await UserGroup.find({ dataCollection: dataCollectionView.dataCollection });
+
+        const dataCollectionViewColumns = dataCollectionView.columns;
+
+        for (const userGroup of userGroups) {
+            const newColumnPermissions = []
+            for (const dataCollectionViewColumn of dataCollectionViewColumns) {
+                newColumnPermissions.push({ column: dataCollectionViewColumn._id, name: dataCollectionViewColumn.name, permissions: userGroup.name === "All Privileges" ? adminColumns : viewOnlyColumns })
+            }
+
+            const newViews = [...userGroup.permissions.views, { name: dataCollectionView?.name, view: newDataCollectionView.toObject()._id, dataCollection: dataCollectionView.dataCollection, permissions: userGroup.name === "All Privileges" ? { ...adminView, columns: newColumnPermissions } : { ...viewOnlyView, columns: newColumnPermissions } }]
+
+            const newUserGroup = { ...userGroup, permissions: { ...userGroup.permissions, views: newViews } }
+
+            const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup)
+
+            console.log(util.inspect(newUserGroup))
+            console.log(updatedUserGroup?.permissions.views)
+        }
 
         res.send(newDataCollectionView);
     } catch (err) {

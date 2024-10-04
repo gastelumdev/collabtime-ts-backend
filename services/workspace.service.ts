@@ -24,7 +24,7 @@ export type TInvitee = {
 export interface IWorkspace {
     name: string;
     description?: string;
-    tools: TTools;
+    tools?: TTools;
     invitees: TInvitee[];
     members: TInvitee[];
     owner: Schema.Types.ObjectId;
