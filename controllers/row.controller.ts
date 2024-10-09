@@ -16,6 +16,7 @@ import { IWorkspace } from "../services/workspace.service";
 
 export const getRows = async (req: Request, res: Response) => {
     try {
+        const user = await User.findOne({ _id: (<any>req).user._id });
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
@@ -85,13 +86,23 @@ export const getRows = async (req: Request, res: Response) => {
                         // console.log("This is not a string value. Potential people array...")
                         // console.log(row.values[filter])
                         // console.log("")
+                        let isMatch = false;
 
                         for (const person of row.values[filter]) {
                             if (lowerCaseValues.includes(person.name.toLowerCase())) {
                                 return true;
                             }
+
+                            if (lowerCaseValues.length > 0) {
+                                if (lowerCaseValues[0] === "__user__") {
+                                    if (person.email === user?.email) {
+                                        isMatch = true;
+                                    }
+                                }
+                            }
+
                         }
-                        return false;
+                        return isMatch
                     }
                     return lowerCaseValues.includes(row.values[filter].toLowerCase());
                 }
