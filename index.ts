@@ -412,7 +412,7 @@ const addPublic = async () => {
   }
 }
 
-addPublic()
+// addPublic()
 
 if (process.env.APP_ENVIRONMENT === "production") {
 
