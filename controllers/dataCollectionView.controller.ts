@@ -8,6 +8,7 @@ import util from 'util';
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
+        console.log("GETTING DATA COLLECTION VIEWS")
         const dataCollectionViews = await DataCollectionView.find({ workspace: req?.params.workspaceId });
         const response: any = [];
 
@@ -20,7 +21,9 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
             }
             dataCollectionViewCopy.columns = columns;
 
-            if (dataCollectionViewCopy.viewers.includes((<any>req).user._id)) {
+            if (dataCollectionView.public) console.log(dataCollectionView)
+
+            if (dataCollectionViewCopy.viewers.includes((<any>req).user._id) || dataCollectionView.public) {
                 response.push(dataCollectionViewCopy);
             }
 

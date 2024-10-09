@@ -126,7 +126,7 @@ export const handleAssignedTo = async (workspace: IWorkspace & { _id: string } |
             const user = await User.findOne({ email: email });
             // Emit a message to the frontend to trigger a toast notification and to update the row
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
-            io.emit("update row", { message: "" });
+            // io.emit("update row", { message: "" });
             // Send an email to the assignee.
             sendEmail({
                 email: email,
@@ -162,7 +162,7 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
             const user = await User.findOne({ email: member.email });
 
             io.emit(user?._id || "", { message: `${assigner?.firstname} ${assigner?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
-            io.emit("update row", { message: "" })
+            // io.emit("update row", { message: "" })
 
             const notification = new Notification({
                 message: `${assigner?.firstname} ${assigner?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,

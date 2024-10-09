@@ -8,6 +8,8 @@ const dataCollectionViewSchema: Schema<IDataCollectionViewDocument> = new Schema
     dataCollection: { type: Schema.Types.ObjectId },
     columns: { type: [] },
     viewers: { type: [] },
+    filters: { type: {} },
+    public: { type: Schema.Types.Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
 }, {
     timestamps: true

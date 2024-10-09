@@ -101,9 +101,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
  */
 export const getOneWorkspace = async (req: Request, res: Response) => {
     try {
-        console.log("FETCHING WORKSPACE")
         const workspace = await workspaceModel.getWorkspaceById(req.params.id);
-        console.log(workspace)
         res.send(workspace);
     } catch (error) {
         res.status(400).send(error);
@@ -341,6 +339,19 @@ export const removeMember = async (req: Request, res: Response) => {
                     const newCell = { ...cell.toJSON(), people: filteredPeople };
 
                     await Cell.findByIdAndUpdate(cell._id, newCell);
+                }
+            }
+
+            const userGroups = await UserGroup.find({ workspace: workspace._id });
+
+            for (const userGroup of userGroups) {
+                if (userGroup.users.includes(user?._id)) {
+                    const newUsers = userGroup.users.filter((item) => {
+                        return item !== user?._id;
+                    })
+
+                    const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, { ...userGroup.toObject(), users: [...newUsers] });
+                    console.log({ updatedUserGroup })
                 }
             }
         }

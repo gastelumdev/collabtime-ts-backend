@@ -16,9 +16,9 @@ export const getUserGroups = async (req: Request, res: Response) => {
 
         let newUserGroups = []
 
-        console.log({ userGroups })
-        console.log({ dataCollections })
-        console.log({ views })
+        // console.log({ userGroups })
+        // console.log({ dataCollections })
+        // console.log({ views })
 
         for (const userGroup of userGroups) {
             let dataCollectionsResult = []
@@ -105,14 +105,12 @@ export const getUserGroups = async (req: Request, res: Response) => {
             }
 
             if (changeMade) {
-                console.log({ viewsResult })
                 const userGroupObj = userGroup.toObject()
                 const newUserGroup = { ...userGroupObj, permissions: { ...userGroupObj.permissions, dataCollections: dataCollectionsResult, views: viewsResult } }
 
-                console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
+                // console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
 
                 const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true })
-                console.log(updateUserGroup)
                 // console.log(newUserGroup)
                 newUserGroups.push(updatedUserGroup)
             } else {
@@ -120,7 +118,6 @@ export const getUserGroups = async (req: Request, res: Response) => {
             }
         }
 
-        console.log(newUserGroups)
         res.send(newUserGroups);
     } catch (err) {
         res.status(400).send({ success: false })

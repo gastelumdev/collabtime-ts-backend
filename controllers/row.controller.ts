@@ -20,6 +20,7 @@ export const getRows = async (req: Request, res: Response) => {
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
+        const filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : {};
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
@@ -33,10 +34,80 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
         }
 
+        if (dataCollection?.name === "Jobs") {
+            // console.log(``)
+            // console.log(`The filters for the ${dataCollection?.name} view.`)
+            // console.log(filters)
+            // console.log(``)
+        }
+
+
+        for (const filter of Object.keys(filters)) {
+            const filterVals = filters[filter]
+
+            if (dataCollection?.name === "Jobs") {
+                // console.log(``)
+                // console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
+                // console.log(filterVals)
+                // console.log(``)
+
+                // console.log(``)
+                // console.log(`There are ${rows.length} rows to go through.`)
+                // console.log(``)
+            }
+
+            rows = rows.filter((row: any) => {
+                const refs = row.refs[filter];
+
+                if (dataCollection?.name === "Jobs") {
+                    // console.log(``)
+                    // console.log(`The refs for the ${row.values['item_name']} row.`)
+                    // console.log(row.refs)
+                    // console.log(``)
+                }
+
+                let existsInRef = false;
+                const lowerCaseValues = filterVals.map((item: string) => {
+                    return item.toLowerCase()
+                })
+
+                if (refs !== undefined) {
+                    for (const ref of refs) {
+                        if (lowerCaseValues.includes(ref.values["item_name"].toLowerCase())) {
+                            existsInRef = true;
+                            return true
+                        }
+
+                    }
+                } else {
+                    if (typeof row.values[filter] !== 'string') {
+                        // console.log("")
+                        // console.log("This is not a string value. Potential people array...")
+                        // console.log(row.values[filter])
+                        // console.log("")
+
+                        for (const person of row.values[filter]) {
+                            if (lowerCaseValues.includes(person.name.toLowerCase())) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    return lowerCaseValues.includes(row.values[filter].toLowerCase());
+                }
+
+                // console.log({ condition: lowerCaseValues.includes(row.values[filter].toLowerCase()) || existsInRef })
+
+
+            })
+        }
+
+        console.log("SENDING ROWS")
+
         res.send(rows);
 
     } catch (error) {
-        res.status(400).send({ success: false })
+        res.status(400).send({ success: false });
     }
 }
 
@@ -141,6 +212,8 @@ export const updateRow = async (req: Request, res: Response) => {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const assigner = await User.findOne({ _id: (<any>req).user._id });
 
+
+
         // Set the first user to interact with the row as the creator
         if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
 
@@ -162,8 +235,15 @@ export const updateRow = async (req: Request, res: Response) => {
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = handleLastRowUpdate(dataCollection, row, req.body, assigner);
+
+        if (req.body.fromView) {
+            console.log("This is being updated from a view")
+            io.emit("update row", { message: "" });
+        }
+        // io.emit(workspace?._id, { message: `Update data collection` });
+
         // Send the blank rows for the frontend to have
-        res.send(blankRows)
+        res.send(blankRows);
     } catch (error) {
         res.status(400).send({ success: false })
     }

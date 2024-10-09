@@ -7,7 +7,9 @@ export interface IDataCollectionView {
     dataCollection: Schema.Types.ObjectId;
     columns: any[];
     viewers: string[];
+    filters: any;
     createdAt: Date;
+    public: boolean;
 }
 
 export interface IDataCollectionViewDocument extends IDataCollectionView, Document {

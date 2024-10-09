@@ -403,6 +403,17 @@ const createUserGroups = async () => {
 
 // createUserGroups();
 
+const addPublic = async () => {
+  const dataCollectionViews = await DataCollectionView.find({});
+
+  for (const dcView of dataCollectionViews) {
+    const newDcView = await DataCollectionView.findByIdAndUpdate(dcView._id, { ...dcView.toObject(), public: false });
+    console.log(newDcView)
+  }
+}
+
+addPublic()
+
 if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
