@@ -414,6 +414,46 @@ const addPublic = async () => {
 
 // addPublic()
 
+const addLabelsToUserGroups = async () => {
+  const userGroups = await UserGroup.find({});
+
+  for (const userGroup of userGroups) {
+    // console.log({ userGroup })
+    const newViewsPermissions = []
+
+    for (const viewsPermissions of userGroup.permissions.views) {
+      // console.log({ viewsPermissions })
+      const newColumnPermissions = []
+
+      for (const columnPermissions of viewsPermissions.permissions.columns) {
+        const column: any = await Column.findOne({ _id: columnPermissions.column });
+        let labelsArray = [];
+        if (['label', 'status'].includes(column?.type)) {
+          labelsArray = column.labels.map((item: any) => {
+            return item.title;
+          })
+
+          // console.log(labelsArray)
+        } else {
+          labelsArray = []
+        }
+
+        // console.log({ ...columnPermissions, permissions: { ...columnPermissions.permissions, labels: labelsArray } })
+        newColumnPermissions.push({ ...columnPermissions, permissions: { ...columnPermissions.permissions, labels: [...labelsArray] } })
+      }
+
+      // console.log(util.inspect({ ...viewsPermissions, permissions: { ...viewsPermissions.permissions, columns: newColumnPermissions } }, { showHidden: false, depth: null, colors: true }));
+      newViewsPermissions.push({ ...viewsPermissions, permissions: { ...viewsPermissions.permissions, columns: newColumnPermissions } })
+    }
+    const newUserGroup = { ...userGroup.toObject(), permissions: { ...userGroup.toObject().permissions, views: newViewsPermissions } }
+    console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }));
+
+    const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true })
+  }
+}
+
+// addLabelsToUserGroups()
+
 if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {

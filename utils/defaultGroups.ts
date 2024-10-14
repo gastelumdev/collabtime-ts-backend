@@ -30,7 +30,8 @@ export const adminView = {
 }
 
 export const adminColumns = {
-    column: { view: true, update: true, delete: true, reorder: true, resize: true }
+    column: { view: true, update: true, delete: true, reorder: true, resize: true },
+    labels: []
 }
 
 // VIEW ONLY +++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -65,7 +66,8 @@ export const viewOnlyView = {
 }
 
 export const viewOnlyColumns = {
-    column: { view: true, update: false, delete: false, reorder: false, resize: false }
+    column: { view: true, update: false, delete: false, reorder: false, resize: false },
+    labels: []
 }
 
 // No Access +++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -101,6 +103,7 @@ export const noAccessViewPermissions = {
 
 export const noAccessColumnPermissions = {
     column: { view: false, update: false, delete: false, reorder: false, resize: false },
+    labels: []
 };
 
 // Empty +++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -136,4 +139,5 @@ export const emptyViewPermissions = {
 
 export const emptyColumnPermissions = {
     column: { view: false, update: false, delete: false, reorder: false, resize: false },
+    labels: []
 };
