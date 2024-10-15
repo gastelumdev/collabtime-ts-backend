@@ -58,8 +58,12 @@ export const getUserGroups = async (req: Request, res: Response) => {
                             changeMade = true;
                         } else {
                             columnsResult.push({ ...columnPermissions, column: column._id, name: column.name })
+                            changeMade = true;
                         }
                     }
+
+
+                    // console.log({ columnsResult })
 
                     dataCollectionsResult.push({ ...dataCollectionPermissions, dataCollection: dataCollection._id, name: dataCollection.name, permissions: { ...dataCollectionPermissions.permissions, columns: columnsResult } });
                 }
@@ -96,6 +100,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
                         }
                     }
 
+
                     viewsResult.push({ ...viewPermissions, dataCollection: view.dataCollection, view: view._id, name: view.name, permissions: { ...viewPermissions.permissions, columns: columnsResult } });
                 }
             }
@@ -108,7 +113,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
                 const userGroupObj = userGroup.toObject()
                 const newUserGroup = { ...userGroupObj, permissions: { ...userGroupObj.permissions, dataCollections: dataCollectionsResult, views: viewsResult } }
 
-                // console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
+                console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
 
                 const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true })
                 // console.log(newUserGroup)
