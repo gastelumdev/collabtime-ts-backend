@@ -154,7 +154,7 @@ export const deleteColumn = async (req: Request, res: Response) => {
         const rows = await Row.find({ dataCollection: dataCollectionId });
 
         const rowsWithValues = rows.filter((row) => {
-            return row.values[name] !== undefined && row.values[name] !== "";
+            return (row.values[name] !== undefined || row.refs[name] !== undefined) && (row.values[name] !== "");
         });
 
         console.log(rowsWithValues)
@@ -166,7 +166,19 @@ export const deleteColumn = async (req: Request, res: Response) => {
             let refs = rowCopy.refs;
             delete values[name];
             rowCopy.values = values;
-            rowCopy.refs = refs;
+
+            let newRefs = {};
+
+            if (refs !== undefined) {
+                const refsKeys = Object.keys(refs);
+
+                for (const key of refsKeys) {
+                    if (key !== column?.name) {
+                        newRefs = { ...newRefs, [column?.name as any]: refs[column?.name as any] };
+                    }
+                }
+            }
+            rowCopy.refs = newRefs;
             console.log({ rowCopyRefs: rowCopy.refs })
 
 

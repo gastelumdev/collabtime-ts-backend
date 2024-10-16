@@ -11,6 +11,7 @@ const columnSchema: Schema<IColumnDocument> = new Schema({
     people: { type: [] },
     labels: { type: [] },
     dataCollectionRef: { type: {} },
+    dataCollectionRefLabel: { type: String },
     includeInForm: { type: Boolean },
     includeInExport: { type: Boolean },
     createdAt: { type: Date, default: Date.now },
