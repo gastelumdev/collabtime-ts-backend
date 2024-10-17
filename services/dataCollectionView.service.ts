@@ -5,11 +5,15 @@ export interface IDataCollectionView {
     description: string;
     workspace: Schema.Types.ObjectId;
     dataCollection: Schema.Types.ObjectId;
+    row?: Schema.Types.ObjectId | null;
     columns: any[];
     viewers: string[];
     filters: any;
     createdAt: Date;
     public: boolean;
+    belongsToRow?: boolean;
+    rowsOfDataCollection?: Schema.Types.ObjectId;
+    main?: boolean;
 }
 
 export interface IDataCollectionViewDocument extends IDataCollectionView, Document {

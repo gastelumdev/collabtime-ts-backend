@@ -6,10 +6,14 @@ const dataCollectionViewSchema: Schema<IDataCollectionViewDocument> = new Schema
     description: { type: String },
     workspace: { type: Schema.Types.ObjectId },
     dataCollection: { type: Schema.Types.ObjectId },
+    row: { type: Schema.Types.ObjectId, default: null },
     columns: { type: [] },
     viewers: { type: [] },
     filters: { type: {} },
     public: { type: Schema.Types.Boolean, default: false },
+    belongsToRow: { type: Schema.Types.Boolean, default: false },
+    rowsOfDataCollection: { type: Schema.Types.ObjectId, default: "" },
+    main: { type: Schema.Types.Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
 }, {
     timestamps: true

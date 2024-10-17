@@ -25,7 +25,7 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
     const newRows = []
     for (let i = 1; i <= count; i++) {
         console.log({ i, count })
-        lastRowPosition = lastRowPosition + 1;
+        lastRowPosition = lastRowPosition + 1024;
         const newRow = new Row({
             dataCollection: dataCollection?._id,
             position: lastRowPosition,

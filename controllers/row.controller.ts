@@ -245,14 +245,14 @@ export const updateRow = async (req: Request, res: Response) => {
         handleRowEmptiness(req.body);
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
-        const blankRows = handleLastRowUpdate(dataCollection, row, req.body, assigner);
+        const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
 
         // if (req.body.fromView) {
         console.log("This is being updated from a view")
         io.emit("update views", { message: "" });
         // }
         // io.emit(workspace?._id, { message: `Update data collection` });
-
+        console.log({ blankRows })
         // Send the blank rows for the frontend to have
         res.send(blankRows);
     } catch (error) {

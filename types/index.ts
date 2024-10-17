@@ -44,6 +44,7 @@ export type TColumn = {
     labels?: TLabel[];
     includeInForm: boolean;
     includeInExport: boolean;
+    primary: boolean;
 };
 
 export type TRow = {

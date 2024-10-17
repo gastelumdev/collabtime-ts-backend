@@ -8,16 +8,20 @@ import Row from "../models/row.models";
 import mongoose from "mongoose";
 import User from "../models/auth.model";
 import sendEmail from "../utils/sendEmail";
+import DataCollectionView from "../models/dataCollectionView.model";
+import { createPrimaryValues } from "../utils/helpers";
 
-const getDataCollectionTemplates = (template: string, dataCollectionId: string, people?: TUser[]) => {
+const getDataCollectionTemplates = (template: string, dataCollectionId: string, people?: TUser[], primaryColumnName?: string, autoIncremented?: boolean, autoIncrementPrefix?: string) => {
     const itemName = {
         dataCollection: dataCollectionId,
-        name: "item_name",
+        name: primaryColumnName || "item_name",
         type: "text",
         permanent: true,
         people: [],
         includeInForm: true,
         includeInExport: true,
+        autoIncrementPrefix: autoIncrementPrefix,
+        autoIncremented: autoIncremented
     };
     const assignedTo = {
         dataCollection: dataCollectionId,
@@ -57,12 +61,14 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
     };
     const taskName = {
         dataCollection: dataCollectionId,
-        name: "task",
+        name: primaryColumnName || "task",
         type: "text",
         permanent: true,
         people: [],
         includeInForm: true,
         includeInExport: true,
+        autoIncrementPrefix: autoIncrementPrefix,
+        autoIncremented: autoIncremented
     };
     const date = {
         dataCollection: dataCollectionId,
@@ -76,7 +82,7 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
 
     if (template === "tasks") {
         return [
-            taskName,
+            itemName,
             assignedTo,
             priority,
             status,
@@ -118,7 +124,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
     let initialColumnsFromUserTemplate: any = [];
 
     if (dataCollection.template == "default" || dataCollection.template == "tasks") {
-        initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people);
+        initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people, dataCollection.primaryColumnName, dataCollection.autoIncremented, dataCollection.autoIncrementPrefix);
     } else {
         const columns = await Column.find({ dataCollection: dataCollection.template });
         initialColumnsFromUserTemplate = columns;
@@ -126,7 +132,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
 
     console.log(initialColumns)
     const columnIds = [];
-    const values: any = {}
+    const values: any = {};
 
     let position = 1;
 
@@ -150,7 +156,10 @@ export const createDataCollection = async (req: Request, res: Response) => {
             labels: initialColumnFromUser.labels,
             dataCollectionRef: initialColumnFromUser.dataCollectionRef,
             includeInForm: initialColumnFromUser.includeInForm,
-            includeInExport: initialColumnFromUser.includeInExport
+            includeInExport: initialColumnFromUser.includeInExport,
+            autoIncremented: initialColumnFromUser.autoIncremented,
+            autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
+
         });
         console.log("NEW COLUMN", column)
         column.save();
@@ -160,11 +169,21 @@ export const createDataCollection = async (req: Request, res: Response) => {
     dataCollection.columns = columnIds;
 
     for (let i = 1; i <= 50; i++) {
-        const row = new Row({
-            dataCollection: dataCollection._id,
-            values: values,
-            position: i,
-        })
+        let newRow;
+        if (dataCollection.autoIncremented) {
+            newRow = {
+                dataCollection: dataCollection._id,
+                values: { ...values, [dataCollection.primaryColumnName]: createPrimaryValues(i, dataCollection.autoIncrementPrefix) },
+                position: i * 1024,
+            }
+        } else {
+            newRow = {
+                dataCollection: dataCollection._id,
+                values: values,
+                position: i * 1024,
+            }
+        }
+        const row = new Row(newRow)
         row.save();
     }
 
@@ -193,6 +212,7 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
         await Cell.deleteMany({ dataCollection: dataCollectionId });
         await Row.deleteMany({ dataCollection: dataCollectionId });
         await Column.deleteMany({ dataCollection: dataCollectionId });
+        await DataCollectionView.deleteMany({ dataCollection: dataCollectionId });
         await DataCollection.findByIdAndDelete({ _id: dataCollectionId });
         res.send({ success: true });
     } catch (error) {

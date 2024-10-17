@@ -18,6 +18,9 @@ export interface IColumn {
     dataCollectionRefLabel?: any;
     includeInForm: boolean;
     includeInExport: boolean;
+    autoIncremented: boolean;
+    autoIncrementPrefix: string;
+    primary: boolean;
     createdAt: Date;
 }
 

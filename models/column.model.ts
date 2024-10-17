@@ -14,6 +14,9 @@ const columnSchema: Schema<IColumnDocument> = new Schema({
     dataCollectionRefLabel: { type: String },
     includeInForm: { type: Boolean },
     includeInExport: { type: Boolean },
+    autoIncremented: { type: Boolean },
+    autoIncrementPrefix: { type: String },
+    primary: { type: Boolean },
     createdAt: { type: Date, default: Date.now },
 }, {
     timestamps: true,

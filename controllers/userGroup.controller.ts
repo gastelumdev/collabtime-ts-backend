@@ -8,6 +8,7 @@ import { adminColumns, adminDataCollection, adminView, emptyColumnPermissions, e
 import Column from "../models/column.model";
 
 export const getUserGroups = async (req: Request, res: Response) => {
+    console.log("getting groups")
     try {
         const { workspaceId } = req.params;
         const userGroups = await UserGroup.find({ workspace: workspaceId });
@@ -75,7 +76,8 @@ export const getUserGroups = async (req: Request, res: Response) => {
                 })
 
                 if (viewPermissions === undefined) {
-                    const columns = view.columns;
+                    // const columns = view.columns;
+                    const columns = await Column.find({ dataCollection: view.dataCollection });
                     let columnsResult = []
 
                     for (const column of columns) {
@@ -84,7 +86,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
                     viewsResult.push({ dataCollection: view.dataCollection, view: view._id, name: view.name, permissions: { ...defaultViewPermissions, columns: columnsResult } });
                     changeMade = true;
                 } else {
-                    const columns = view.columns;
+                    const columns = await Column.find({ dataCollection: view.dataCollection });
                     let columnsResult = []
 
                     for (const column of columns) {
@@ -113,7 +115,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
                 const userGroupObj = userGroup.toObject()
                 const newUserGroup = { ...userGroupObj, permissions: { ...userGroupObj.permissions, dataCollections: dataCollectionsResult, views: viewsResult } }
 
-                console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
+                // console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }))
 
                 const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true })
                 // console.log(newUserGroup)
@@ -123,6 +125,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
             }
         }
 
+        console.log("Done getting groups")
         res.send(newUserGroups);
     } catch (err) {
         res.status(400).send({ success: false })

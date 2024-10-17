@@ -17,7 +17,9 @@ export interface IDataCollection {
     name: string;
     description: string;
     workspace: Schema.Types.ObjectId;
+    row?: Schema.Types.ObjectId | null;
     template: string;
+    primaryColumnName: string;
     form: TForm;
     columns: string[];
     rows: string[];
@@ -25,6 +27,8 @@ export interface IDataCollection {
     createdAt: Date;
     asTemplate: { active: boolean, name: string };
     formRecipients: { sent: true, email: string }[];
+    autoIncremented: boolean;
+    autoIncrementPrefix: string;
 }
 
 export interface IDataCollectionDocument extends IDataCollection, Document { }

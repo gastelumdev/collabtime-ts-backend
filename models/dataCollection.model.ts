@@ -6,7 +6,9 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     name: { type: String, required: true },
     description: { type: String },
     workspace: { type: Schema.Types.ObjectId },
+    row: { type: Schema.Types.ObjectId, default: null },
     template: { type: String, default: "default" },
+    primaryColumnName: { type: String },
     form: { type: {} },
     columns: { type: [] },
     rows: { type: [] },
@@ -14,6 +16,8 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     createdAt: { type: Date, default: Date.now },
     asTemplate: { type: {} },
     formRecipients: { type: [] },
+    autoIncremented: { type: Boolean },
+    autoIncrementPrefix: { type: String },
 }, {
     timestamps: true
 });

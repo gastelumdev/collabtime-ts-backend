@@ -5,6 +5,8 @@ import mongoose from "mongoose";
 import UserGroup from "../models/userGroup.model";
 import { admin, adminColumns, adminView, viewOnly, viewOnlyColumns, viewOnlyView } from "../utils/defaultGroups";
 import util from 'util';
+import DataCollection from "../models/dataCollection.model";
+import Row from "../models/row.models";
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
@@ -13,6 +15,7 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
         const response: any = [];
 
         for (const dataCollectionView of dataCollectionViews) {
+
             const dataCollectionViewCopy = dataCollectionView;
             const columns: any = []
             for (const column of dataCollectionView.columns) {
@@ -35,17 +38,43 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
     }
 }
 
+export const getDataCollectionViewsByRowId = async (req: Request, res: Response) => {
+    try {
+        const views = await DataCollectionView.find({ row: req.params.rowId })
+        res.send(views)
+    } catch (err) {
+        res.status(400).send({ success: false })
+    }
+
+}
+
 export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
         const dataCollectionView: any = req.body;
 
-        const newDataCollectionView = new DataCollectionView(dataCollectionView)
+        const dataCollectionContainingSelectableRows = await DataCollection.findOne({ _id: dataCollectionView.rowsOfDataCollection });
+        const selectableRows = await Row.find({ dataCollection: dataCollectionContainingSelectableRows?._id });
+
+        for (const row of selectableRows) {
+            console.log(row)
+            const newDataCollectionView = new DataCollectionView({ ...dataCollectionView, viewers: [], row: row._id })
+
+            console.log(newDataCollectionView)
+
+            newDataCollectionView.save();
+        }
+
+        const newDataCollectionView = new DataCollectionView({ ...dataCollectionView })
+
+        console.log(newDataCollectionView)
 
         newDataCollectionView.save();
 
         const userGroups = await UserGroup.find({ dataCollection: dataCollectionView.dataCollection });
 
         const dataCollectionViewColumns = dataCollectionView.columns;
+
+
 
         for (const userGroup of userGroups) {
             const newColumnPermissions = []
@@ -63,7 +92,9 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
             console.log(updatedUserGroup?.permissions.views)
         }
 
-        res.send(newDataCollectionView);
+
+
+        res.send(newDataCollectionView)
     } catch (err) {
         res.status(400).send({ success: false })
     }
