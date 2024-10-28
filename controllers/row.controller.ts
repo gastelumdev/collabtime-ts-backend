@@ -32,7 +32,7 @@ export const getRows = async (req: Request, res: Response) => {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
         let filters = null;
-        let appModel = null;
+        let appModel: any = null;
         let userGroupName = "";
         if (dataCollection?.appModel) {
             appModel = await DataCollection.findOne({ _id: dataCollection?.appModel })
@@ -85,7 +85,7 @@ export const getRows = async (req: Request, res: Response) => {
             rows = rows.filter((row: any) => {
                 const refs = row.refs[filter];
 
-                console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
+                // console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
                 if (appModel?.userGroupAccess?.includes(userGroupName)) {
                     return true;
                 }
