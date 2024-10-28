@@ -29,6 +29,13 @@ export interface IDataCollection {
     formRecipients: { sent: true, email: string }[];
     autoIncremented: boolean;
     autoIncrementPrefix: string;
+    belongsToAppModel?: boolean;
+    main?: boolean;
+    appModel?: Schema.Types.ObjectId | null;
+    inParentToDisplay?: Schema.Types.ObjectId | null;
+    filters?: any;
+    appType?: string | null;
+    userGroupAccess?: string[];
 }
 
 export interface IDataCollectionDocument extends IDataCollection, Document { }

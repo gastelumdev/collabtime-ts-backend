@@ -12,7 +12,7 @@ export const getUserGroups = async (req: Request, res: Response) => {
     try {
         const { workspaceId } = req.params;
         const userGroups = await UserGroup.find({ workspace: workspaceId });
-        const dataCollections = await DataCollection.find({ workspace: workspaceId });
+        const dataCollections = await DataCollection.find({ workspace: workspaceId, main: true });
         const views = await DataCollectionView.find({ workspace: workspaceId })
 
         let newUserGroups = []

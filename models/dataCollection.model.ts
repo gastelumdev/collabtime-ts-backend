@@ -18,6 +18,13 @@ const dataCollectionSchema: Schema<IDataCollectionDocument> = new Schema({
     formRecipients: { type: [] },
     autoIncremented: { type: Boolean },
     autoIncrementPrefix: { type: String },
+    belongsToAppModel: { type: Boolean, default: false },
+    main: { type: Boolean, default: true },
+    appModel: { type: Schema.Types.ObjectId, default: null },
+    inParentToDisplay: { type: Schema.Types.ObjectId, default: null },
+    filters: { type: {} },
+    appType: { type: String, default: null },
+    userGroupAccess: { type: [], default: [] }
 }, {
     timestamps: true
 });

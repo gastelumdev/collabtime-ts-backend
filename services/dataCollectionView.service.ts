@@ -12,7 +12,7 @@ export interface IDataCollectionView {
     createdAt: Date;
     public: boolean;
     belongsToRow?: boolean;
-    rowsOfDataCollection?: Schema.Types.ObjectId;
+    rowsOfDataCollection?: Schema.Types.ObjectId | null;
     main?: boolean;
 }
 

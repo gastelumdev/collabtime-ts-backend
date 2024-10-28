@@ -486,6 +486,16 @@ export const setPrimaryColumns = async () => {
     }
 }
 
+const setAllDCsAsMain = async () => {
+    const dataCollections = await DataCollection.find({});
+
+    for (const dc of dataCollections) {
+        const updatedDc = await DataCollection.findByIdAndUpdate(dc._id, { ...dc, main: true, belongsToAppModel: false, appModel: null, inParentToDisplay: null })
+        console.log(updatedDc)
+    }
+}
+
 export const helpersRunner = () => {
     // autoIncrementProjectNumber()
+    // setAllDCsAsMain()
 }

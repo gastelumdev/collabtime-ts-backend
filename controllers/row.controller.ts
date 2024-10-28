@@ -11,22 +11,52 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
-import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, handleRowEmptiness, updateRefs } from "../services/row.service";
+import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
+import UserGroup from "../models/userGroup.model";
 
 export const getRows = async (req: Request, res: Response) => {
+
     try {
         const user = await User.findOne({ _id: (<any>req).user._id });
+        // console.log(user)
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
-        const filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : {};
+        // console.log({ filters: req.query.filters })
+
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
 
+        let filters = null;
+        let appModel = null;
+        let userGroupName = "";
+        if (dataCollection?.appModel) {
+            appModel = await DataCollection.findOne({ _id: dataCollection?.appModel })
+            filters = appModel && appModel.filters && appModel.filters !== undefined ? appModel.filters : {};
+
+            const userGroups = await UserGroup.find({ workspace: appModel?.workspace });
+
+            for (const ug of userGroups) {
+                const users = ug.users;
+
+                for (const uid of users) {
+                    if (uid === user?._id.toString()) {
+                        userGroupName = ug.name;
+                    }
+                }
+            }
+        } else {
+            filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : {};
+        }
+        // console.log("Filters and usergroups are set")
+
+        // const filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : appModel && appModel.filters && appModel.filters !== undefined ? JSON.parse(appModel.filters) : {};
+
+        // console.log({ filters })
         let rows;
 
         if (showEmptyRows) {
@@ -35,44 +65,46 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
         }
 
-        if (dataCollection?.name === "Jobs") {
-            // console.log(``)
-            // console.log(`The filters for the ${dataCollection?.name} view.`)
-            // console.log(filters)
-            // console.log(``)
-        }
-
+        // console.log(`These filters are for ${dataCollection?.name}`)
+        // console.log({ filters })
 
         for (const filter of Object.keys(filters)) {
             const filterVals = filters[filter]
 
-            if (dataCollection?.name === "Jobs") {
-                // console.log(``)
-                // console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
-                // console.log(filterVals)
-                // console.log(``)
 
-                // console.log(``)
-                // console.log(`There are ${rows.length} rows to go through.`)
-                // console.log(``)
-            }
+
+            // console.log(``)
+            // console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
+            // console.log(filterVals)
+            // console.log(``)
+
+            // console.log(``)
+            // console.log(`There are ${rows.length} rows to go through.`)
+            // console.log(``)
 
             rows = rows.filter((row: any) => {
                 const refs = row.refs[filter];
 
-                if (dataCollection?.name === "Jobs") {
-                    // console.log(``)
-                    // console.log(`The refs for the ${row.values['item_name']} row.`)
-                    // console.log(row.refs)
-                    // console.log(``)
+                console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
+                if (appModel?.userGroupAccess?.includes(userGroupName)) {
+                    return true;
                 }
+
+                // console.log(``)
+                // console.log(`The refs for the ${row.values['Todo']} row.`)
+                // console.log(row.refs)
+                // console.log(``)
 
                 let existsInRef = false;
                 const lowerCaseValues = filterVals.map((item: string) => {
                     return item.toLowerCase()
                 })
 
-                if (refs !== undefined) {
+                if (refs !== undefined && refs.length > 0) {
+                    // console.log("");
+                    // console.log("Is going to go through refs.")
+                    // console.log("")
+
                     for (const ref of refs) {
                         if (lowerCaseValues.includes(ref.values["item_name"].toLowerCase())) {
                             existsInRef = true;
@@ -81,12 +113,19 @@ export const getRows = async (req: Request, res: Response) => {
 
                     }
                 } else {
+                    // console.log("");
+                    // console.log("It is not going to go through refs.")
+                    // console.log("The type of row values is " + typeof row.values[filter])
+                    // console.log({ lowerCaseValues })
+                    // console.log("")
+                    let isMatch = false;
                     if (typeof row.values[filter] !== 'string') {
                         // console.log("")
                         // console.log("This is not a string value. Potential people array...")
                         // console.log(row.values[filter])
+
                         // console.log("")
-                        let isMatch = false;
+
 
                         for (const person of row.values[filter]) {
                             if (lowerCaseValues.includes(person.name.toLowerCase())) {
@@ -95,7 +134,9 @@ export const getRows = async (req: Request, res: Response) => {
 
                             if (lowerCaseValues.length > 0) {
                                 if (lowerCaseValues[0] === "__user__") {
+
                                     if (person.email === user?.email) {
+
                                         isMatch = true;
                                     }
                                 }
@@ -113,7 +154,7 @@ export const getRows = async (req: Request, res: Response) => {
             })
         }
 
-        console.log("SENDING ROWS")
+        // console.log("SENDING ROWS")
 
         res.send(rows);
 
@@ -220,17 +261,52 @@ export const updateRow = async (req: Request, res: Response) => {
     try {
         const row = await Row.findOne({ _id: req.params.id });
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
-        const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        let dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const assigner = await User.findOne({ _id: (<any>req).user._id });
 
 
+
+
+        if (dataCollection?.main) {
+            if (dataCollection?.inParentToDisplay && !rowIsEmpty(req.body)) {
+                const subDataCollections = await DataCollection.find({ appModel: dataCollection?._id, main: false });
+                // console.log({ dataCollection })
+                if (row?.isEmpty) {
+
+                    for (const dc of subDataCollections) {
+                        const newRow = new Row({
+                            dataCollection: dc._id,
+                            values: req.body.values,
+                            position: row?.position,
+                            isEmpty: false
+                        })
+                        newRow.save()
+                        // console.log({ newRow })
+
+                        // console.log({ requestBody: req.body, newRow })
+                    }
+                } else {
+                    for (const dc of subDataCollections) {
+                        const existingRow = await Row.findOne({ position: req.body.position, dataCollection: dc._id });
+                        // console.log({ requestBody: req.body, existingRow })
+                        const primaryColumn = await Column.findOne({ dataCollection: dc.appModel, primary: true });
+                        // console.log({ primaryColumn })
+                        // const updatedRow = await Row.findByIdAndUpdate(existingRow?._id, { ...existingRow?.toObject(), values: { ...existingRow?.values, [primaryColumn?.name as string]: req.body.values[primaryColumn?.name as any] } });
+                        const updatedRow = await Row.findByIdAndUpdate(existingRow?._id, { ...existingRow?.toObject(), values: req.body.values });
+                        // console.log({ updatedRow });
+
+                    }
+                }
+            }
+        } else {
+            dataCollection = await DataCollection.findOne({ _id: dataCollection?.appModel })
+        }
 
         // Set the first user to interact with the row as the creator
         if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
 
         // Update the row
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
         // Updates references in all rows across all data collections in a workspace if a specific column value changes.
         updateRefs(workspace, dataCollection, row, req.body);
         // Handles changes to the "assigned_to" field of a row, sending notifications and emails if the assigned user changes.
@@ -248,11 +324,11 @@ export const updateRow = async (req: Request, res: Response) => {
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
 
         // if (req.body.fromView) {
-        console.log("This is being updated from a view")
+        // console.log("This is being updated from a view")
         io.emit("update views", { message: "" });
         // }
         // io.emit(workspace?._id, { message: `Update data collection` });
-        console.log({ blankRows })
+        // console.log({ blankRows })
         // Send the blank rows for the frontend to have
         res.send(blankRows);
     } catch (error) {
@@ -263,6 +339,21 @@ export const updateRow = async (req: Request, res: Response) => {
 export const deleteRow = async (req: Request, res: Response) => {
     const row = await Row.findOne({ _id: req.params.id })
     let cells: any = row?.cells;
+
+    const dataCollection = await DataCollection.findOne({ _id: row?._id });
+
+    if (dataCollection?.appModel && !dataCollection.main) {
+        const subDataCollections = await DataCollection.find({ appModel: dataCollection._id })
+
+        for (const subDc of subDataCollections) {
+            const appRowsToDelete = await Row.find({ position: row?.position, dataCollection: subDc._id });
+
+            for (const rowToDelete of appRowsToDelete) {
+                await Row.findByIdAndDelete({ _id: rowToDelete._id });
+            }
+        }
+
+    }
 
     try {
         for (const cell of cells || []) {
@@ -293,11 +384,11 @@ export const deleteRows = async (req: Request, res: Response) => {
 }
 
 export const getBlankRows = async (req: Request, res: Response) => {
-    console.log(req.body)
+    // console.log(req.body)
     try {
         const { dataCollectionId, numberOfRowsToCreate } = req.body;
 
-        console.log({ params: req.params })
+        // console.log({ params: req.params })
 
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
         const totalNumberOfRows = await Row.count({ dataCollection: dataCollectionId });
@@ -396,7 +487,7 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
 export const reorderRows = async (req: Request, res: Response) => {
     try {
         const { draggedRowPosition, overRowPosition, numberOfItems } = req.body;
-        console.log({ draggedRowPosition, overRowPosition, numberOfItems })
+        // console.log({ draggedRowPosition, overRowPosition, numberOfItems })
         const { dataCollectionId } = req.params;
 
         const movedRow = await Row.find({ dataCollection: dataCollectionId, position: draggedRowPosition + 1 });

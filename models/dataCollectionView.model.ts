@@ -12,7 +12,7 @@ const dataCollectionViewSchema: Schema<IDataCollectionViewDocument> = new Schema
     filters: { type: {} },
     public: { type: Schema.Types.Boolean, default: false },
     belongsToRow: { type: Schema.Types.Boolean, default: false },
-    rowsOfDataCollection: { type: Schema.Types.ObjectId, default: "" },
+    rowsOfDataCollection: { type: Schema.Types.ObjectId, default: null },
     main: { type: Schema.Types.Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
 }, {

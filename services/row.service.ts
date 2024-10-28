@@ -69,8 +69,9 @@ export interface IRowModel extends Model<IRowDocument> {
  */
 export const updateRefs = async (workspace: IWorkspace & { _id: string } | null, dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow) => {
     const columns: any = await Column.find({ dataCollection: dataCollection?._id, position: 1 })
-
     const columnName = columns[0].name;
+
+
 
     // If the value from the body coming in is different than the existing row
     if (row?.values[columnName] !== newRow.values[columnName]) {
@@ -302,9 +303,12 @@ export const rowIsEmpty = (row: IRow & { _id: string }) => {
                 isEmpty = false;
             }
         } else {
-            if (value.length > 0) {
-                isEmpty = false;
+            if (value) {
+                if (value.length > 0) {
+                    isEmpty = false;
+                }
             }
+
         }
     }
 

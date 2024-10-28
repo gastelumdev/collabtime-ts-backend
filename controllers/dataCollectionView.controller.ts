@@ -19,12 +19,12 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
             const dataCollectionViewCopy = dataCollectionView;
             const columns: any = []
             for (const column of dataCollectionView.columns) {
-                const col = await Column.findById({ _id: column._id });
+                const col = await Column.findById({ _id: column._id })
                 columns.push(col);
             }
             dataCollectionViewCopy.columns = columns;
 
-            if (dataCollectionView.public) console.log(dataCollectionView)
+            // if (dataCollectionView.public) console.log(dataCollectionView)
 
             if (dataCollectionViewCopy.viewers.includes((<any>req).user._id) || dataCollectionView.public) {
                 response.push(dataCollectionViewCopy);
@@ -52,17 +52,19 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
         const dataCollectionView: any = req.body;
 
-        const dataCollectionContainingSelectableRows = await DataCollection.findOne({ _id: dataCollectionView.rowsOfDataCollection });
-        const selectableRows = await Row.find({ dataCollection: dataCollectionContainingSelectableRows?._id });
+        console.log(dataCollectionView)
 
-        for (const row of selectableRows) {
-            console.log(row)
-            const newDataCollectionView = new DataCollectionView({ ...dataCollectionView, viewers: [], row: row._id })
+        // const dataCollectionContainingSelectableRows = await DataCollection.findOne({ _id: dataCollectionView.rowsOfDataCollection });
+        // const selectableRows = await Row.find({ dataCollection: dataCollectionContainingSelectableRows?._id });
 
-            console.log(newDataCollectionView)
+        // for (const row of selectableRows) {
+        //     console.log(row)
+        //     const newDataCollectionView = new DataCollectionView({ ...dataCollectionView, viewers: [], row: row._id })
 
-            newDataCollectionView.save();
-        }
+        //     console.log(newDataCollectionView)
+
+        //     newDataCollectionView.save();
+        // }
 
         const newDataCollectionView = new DataCollectionView({ ...dataCollectionView })
 

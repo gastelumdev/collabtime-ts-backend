@@ -110,6 +110,7 @@ export const getDataCollections = async (req: Request, res: Response) => {
 }
 
 export const createDataCollection = async (req: Request, res: Response) => {
+    console.log({ dc: req.body })
     const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
     const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
 
@@ -139,6 +140,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
     for (const initialColumn of initialColumns || []) {
         const column = new Column(initialColumn);
         column.position = position;
+        column.primary = position === 1 ? true : false;
         position++;
         columnIds.push(column._id);
         column.save();
@@ -161,7 +163,6 @@ export const createDataCollection = async (req: Request, res: Response) => {
             autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
 
         });
-        console.log("NEW COLUMN", column)
         column.save();
         values[column.name] = "";
     }
@@ -189,6 +190,24 @@ export const createDataCollection = async (req: Request, res: Response) => {
 
     try {
         dataCollection.save();
+        if (dataCollection.inParentToDisplay !== null) {
+            const rowsOfParentToDisplay = await Row.find({ dataCollection: dataCollection.inParentToDisplay, isEmpty: false })
+            console.log({ dataCollection })
+
+            for (const row of rowsOfParentToDisplay) {
+                const subDataCollection = new DataCollection({
+                    ...(req.body),
+                    workspace: workspace?._id,
+                    belongsToAppModel: true,
+                    main: false,
+                    appModel: dataCollection._id,
+                    inParentToDisplay: row._id
+                })
+
+                subDataCollection.save();
+            }
+        }
+
         res.send(dataCollection);
     } catch (error) {
         res.status(400).send({ success: false });
@@ -196,8 +215,17 @@ export const createDataCollection = async (req: Request, res: Response) => {
 }
 
 export const updateDataCollection = async (req: Request, res: Response) => {
+    console.log({ updatedDC: req.body })
     try {
         console.log("DATACOLLECTION", req.body)
+        if (req.body.inParentToDisplay) {
+            const dataCollections = await DataCollection.find({ appModel: req.body._id });
+
+            for (const dc of dataCollections) {
+                const updatedDc = await DataCollection.findByIdAndUpdate(dc._id, { ...dc.toObject(), name: req.body.name }, { new: true });
+                console.log(updatedDc)
+            }
+        }
         const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.send(dataCollection);
     } catch (error) {
@@ -209,6 +237,18 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
     const dataCollectionId = new mongoose.Types.ObjectId(req?.params.id);
 
     try {
+
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
+        if (dataCollection?.inParentToDisplay) {
+            const subDataCollections = await DataCollection.find({ appModel: dataCollection._id });
+
+            for (const subDataCollection of subDataCollections) {
+                const deletedRows = await Row.deleteMany({ dataCollection: subDataCollection._id });
+                const deletedDC = await DataCollection.findByIdAndDelete({ _id: subDataCollection._id });
+                console.log({ deletedDC, deletedRows })
+            }
+        }
+
         await Cell.deleteMany({ dataCollection: dataCollectionId });
         await Row.deleteMany({ dataCollection: dataCollectionId });
         await Column.deleteMany({ dataCollection: dataCollectionId });
