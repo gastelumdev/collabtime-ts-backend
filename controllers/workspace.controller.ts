@@ -15,6 +15,7 @@ import { IUser, IUserWorkspace } from "../services/auth.service"
 import { IWorkspace } from "../services/workspace.service";
 import * as workspaceService from "../services/workspace.service";
 import * as dataCollectionService from "../services/dataCollection.service";
+import * as userGroupService from "../services/userGroup.service";
 
 import { TInvitee } from "../types";
 
@@ -74,6 +75,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
         const user = (<any>req).user;
         const workspace: any = await workspaceService.createNewWorkspace(req.body, user);
         workspaceService.addWorkspaceToUser(workspace, user);
+        userGroupService.createInitialSetup(workspace);
 
         io.emit("update", {});
         res.send(workspace);

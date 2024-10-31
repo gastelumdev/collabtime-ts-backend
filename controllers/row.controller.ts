@@ -84,6 +84,7 @@ export const getRows = async (req: Request, res: Response) => {
 
             rows = rows.filter((row: any) => {
                 const refs = row.refs[filter];
+                console.log({ rowValuesOfFilter: row.values[filter] })
 
                 // console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
                 if (appModel?.userGroupAccess?.includes(userGroupName)) {
@@ -119,33 +120,37 @@ export const getRows = async (req: Request, res: Response) => {
                     // console.log({ lowerCaseValues })
                     // console.log("")
                     let isMatch = false;
-                    if (typeof row.values[filter] !== 'string') {
-                        // console.log("")
-                        // console.log("This is not a string value. Potential people array...")
-                        // console.log(row.values[filter])
 
-                        // console.log("")
+                    if (row.values[filter] !== undefined) {
+                        if (typeof row.values[filter] !== 'string') {
+                            // console.log("")
+                            // console.log("This is not a string value. Potential people array...")
+                            // console.log(row.values[filter])
+
+                            // console.log("")
 
 
-                        for (const person of row.values[filter]) {
-                            if (lowerCaseValues.includes(person.name.toLowerCase())) {
-                                return true;
-                            }
+                            for (const person of row.values[filter]) {
+                                if (lowerCaseValues.includes(person.name.toLowerCase())) {
+                                    return true;
+                                }
 
-                            if (lowerCaseValues.length > 0) {
-                                if (lowerCaseValues[0] === "__user__") {
+                                if (lowerCaseValues.length > 0) {
+                                    if (lowerCaseValues[0] === "__user__") {
 
-                                    if (person.email === user?.email) {
+                                        if (person.email === user?.email) {
 
-                                        isMatch = true;
+                                            isMatch = true;
+                                        }
                                     }
                                 }
-                            }
 
+                            }
+                            return isMatch
                         }
-                        return isMatch
+                        return lowerCaseValues.includes(row.values[filter].toLowerCase());
                     }
-                    return lowerCaseValues.includes(row.values[filter].toLowerCase());
+
                 }
 
                 // console.log({ condition: lowerCaseValues.includes(row.values[filter].toLowerCase()) || existsInRef })
@@ -155,10 +160,13 @@ export const getRows = async (req: Request, res: Response) => {
         }
 
         // console.log("SENDING ROWS")
+        console.log({ dataCollectionName: dataCollection?.name })
+        console.log({ rows })
 
         res.send(rows);
 
     } catch (error) {
+        console.log(error)
         res.status(400).send({ success: false });
     }
 }
