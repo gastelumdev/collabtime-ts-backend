@@ -107,10 +107,12 @@ export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser):
  */
 export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }, user: IUser) => {
     const userWorkspaces = user?.workspaces;
-    userWorkspaces?.push({ id: workspace._id, permissions: 2 });
-    const updatedUser: any = await User.findOne({ _id: user._id });
-    updatedUser.workspaces = userWorkspaces;
-    updatedUser.save();
+    userWorkspaces?.push({ id: workspace._id.toString(), permissions: 2 });
+    let newUser: any = await User.findOne({ _id: user._id });
+    newUser = { ...newUser.toObject(), workspaces: [...userWorkspaces] };
+    const updatedUser = await User.findByIdAndUpdate(user?._id, { workspaces: userWorkspaces }, { new: true });
+    console.log({ updatedUserWorkspaces: updatedUser?.workspaces })
+
     return updatedUser;
 }
 

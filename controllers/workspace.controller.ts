@@ -74,8 +74,8 @@ export const createWorkspace = async (req: Request, res: Response) => {
     try {
         const user = (<any>req).user;
         const workspace: any = await workspaceService.createNewWorkspace(req.body, user);
-        workspaceService.addWorkspaceToUser(workspace, user);
-        userGroupService.createInitialSetup(workspace);
+        await workspaceService.addWorkspaceToUser(workspace, user);
+        await userGroupService.createInitialSetup(workspace);
 
         io.emit("update", {});
         res.send(workspace);
@@ -154,6 +154,7 @@ export const updateWorkspace = async (req: Request, res: Response) => {
  * @note This function is not part of automated testing and needs to have automated tests implemented.
  */
 export const deleteWorkspace = async (req: Request, res: Response) => {
+    console.log("Removing workspace from user")
     try {
         const user = (<any>req).user;
         // Get workspace by the id provided in the request and make sure that the owner matches
@@ -163,12 +164,15 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
             // Remove the workspace from the user's workspaces
             await authModel.removeWorkspaceFromUser(workspace?._id, user);
             // Go through each member associated to the workspace and remove the association
-            workspaceService.removeWorkspaceFromMembers(workspace);
+            await workspaceService.removeWorkspaceFromMembers(workspace);
             // Get all the data collections in the workspace
             await dataCollectionService.removeWorkspaceDataCollections(workspace);
 
             // Remove all data collections associated with a workspace
             await workspaceModel.getWorkspaceByIdAndDelete(workspace?._id, user._id);
+
+            // Delete user groups
+            await UserGroup.deleteMany({ workspace: workspace._id })
 
             res.send(workspace);
         } else {
