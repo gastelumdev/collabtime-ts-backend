@@ -22,6 +22,7 @@ import { TInvitee } from "../types";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import UserGroup from "../models/userGroup.model";
+import UserWorkspace from "../models/userWorkspace.model";
 
 
 /**
@@ -43,8 +44,10 @@ import UserGroup from "../models/userGroup.model";
  */
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await authModel.getUserById((<any>req).user._id as string);
+    const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
+    console.log(userWorkspaces)
     try {
-        const data = await workspaceService.getUserWorkspaces(user?.workspaces as IUserWorkspace[]);
+        const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
 
         res.status(200).send(data);
     } catch (err) {
@@ -162,7 +165,9 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
 
         if (workspace) {
             // Remove the workspace from the user's workspaces
-            await authModel.removeWorkspaceFromUser(workspace?._id, user);
+            // await authModel.removeWorkspaceFromUser(workspace?._id, user);
+            const userWorkspace = await UserWorkspace.findOne({ userId: user._id, workspaceId: workspace._id });
+            await UserWorkspace.findOneAndDelete(userWorkspace?._id);
             // Go through each member associated to the workspace and remove the association
             await workspaceService.removeWorkspaceFromMembers(workspace);
             // Get all the data collections in the workspace

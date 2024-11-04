@@ -4,6 +4,7 @@ import Workspace from "../models/workspace.model";
 import { IUser, IUserWorkspace } from "./auth.service";
 import User from "../models/auth.model";
 import * as authModel from "../models/auth.model";
+import UserWorkspace from "../models/userWorkspace.model";
 
 export type TAccess = {
     access: number;
@@ -56,10 +57,10 @@ export interface IWorkspaceModel extends Model<IWorkspaceDocument> {
  * 
  * Note: The function assumes that the `Workspace` model has a `findOne` method that retrieves a workspace by its `_id`.
  */
-export const getUserWorkspaces = async (userWorkspaceObjects: IUserWorkspace[]) => {
+export const getUserWorkspaces = async (userWorkspaceObjects: any) => {
     const workspaces = [];
     for (const userWorkspaceObject of userWorkspaceObjects) {
-        const workspace = await Workspace.findOne({ _id: userWorkspaceObject.id });
+        const workspace = await Workspace.findOne({ _id: userWorkspaceObject.workspaceId });
         workspaces.push(workspace);
     }
     return workspaces;
@@ -105,15 +106,22 @@ export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser):
  * Note: The function assumes that `user.workspaces` is an array. If `user.workspaces` is undefined, 
  *       the optional chaining operator `?.` prevents errors during the push operation.
  */
-export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }, user: IUser) => {
-    const userWorkspaces = user?.workspaces;
-    userWorkspaces?.push({ id: workspace._id.toString(), permissions: 2 });
-    let newUser: any = await User.findOne({ _id: user._id });
-    newUser = { ...newUser.toObject(), workspaces: [...userWorkspaces] };
-    const updatedUser = await User.findByIdAndUpdate(user?._id, { workspaces: userWorkspaces }, { new: true });
-    console.log({ updatedUserWorkspaces: updatedUser?.workspaces })
+// export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }, user: IUser) => {
+//     const userWorkspaces = user?.workspaces;
+//     userWorkspaces?.push({ id: workspace._id.toString(), permissions: 2 });
+//     let newUser: any = await User.findOne({ _id: user._id });
+//     newUser = { ...newUser.toObject(), workspaces: [...userWorkspaces] };
+//     const updatedUser = await User.findByIdAndUpdate(user?._id, { workspaces: userWorkspaces }, { new: true });
+//     console.log({ updatedUserWorkspaces: updatedUser?.workspaces })
 
-    return updatedUser;
+//     return updatedUser;
+// }
+export const addWorkspaceToUser = async (workspace: IWorkspace & { _id: string }, user: IUser) => {
+    const newUserWorkspace = new UserWorkspace({
+        userId: user._id,
+        workspaceId: workspace._id
+    });
+    newUserWorkspace.save();
 }
 
 /**

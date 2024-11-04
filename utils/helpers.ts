@@ -8,6 +8,7 @@ import DataCollectionView from "../models/dataCollectionView.model";
 import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPermissions, noAccessDataCollectionPermissions, noAccessPermissions, noAccessViewPermissions, viewOnly, viewOnlyColumns, viewOnlyDataCollection, viewOnlyView } from "./defaultGroups";
 import User from "../models/auth.model";
 import Workspace from "../models/workspace.model";
+import UserWorkspace from "../models/userWorkspace.model";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
@@ -495,7 +496,23 @@ const setAllDCsAsMain = async () => {
     }
 }
 
+const setUserWorkspaces = async () => {
+    const users = await User.find({});
+    for (const user of users) {
+        const userWorkspaces = user.workspaces;
+        for (const userWorkspace of userWorkspaces) {
+            console.log(userWorkspace)
+            const userWorkspaceDoc = new UserWorkspace({
+                userId: user._id,
+                workspaceId: userWorkspace.id
+            });
+            userWorkspaceDoc.save();
+        }
+    }
+}
+
 export const helpersRunner = () => {
     // autoIncrementProjectNumber()
     // setAllDCsAsMain()
+    // setUserWorkspaces();
 }
