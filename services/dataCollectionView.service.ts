@@ -14,6 +14,7 @@ export interface IDataCollectionView {
     belongsToRow?: boolean;
     rowsOfDataCollection?: Schema.Types.ObjectId | null;
     main?: boolean;
+    maxNumberOfItems?: number | null;
 }
 
 export interface IDataCollectionViewDocument extends IDataCollectionView, Document {

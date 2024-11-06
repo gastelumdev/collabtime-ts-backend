@@ -45,7 +45,6 @@ import UserWorkspace from "../models/userWorkspace.model";
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await authModel.getUserById((<any>req).user._id as string);
     const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
-    console.log(userWorkspaces)
     try {
         const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
 
@@ -256,10 +255,13 @@ export const joinWorkspace = async (req: Request, res: Response) => {
     const numberOfFilteredInvitees = invitees?.length || 0;
     const numberOfInvitees = workspace?.invitees.length || 0;
 
+
+
     if (numberOfFilteredInvitees < numberOfInvitees) {
         if (workspace) {
             workspace.invitees = invitees || workspace.invitees;
             if (member) {
+
                 workspace.members.push(member as TInvitee);
                 user?.workspaces.push({ id: workspace?._id, permissions: (member as TInvitee).permissions });
 
@@ -289,11 +291,19 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         }
 
         try {
+            console.log({ invitees, member, numberOfFilteredInvitees, numberOfInvitees, workspace })
             const userGroup: any = await UserGroup.findOne({ workspace: workspace?._id, name: "View Only" });
-            const newUserGroup = { ...userGroup, users: [...userGroup.users, user?._id] };
+            // const newUserGroup = { ...userGroup, users: [...userGroup.users, user?._id] };
 
-            const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true });
-            console.log(updatedUserGroup)
+            const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, { users: [...userGroup.users, user?._id] }, { new: true });
+            console.log({ updatedUserGroup })
+
+            const newUserWorkspace = new UserWorkspace({
+                userId: user?._id,
+                workspaceId: workspace?._id,
+            });
+
+            newUserWorkspace.save()
 
             const notification = new Notification({
                 message: `${user?.firstname} ${user?.lastname} has joined ${workspace?.name}`,

@@ -113,7 +113,7 @@ export const updateColumn = async (req: Request, res: Response) => {
         const prevColumn: any = await Column.findById(req.params.id);
         const newColumn: any = req.body;
 
-        if (prevColumn.width === newColumn.width) {
+        if (prevColumn.width === newColumn.width && prevColumn.name !== newColumn.name) {
             const rows = await Row.find({ dataCollection: prevColumn?.dataCollection });
 
             for (const row of rows) {
