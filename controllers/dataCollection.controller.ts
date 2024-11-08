@@ -59,6 +59,33 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         includeInForm: true,
         includeInExport: true,
     };
+    const plannerStatus = {
+        dataCollection: dataCollectionId,
+        name: "status",
+        type: "label",
+        permanent: true,
+        labels: [
+            { title: "Not started", color: "#ffffff" },
+            { title: "In progress", color: "#146c96" },
+            { title: "Completed", color: "#046906" },
+        ],
+        includeInForm: true,
+        includeInExport: true,
+    };
+    const bucket = {
+        dataCollection: dataCollectionId,
+        name: "bucket",
+        type: "label",
+        permanent: true,
+        labels: [
+            { title: "Initiation Todos", color: "#121f82" },
+            { title: "Engineering and Design", color: "#146c96" },
+            { title: "Ops", color: "#FFA500" },
+            { title: "Job Closeout", color: "#28B542" },
+        ],
+        includeInForm: true,
+        includeInExport: true,
+    };
     const taskName = {
         dataCollection: dataCollectionId,
         name: primaryColumnName || "task",
@@ -70,6 +97,16 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         autoIncrementPrefix: autoIncrementPrefix,
         autoIncremented: autoIncremented
     };
+
+    const startDate = {
+        dataCollection: dataCollectionId,
+        name: "start_date",
+        type: "date",
+        permanent: true,
+        people: [],
+        includeInForm: true,
+        includeInExport: true,
+    }
     const date = {
         dataCollection: dataCollectionId,
         name: "due_date",
@@ -80,6 +117,16 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         includeInExport: true,
     };
 
+    const todo = {
+        dataCollection: dataCollectionId,
+        name: "todo",
+        type: "text",
+        permanent: true,
+        people: [],
+        includeInForm: true,
+        includeInExport: true,
+    }
+
     if (template === "tasks") {
         return [
             itemName,
@@ -88,6 +135,18 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
             status,
             date,
         ];
+    }
+
+    if (template === "planner") {
+        return [
+            todo,
+            bucket,
+            assignedTo,
+            plannerStatus,
+            startDate,
+            date,
+            priority,
+        ]
     }
 
     return [
@@ -124,7 +183,9 @@ export const createDataCollection = async (req: Request, res: Response) => {
     let initialColumns: any = [];
     let initialColumnsFromUserTemplate: any = [];
 
-    if (dataCollection.template == "default" || dataCollection.template == "tasks") {
+    console.log({ template: dataCollection.template })
+
+    if (dataCollection.template == "default" || dataCollection.template == "tasks" || dataCollection.template == "planner") {
         initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people, dataCollection.primaryColumnName, dataCollection.autoIncremented, dataCollection.autoIncrementPrefix);
     } else {
         const columns = await Column.find({ dataCollection: dataCollection.template });
