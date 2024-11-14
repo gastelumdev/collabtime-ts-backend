@@ -23,7 +23,9 @@ export const getRows = async (req: Request, res: Response) => {
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
+
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
+
         // console.log({ filters: req.query.filters })
 
 
@@ -65,26 +67,32 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
         }
 
-        // console.log(`These filters are for ${dataCollection?.name}`)
-        // console.log({ filters })
+        // if (dataCollection?.template === 'filtered') {
+        //     rows = rows.filter((item: any) => {
+
+        //     })
+        // }
+
+        console.log(`These filters are for ${dataCollection?.name}`)
+        console.log({ filters })
 
         for (const filter of Object.keys(filters)) {
             const filterVals = filters[filter]
 
 
 
-            // console.log(``)
-            // console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
-            // console.log(filterVals)
-            // console.log(``)
+            console.log(``)
+            console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
+            console.log(filterVals)
+            console.log(``)
 
-            // console.log(``)
-            // console.log(`There are ${rows.length} rows to go through.`)
-            // console.log(``)
+            console.log(``)
+            console.log(`There are ${rows.length} rows to go through.`)
+            console.log(``)
 
             rows = rows.filter((row: any) => {
                 const refs = row.refs[filter];
-                console.log({ rowValuesOfFilter: row.values[filter] })
+                // console.log({ rowValuesOfFilter: row.values[filter] })
 
                 // console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
                 if (appModel?.userGroupAccess?.includes(userGroupName)) {
@@ -160,8 +168,8 @@ export const getRows = async (req: Request, res: Response) => {
         }
 
         // console.log("SENDING ROWS")
-        console.log({ dataCollectionName: dataCollection?.name })
-        console.log({ rows })
+        // console.log({ dataCollectionName: dataCollection?.name })
+        // console.log({ rows })
 
         res.send(rows);
 
@@ -181,7 +189,15 @@ export const getRow = async (req: Request, res: Response) => {
     }
 }
 
+export const getRowById = async (req: Request, res: Response) => {
+    try {
+        const row = await Row.findOne({ _id: req.params.rowId });
 
+        res.send(row);
+    } catch (error) {
+        res.status(400).send({ success: false });
+    }
+}
 
 export const createRow = async (req: Request, res: Response) => {
 

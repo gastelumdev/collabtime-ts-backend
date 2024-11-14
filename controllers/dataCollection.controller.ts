@@ -127,6 +127,16 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         includeInExport: true,
     }
 
+    const item_number = {
+        dataCollection: dataCollectionId,
+        name: "item_number",
+        type: "text",
+        permanent: true,
+        people: [],
+        includeInForm: true,
+        includeInExport: true,
+    }
+
     if (template === "tasks") {
         return [
             itemName,
@@ -149,6 +159,12 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
         ]
     }
 
+    if (template === 'filtered') {
+        return [
+            item_number
+        ]
+    }
+
     return [
         itemName,
         assignedTo,
@@ -156,6 +172,7 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
     ];
 }
 
+const rowAppNames = ['planner', 'filtered']
 
 export const getDataCollections = async (req: Request, res: Response) => {
     const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
@@ -169,108 +186,142 @@ export const getDataCollections = async (req: Request, res: Response) => {
 }
 
 export const createDataCollection = async (req: Request, res: Response) => {
-    console.log({ dc: req.body })
-    const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
-    const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
 
-    const people: any = [];
-
-    for (const member of workspace?.members || []) {
-        let person = await User.findOne({ email: member.email })
-        people.push(person);
-    }
-
-    let initialColumns: any = [];
-    let initialColumnsFromUserTemplate: any = [];
-
-    console.log({ template: dataCollection.template })
-
-    if (dataCollection.template == "default" || dataCollection.template == "tasks" || dataCollection.template == "planner") {
-        initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people, dataCollection.primaryColumnName, dataCollection.autoIncremented, dataCollection.autoIncrementPrefix);
-    } else {
-        const columns = await Column.find({ dataCollection: dataCollection.template });
-        initialColumnsFromUserTemplate = columns;
-    }
-
-    console.log(initialColumns)
-    const columnIds = [];
-    const values: any = {};
-
-    let position = 1;
-
-    for (const initialColumn of initialColumns || []) {
-        const column = new Column(initialColumn);
-        column.position = position;
-        column.primary = position === 1 ? true : false;
-        position++;
-        columnIds.push(column._id);
-        column.save();
-        values[column.name] = "";
-    }
-
-    for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
-        const column = new Column({
-            dataCollection: dataCollection._id,
-            name: initialColumnFromUser.name,
-            type: initialColumnFromUser.type,
-            position: initialColumnFromUser.position,
-            permanent: initialColumnFromUser.permanent,
-            people: initialColumnFromUser.people,
-            labels: initialColumnFromUser.labels,
-            dataCollectionRef: initialColumnFromUser.dataCollectionRef,
-            includeInForm: initialColumnFromUser.includeInForm,
-            includeInExport: initialColumnFromUser.includeInExport,
-            autoIncremented: initialColumnFromUser.autoIncremented,
-            autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
-
-        });
-        column.save();
-        values[column.name] = "";
-    }
-
-    dataCollection.columns = columnIds;
-
-    for (let i = 1; i <= 50; i++) {
-        let newRow;
-        if (dataCollection.autoIncremented) {
-            newRow = {
-                dataCollection: dataCollection._id,
-                values: { ...values, [dataCollection.primaryColumnName]: createPrimaryValues(i, dataCollection.autoIncrementPrefix) },
-                position: i * 1024,
-            }
-        } else {
-            newRow = {
-                dataCollection: dataCollection._id,
-                values: values,
-                position: i * 1024,
-            }
-        }
-        const row = new Row(newRow)
-        row.save();
-    }
 
     try {
+        console.log({ dc: req.body })
+        const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
+        const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
+
+        const people: any = [];
+
+        for (const member of workspace?.members || []) {
+            let person = await User.findOne({ email: member.email })
+            people.push(person);
+        }
+
+        let initialColumns: any = [];
+        let initialColumnsFromUserTemplate: any = [];
+
+        console.log({ template: dataCollection.template })
+
+        if (dataCollection.template == "default" || dataCollection.template == "tasks" || dataCollection.template == "planner" || dataCollection.template == 'filtered') {
+            initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people, dataCollection.primaryColumnName, dataCollection.autoIncremented, dataCollection.autoIncrementPrefix);
+        } else {
+            const columns = await Column.find({ dataCollection: dataCollection.template });
+            initialColumnsFromUserTemplate = columns;
+        }
+
+        console.log(initialColumns)
+        const columnIds = [];
+        const values: any = {};
+
+        let position = 1;
+
+        for (const initialColumn of initialColumns || []) {
+            const column = new Column(initialColumn);
+            column.position = position;
+            column.primary = position === 1 ? true : false;
+            position++;
+            columnIds.push(column._id);
+            column.save();
+            values[column.name] = "";
+        }
+
+        for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
+            const column = new Column({
+                dataCollection: dataCollection._id,
+                name: initialColumnFromUser.name,
+                type: initialColumnFromUser.type,
+                position: initialColumnFromUser.position,
+                permanent: initialColumnFromUser.permanent,
+                people: initialColumnFromUser.people,
+                labels: initialColumnFromUser.labels,
+                dataCollectionRef: initialColumnFromUser.dataCollectionRef,
+                includeInForm: initialColumnFromUser.includeInForm,
+                includeInExport: initialColumnFromUser.includeInExport,
+                autoIncremented: initialColumnFromUser.autoIncremented,
+                autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
+
+            });
+            column.save();
+            values[column.name] = "";
+        }
+
+        dataCollection.columns = columnIds;
+
+        for (let i = 1; i <= 50; i++) {
+            let newRow;
+            if (dataCollection.autoIncremented) {
+                newRow = {
+                    dataCollection: dataCollection._id,
+                    values: { ...values, [dataCollection.primaryColumnName]: createPrimaryValues(i, dataCollection.autoIncrementPrefix) },
+                    position: i * 1024,
+                }
+            } else {
+                newRow = {
+                    dataCollection: dataCollection._id,
+                    values: values,
+                    position: i * 1024,
+                }
+            }
+            const row = new Row(newRow)
+            row.save();
+        }
+
+
+
         dataCollection.save();
         if (dataCollection.inParentToDisplay !== null) {
-            const rowsOfParentToDisplay = await Row.find({ dataCollection: dataCollection.inParentToDisplay, isEmpty: false })
-            console.log({ dataCollection })
+            if (['planner'].includes(dataCollection.template)) {
+                const rowsOfParentToDisplay = await Row.find({ dataCollection: dataCollection.inParentToDisplay, isEmpty: false })
+                console.log({ dataCollection })
 
-            for (const row of rowsOfParentToDisplay) {
-                const subDataCollection = new DataCollection({
-                    ...(req.body),
-                    workspace: workspace?._id,
-                    belongsToAppModel: true,
-                    main: false,
-                    appModel: dataCollection._id,
-                    inParentToDisplay: row._id
+                for (const row of rowsOfParentToDisplay) {
+                    const subDataCollection = new DataCollection({
+                        ...(req.body),
+                        workspace: workspace?._id,
+                        belongsToAppModel: true,
+                        main: false,
+                        appModel: dataCollection._id,
+                        inParentToDisplay: row._id
+                    })
+
+                    subDataCollection.save();
+                }
+            }
+            if (['filtered'].includes(dataCollection.template)) {
+                const dataCollectionRef = await DataCollection.findOne({ _id: dataCollection.inParentToDisplay });
+                const dataCollectionRefColumns = await Column.find({ dataCollection: dataCollection.inParentToDisplay }).sort({ position: 1 });
+                const dataCollectionRefColumn = dataCollectionRefColumns.find((item: any) => {
+                    return true;
+                });
+                const dataCollectionRefLabel = dataCollectionRefColumn?.name;
+                console.log({ dataCollectionRefLabel })
+                const column = new Column({
+                    dataCollection: dataCollection._id,
+                    name: dataCollectionRefLabel,
+                    type: "reference",
+                    permanent: true,
+                    position: 2,
+                    people: [],
+                    includeInForm: true,
+                    includeInExport: true,
+                    dataCollectionRef: dataCollection.inParentToDisplay,
+                    dataCollectionRefLabel: dataCollectionRefLabel,
                 })
+                column.save()
 
-                subDataCollection.save();
+                // const dataCollectionToUpdate = await DataCollection.findOne({_id: dataCollection._id});
+                const newDataCollection = { ...dataCollection.toObject(), filters: { [dataCollectionRefLabel as string]: ['__ref__'] } }
+                const updatedDataCollection = await DataCollection.findByIdAndUpdate(dataCollection._id, newDataCollection, { new: true });
+                console.log({ updatedDataCollection })
             }
         }
 
         res.send(dataCollection);
     } catch (error) {
+        console.log(error)
         res.status(400).send({ success: false });
     }
 }
