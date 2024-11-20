@@ -9,6 +9,8 @@ import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPerm
 import User from "../models/auth.model";
 import Workspace from "../models/workspace.model";
 import UserWorkspace from "../models/userWorkspace.model";
+import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../services/workspace.service";
+import axios from "axios";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
@@ -511,8 +513,216 @@ const setUserWorkspaces = async () => {
     }
 }
 
+const addIntegrationSettings = async (workspaceId: string) => {
+
+    const settings: IWorkspaceSettings = {
+        integration: {
+            swiftSensors: {
+                type: "Swift Sensors",
+                apiKey: "ho0cfvh4grq5g4i4lj52krft0o0sq87e",
+                email: "ogastelum@environmentalautomation.com",
+                password: "Queenbee24*!",
+                accessToken: null,
+                expiresIn: null,
+                tokenType: null,
+                refreshToken: null,
+                sessionId: null,
+                accountId: ".2316.",
+            }
+        }
+    }
+
+    const integrationSwiftSensorSettings = settings.integration.swiftSensors;
+    // const treeMapUrl = `https://api.swiftsensors.net/api/client/v1/accounts/${integrationSwiftSensorSettings.accountId}/treemap`;
+    const url = `https://api.swiftsensors.net/api/client/v1/sign-in`;
+
+    const requestData = {
+        email: integrationSwiftSensorSettings.email,
+        password: integrationSwiftSensorSettings.password,
+        language: 'en'
+    }
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': integrationSwiftSensorSettings.apiKey,
+    }
+
+    const signinResponse = await axios.post(url, requestData, { headers });
+    const signinData: { access_token: string; expires_in: number; token_type: string; refresh_token: string; session_id: string; account_id: string } = signinResponse.data;
+
+    settings.integration.swiftSensors.accessToken = signinData.access_token;
+    settings.integration.swiftSensors.expiresIn = signinData.expires_in;
+    settings.integration.swiftSensors.tokenType = signinData.token_type;
+    settings.integration.swiftSensors.refreshToken = signinData.refresh_token;
+    settings.integration.swiftSensors.sessionId = signinData.session_id;
+
+    const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
+}
+
+const swiftSensorDeviceIntegration = async (workspaceId: string, dataCollectionId: string) => {
+    const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
+
+    const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
+
+    console.log(settings)
+
+    const { apiKey, accessToken, accountId, tokenType }: any = settings;
+
+    const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'Authorization': `${tokenType} ${accessToken}`
+    }
+
+    const treemapResponse = await axios.get(url, { headers });
+
+    const treemap = treemapResponse.data.treeMap;
+
+    const account = treemap.a_;
+    const collectorIds = account.children;
+
+    for (const collectorid of collectorIds) {
+        const { name, children, ip } = treemap[collectorid]
+        console.log(`* Collector ${name} has an IP of ${ip}`);
+
+        for (const deviceId of children) {
+            const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
+            console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
+            let profilename, valueResult;
+
+            for (const sensorId of children) {
+                const { profileName, value } = treemap[sensorId];
+                let convertedValue = value;
+                profilename = profileName;
+
+
+                if (profileName === 'Temperature') {
+                    convertedValue = ((value * (9 / 5)) + 32);
+                }
+                if (profileName === "Door") {
+                    convertedValue = value === 0 ? "Open" : "Closed";
+                }
+                valueResult = convertedValue;
+                console.log(`**** ${profileName} has a value of ${convertedValue}`);
+                console.log("");
+            }
+
+            let values
+
+            if (profilename === 'Temperature') {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
+            } else if (profilename === 'Door') {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
+            } else {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
+            }
+
+            console.log({ values })
+
+            const row = await Row.findOne({ dataCollection: dataCollectionId, isEmpty: true }).sort({ position: 1 });
+
+            const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values, isEmpty: false }, { new: true });
+
+            console.log({ updatedRow })
+        }
+
+        console.log("")
+        console.log("")
+    }
+
+}
+
+export const updateSwiftSensorValues = async (workspaceId: string, dataCollectionId: string) => {
+    const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
+
+    const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
+
+    console.log(settings)
+
+    const { apiKey, accessToken, accountId, tokenType }: any = settings;
+
+    const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'Authorization': `${tokenType} ${accessToken}`
+    }
+
+    const treemapResponse = await axios.get(url, { headers });
+
+    const treemap = treemapResponse.data.treeMap;
+
+    const account = treemap.a_;
+    const collectorIds = account.children;
+
+    for (const collectorid of collectorIds) {
+        const { name, children, ip } = treemap[collectorid]
+        console.log(`* Collector ${name} has an IP of ${ip}`);
+
+        for (const deviceId of children) {
+            const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
+            console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
+            let profilename, valueResult;
+
+            for (const sensorId of children) {
+                const { profileName, value } = treemap[sensorId];
+                let convertedValue = value;
+                profilename = profileName;
+
+
+                if (profileName === 'Temperature') {
+                    convertedValue = ((value * (9 / 5)) + 32).toFixed(2);
+                }
+                if (profileName === "Door") {
+                    convertedValue = value === 0 ? "Open" : "Closed";
+                }
+                valueResult = convertedValue;
+                console.log(`**** ${profileName} has a value of ${convertedValue}`);
+                console.log("");
+            }
+
+            let values
+
+            if (profilename === 'Temperature') {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
+            } else if (profilename === 'Door') {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
+            } else {
+                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
+            }
+
+            console.log({ values })
+
+            const rows = await Row.find({ dataCollection: dataCollectionId, isEmpty: false }).sort({ position: 1 });
+
+            for (const row of rows) {
+                if (row.values.name === name) {
+                    const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values }, { new: true });
+
+                    console.log({ updatedRow })
+                }
+            }
+
+
+        }
+
+        console.log("")
+        console.log("")
+    }
+
+}
+
 export const helpersRunner = () => {
     // autoIncrementProjectNumber()
     // setAllDCsAsMain()
     // setUserWorkspaces();
+
+    const workspaceId = "673b87f6299c04ead15cc3b0";
+    const dataCollectionId = "673d2be015a038c6d24b53d4";
+    // addIntegrationSettings(workspaceId)
+    // swiftSensorDeviceIntegration(workspaceId, dataCollectionId);
+    // updateSwiftSensorValues(workspaceId, dataCollectionId)
 }

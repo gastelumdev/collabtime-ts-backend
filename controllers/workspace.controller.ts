@@ -79,6 +79,10 @@ export const createWorkspace = async (req: Request, res: Response) => {
         await workspaceService.addWorkspaceToUser(workspace, user);
         await userGroupService.createInitialSetup(workspace);
 
+        if (workspace.type === 'integration') {
+
+        }
+
         io.emit("update", {});
         res.send(workspace);
     } catch (error) {

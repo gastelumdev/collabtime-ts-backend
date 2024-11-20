@@ -166,9 +166,7 @@ const getDataCollectionTemplates = (template: string, dataCollectionId: string, 
     }
 
     return [
-        itemName,
-        assignedTo,
-        priority,
+        itemName
     ];
 }
 

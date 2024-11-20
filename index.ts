@@ -25,7 +25,7 @@ import { Schema } from 'mongoose';
 import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPermissions, noAccessDataCollectionPermissions, noAccessPermissions, noAccessViewPermissions, viewOnly, viewOnlyColumns, viewOnlyDataCollection, viewOnlyView } from './utils/defaultGroups';
 import UserGroup from './models/userGroup.model';
 import DataCollectionView from './models/dataCollectionView.model';
-import { autoIncrementProjectNumber, helpersRunner } from './utils/helpers';
+import { autoIncrementProjectNumber, helpersRunner, updateSwiftSensorValues } from './utils/helpers';
 
 
 const sh = shell.execSync;
@@ -120,6 +120,8 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
+
+
 if (process.env.APP_ENVIRONMENT === "production") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
@@ -146,6 +148,15 @@ if (process.env.APP_ENVIRONMENT === "production") {
   cron.schedule("0 0 23 * * 7", () => {
     changeRowPositions()
   })
+
+  cron.schedule("0 * * * * *", () => {
+    // setReminders()
+    console.log("Test")
+    const workspaceId = "673b87f6299c04ead15cc3b0";
+    const dataCollectionId = "673d2be015a038c6d24b53d4";
+    updateSwiftSensorValues(workspaceId, dataCollectionId);
+    io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+  });
 }
 
 const changeRowPositions = async () => {

@@ -11,7 +11,9 @@ const workspaceSchema: Schema<IWorkspaceDocument> = new Schema({
     owner: { type: Schema.Types.ObjectId },
     workspaceTags: { type: [] },
     tags: { type: [] },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    type: { type: String, default: 'basic' },
+    settings: { type: {}, default: null }
 }, {
     timestamps: true
 });

@@ -32,6 +32,25 @@ export interface IWorkspace {
     workspaceTags: ITag[];
     tags: ITag[];
     createdAt: Date | null;
+    type: 'basic' | 'integration';
+    settings: IWorkspaceSettings | null;
+}
+
+export interface IWorkspaceSettings {
+    integration: { swiftSensors: IIntegrationSettings };
+}
+
+export interface IIntegrationSettings {
+    type: "Swift Sensors";
+    apiKey: string;
+    email: string;
+    password: string;
+    accessToken: string | null;
+    expiresIn: number | null;
+    tokenType: string | null;
+    refreshToken: string | null;
+    sessionId: string | null;
+    accountId: string | null;
 }
 
 export interface IWorkspaceDocument extends IWorkspace, Document {
