@@ -578,59 +578,65 @@ const swiftSensorDeviceIntegration = async (workspaceId: string, dataCollectionI
 
     const treemapResponse = await axios.get(url, { headers });
 
-    const treemap = treemapResponse.data.treeMap;
+    if (treemapResponse.status === 200) {
+        const treemap = treemapResponse.data.treeMap;
 
-    const account = treemap.a_;
-    const collectorIds = account.children;
+        const account = treemap.a_;
+        const collectorIds = account.children;
 
-    for (const collectorid of collectorIds) {
-        const { name, children, ip } = treemap[collectorid]
-        console.log(`* Collector ${name} has an IP of ${ip}`);
+        for (const collectorid of collectorIds) {
+            const { name, children, ip } = treemap[collectorid]
+            console.log(`* Collector ${name} has an IP of ${ip}`);
 
-        for (const deviceId of children) {
-            const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
-            console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
-            let profilename, valueResult;
+            for (const deviceId of children) {
+                const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
+                console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
+                let profilename, valueResult;
 
-            for (const sensorId of children) {
-                const { profileName, value } = treemap[sensorId];
-                let convertedValue = value;
-                profilename = profileName;
+                for (const sensorId of children) {
+                    const { profileName, value } = treemap[sensorId];
+                    let convertedValue = value;
+                    profilename = profileName;
 
 
-                if (profileName === 'Temperature') {
-                    convertedValue = ((value * (9 / 5)) + 32);
+                    if (profileName === 'Temperature') {
+                        convertedValue = ((value * (9 / 5)) + 32);
+                    }
+                    if (profileName === "Door") {
+                        convertedValue = value === 0 ? "Open" : "Closed";
+                    }
+                    valueResult = convertedValue;
+                    console.log(`**** ${profileName} has a value of ${convertedValue}`);
+                    console.log("");
                 }
-                if (profileName === "Door") {
-                    convertedValue = value === 0 ? "Open" : "Closed";
+
+                let values
+
+                if (profilename === 'Temperature') {
+                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
+                } else if (profilename === 'Door') {
+                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
+                } else {
+                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
                 }
-                valueResult = convertedValue;
-                console.log(`**** ${profileName} has a value of ${convertedValue}`);
-                console.log("");
+
+                console.log({ values })
+
+                const row = await Row.findOne({ dataCollection: dataCollectionId, isEmpty: true }).sort({ position: 1 });
+
+                const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values, isEmpty: false }, { new: true });
+
+                console.log({ updatedRow })
             }
 
-            let values
-
-            if (profilename === 'Temperature') {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
-            } else if (profilename === 'Door') {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
-            } else {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
-            }
-
-            console.log({ values })
-
-            const row = await Row.findOne({ dataCollection: dataCollectionId, isEmpty: true }).sort({ position: 1 });
-
-            const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values, isEmpty: false }, { new: true });
-
-            console.log({ updatedRow })
+            console.log("")
+            console.log("")
         }
+    } else {
 
-        console.log("")
-        console.log("")
     }
+
+
 
 }
 
@@ -687,20 +693,22 @@ export const updateSwiftSensorValues = async (workspaceId: string, dataCollectio
             let values
 
             if (profilename === 'Temperature') {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
+                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
             } else if (profilename === 'Door') {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
+                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
             } else {
-                values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
+                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
             }
 
-            console.log({ values })
+            // console.log({ values })
 
             const rows = await Row.find({ dataCollection: dataCollectionId, isEmpty: false }).sort({ position: 1 });
 
             for (const row of rows) {
-                if (row.values.name === name) {
-                    const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values }, { new: true });
+                console.log({ rowDeviceId: row.values.deviceId, deviceId })
+                if (row.values.deviceId === deviceId) {
+                    console.log({ values })
+                    const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
 
                     console.log({ updatedRow })
                 }
