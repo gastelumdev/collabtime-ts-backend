@@ -26,6 +26,8 @@ import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPerm
 import UserGroup from './models/userGroup.model';
 import DataCollectionView from './models/dataCollectionView.model';
 import { autoIncrementProjectNumber, helpersRunner, updateSwiftSensorValues } from './utils/helpers';
+import SwiftSensorsAPIAuth from './utils/template/integrationApp/swiftSensors/Auth';
+import { IWorkspaceSettings } from './services/workspace.service';
 
 
 const sh = shell.execSync;
@@ -120,14 +122,14 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
-// cron.schedule("0 * * * * *", async () => {
-//   // setReminders()
-//   console.log("Test")
-//   const workspaceId = "673b87f6299c04ead15cc3b0";
-//   const dataCollectionId = "673d2be015a038c6d24b53d4";
-//   await updateSwiftSensorValues(workspaceId, dataCollectionId);
-//   io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-// });
+cron.schedule("0 * * * * *", async () => {
+  // setReminders()
+  console.log("Test")
+
+  // await updateSwiftSensorValues(workspaceId, dataCollectionId);
+  // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+
+});
 
 if (process.env.APP_ENVIRONMENT === "production") {
 
@@ -165,11 +167,21 @@ if (process.env.APP_ENVIRONMENT === "production") {
     io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
   });
 
+  cron.schedule("30 0 23 * * *", () => {
+    const swiftSensorAuth = new SwiftSensorsAPIAuth();
+    swiftSensorAuth.refreshAll();
+  })
+
   cron.schedule("0 0 23 * * *", () => {
     // setReminders()
 
   });
 }
+
+const swiftSensorAuth = new SwiftSensorsAPIAuth();
+// swiftSensorAuth.signin(workspaceId, settings)
+// swiftSensorAuth.refresh(workspaceId)
+// swiftSensorAuth.refreshAll()
 
 const changeRowPositions = async () => {
   const dcs = await DataCollection.find({});

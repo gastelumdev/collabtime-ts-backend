@@ -45,3 +45,5 @@ uploads
 
 # JSDoc
 out
+
+env.ts

@@ -51,6 +51,7 @@ export interface IIntegrationSettings {
     refreshToken: string | null;
     sessionId: string | null;
     accountId: string | null;
+    dataCollectionId: string | null;
 }
 
 export interface IWorkspaceDocument extends IWorkspace, Document {

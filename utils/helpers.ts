@@ -528,6 +528,8 @@ const addIntegrationSettings = async (workspaceId: string) => {
                 refreshToken: null,
                 sessionId: null,
                 accountId: ".2316.",
+                dataCollectionId: "673d2be015a038c6d24b53d4"
+
             }
         }
     }

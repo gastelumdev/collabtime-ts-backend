@@ -14,6 +14,8 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
         const dataCollectionViews = await DataCollectionView.find({ workspace: req?.params.workspaceId });
         const response: any = [];
 
+        console.log(dataCollectionViews)
+
         for (const dataCollectionView of dataCollectionViews) {
 
             const dataCollectionViewCopy = dataCollectionView;
