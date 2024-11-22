@@ -11,6 +11,7 @@ import Workspace from "../models/workspace.model";
 import UserWorkspace from "../models/userWorkspace.model";
 import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../services/workspace.service";
 import axios from "axios";
+import { IDataCollection } from "../services/dataCollection.service";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
@@ -561,8 +562,10 @@ const addIntegrationSettings = async (workspaceId: string) => {
     const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
 }
 
-const swiftSensorDeviceIntegration = async (workspaceId: string, dataCollectionId: string) => {
-    const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
+const swiftSensorDeviceIntegration = async (workspaceId: string) => {
+    const workspace = await Workspace.findOne({ _id: workspaceId });
+    const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
+    const dataCollectionId = dataCollection?._id;
 
     const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
 
@@ -642,8 +645,10 @@ const swiftSensorDeviceIntegration = async (workspaceId: string, dataCollectionI
 
 }
 
-export const updateSwiftSensorValues = async (workspaceId: string, dataCollectionId: string) => {
+export const updateSwiftSensorValues = async (workspaceId: string) => {
     const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
+    const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
+    const dataCollectionId = dataCollection?._id;
 
     const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
 
