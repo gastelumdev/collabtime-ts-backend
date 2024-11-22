@@ -26,8 +26,11 @@ import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPerm
 import UserGroup from './models/userGroup.model';
 import DataCollectionView from './models/dataCollectionView.model';
 import { autoIncrementProjectNumber, helpersRunner, updateSwiftSensorValues } from './utils/helpers';
-import SwiftSensorsAPIAuth from './utils/template/integrationApp/swiftSensors/Auth';
+import SwiftSensorsAPIAuth from './utils/integrationApp/swiftSensors/Auth';
 import { IWorkspaceSettings } from './services/workspace.service';
+import Treemap from './utils/integrationApp/swiftSensors/Treemap';
+import { workspaceIds } from './env';
+import SwiftSensorsIntegration from './utils/integrationApp/swiftSensors/SwiftSensorsIntegration';
 
 
 const sh = shell.execSync;
@@ -122,11 +125,14 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
+
+
 // cron.schedule("0 * * * * *", async () => {
-
-//   await updateSwiftSensorValues(workspaceId, dataCollectionId);
+//   // const workspaceId = "673b87f6299c04ead15cc3b0";
+//   // await updateSwiftSensorValues(workspaceId);
+//   const integration = new SwiftSensorsIntegration();
+//   await integration.syncAll()
 //   io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-
 // });
 
 if (process.env.APP_ENVIRONMENT === "production") {
@@ -156,14 +162,11 @@ if (process.env.APP_ENVIRONMENT === "production") {
     changeRowPositions()
   })
 
-  // cron.schedule("0 * * * * *", async () => {
-  //   // setReminders()
-  //   console.log("Test")
-  //   const workspaceId = "673b87f6299c04ead15cc3b0";
-  //   const dataCollectionId = "673d2be015a038c6d24b53d4";
-  //   updateSwiftSensorValues(workspaceId);
-  //   io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-  // });
+  cron.schedule("0 * * * * *", async () => {
+    const integration = new SwiftSensorsIntegration();
+    await integration.syncAll()
+    io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+  });
 
   cron.schedule("30 0 23 * * *", () => {
     const swiftSensorAuth = new SwiftSensorsAPIAuth();

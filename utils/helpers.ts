@@ -11,7 +11,6 @@ import Workspace from "../models/workspace.model";
 import UserWorkspace from "../models/userWorkspace.model";
 import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../services/workspace.service";
 import axios from "axios";
-import { IDataCollection } from "../services/dataCollection.service";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
@@ -637,8 +636,6 @@ const swiftSensorDeviceIntegration = async (workspaceId: string) => {
             console.log("")
             console.log("")
         }
-    } else {
-
     }
 
 
@@ -730,14 +727,6 @@ export const updateSwiftSensorValues = async (workspaceId: string) => {
 
 }
 
-export const helpersRunner = () => {
-    // autoIncrementProjectNumber()
-    // setAllDCsAsMain()
-    // setUserWorkspaces();
+export const helpersRunner = async () => {
 
-    const workspaceId = "673b87f6299c04ead15cc3b0";
-    const dataCollectionId = "673d2be015a038c6d24b53d4";
-    // addIntegrationSettings(workspaceId)
-    // swiftSensorDeviceIntegration(workspaceId, dataCollectionId);
-    // updateSwiftSensorValues(workspaceId, dataCollectionId)
 }

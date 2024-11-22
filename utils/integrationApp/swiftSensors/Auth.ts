@@ -1,6 +1,6 @@
 import axios from "axios";
-import { IWorkspace, IWorkspaceSettings } from "../../../../services/workspace.service";
-import Workspace from "../../../../models/workspace.model";
+import { IWorkspace, IWorkspaceSettings } from "../../../services/workspace.service";
+import Workspace from "../../../models/workspace.model";
 
 
 
