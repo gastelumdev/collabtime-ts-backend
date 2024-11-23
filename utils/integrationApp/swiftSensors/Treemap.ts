@@ -21,12 +21,7 @@ class Treemap {
     }
 
     async getTreemapResponse(workspace: IWorkspace) {
-
-
         const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
-
-        console.log(settings)
-
         const { apiKey, accessToken, accountId, tokenType }: any = settings;
 
         const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
@@ -52,8 +47,6 @@ class Treemap {
         let sensors: ISwiftSensorSensor[] = [];
 
         const workspace = await Workspace.findOne({ _id: workspaceId });
-        const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
-        const dataCollectionId = dataCollection?._id;
 
         const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
 

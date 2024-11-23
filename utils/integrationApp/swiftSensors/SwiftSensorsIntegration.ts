@@ -3,20 +3,24 @@ import Row from "../../../models/row.models";
 import Workspace from "../../../models/workspace.model";
 import { IWorkspace } from "../../../services/workspace.service";
 import Device from "./Device";
+import Threshold from "./Threshold";
 import Treemap from "./Treemap";
 
 class SwiftSensorsIntegration {
     async syncOne(workspaceId: string) {
         const treemap = await Treemap.initialize(workspaceId);
-        const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
+
         const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
-        const dataCollectionId = dataCollection?._id;
-        const rows = await Row.find({ dataCollection: dataCollectionId, isEmpty: false }).sort({ position: 1 });
+        const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: 1 });
 
         for (const device of treemap.devices) {
+
             const collector: ISwiftSensorCollector = treemap.data[device.parent];
             const sensor: ISwiftSensorSensor = treemap.data[device.children[0]]
-            console.log({ collector, device, sensor });
+            console.log(sensor.thresholdId)
+            const thresholdInstance = await Threshold.initialize(workspaceId, sensor.thresholdId as number);
+            const threshold = thresholdInstance?.getData()
+            console.log({ collector, device, sensor, threshold });
 
             const fullDevice = new Device({
                 name: device.name,
@@ -28,7 +32,11 @@ class SwiftSensorsIntegration {
                 temperature: sensor.profileName === 'Temperature' ? sensor.value : null,
                 status: sensor.profileName === 'Door' ? sensor.value : null,
                 value: sensor.profileName === "Electric Potential (DC)" ? sensor.value : null,
-                deviceId: sensor.parent
+                deviceId: sensor.parent,
+                min_critical: threshold !== undefined ? threshold.minCritical : null,
+                min_warning: threshold !== undefined ? threshold.minWarning : null,
+                max_warning: threshold !== undefined ? threshold.maxWarning : null,
+                max_critical: threshold !== undefined ? threshold.maxCritical : null
             });
 
             const values = {
@@ -41,14 +49,18 @@ class SwiftSensorsIntegration {
                 temperature: fullDevice.getTemperature(),
                 status: fullDevice.getStatus(),
                 value: fullDevice.getValue(),
-                deviceId: fullDevice.getDeviceId()
+                deviceId: fullDevice.getDeviceId(),
+                min_critical: fullDevice.getMinCritical(),
+                min_warning: fullDevice.getMinWarning(),
+                max_warning: fullDevice.getMaxWarning(),
+                max_critical: fullDevice.getMaxCritical()
             }
 
             console.log({ values });
 
             for (const row of rows) {
                 if (row.values.deviceId === fullDevice.getDeviceId()) {
-                    console.log({ values })
+                    // console.log({ values })
                     const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
 
                     console.log({ updatedRow });

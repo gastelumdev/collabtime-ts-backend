@@ -118,8 +118,6 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
-
-
 // cron.schedule("0 * * * * *", async () => {
 //   // const workspaceId = "673b87f6299c04ead15cc3b0";
 //   // await updateSwiftSensorValues(workspaceId);
@@ -161,10 +159,10 @@ if (process.env.APP_ENVIRONMENT === "production") {
     io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
   });
 
-  cron.schedule("30 0 23 * * *", () => {
-    const swiftSensorAuth = new SwiftSensorsAPIAuth();
-    swiftSensorAuth.refreshAll();
-  })
+  // cron.schedule("30 0 23 * * *", () => {
+  //   const swiftSensorAuth = new SwiftSensorsAPIAuth();
+  //   swiftSensorAuth.refreshAll();
+  // })
 
   cron.schedule("0 0 23 * * *", () => {
     // setReminders()

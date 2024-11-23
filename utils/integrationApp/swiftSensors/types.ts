@@ -47,3 +47,20 @@ interface ISwiftSensorSensor {
     shiftScheduleId?: number;       // Optional: not sent if null
     parent: string;
 }
+
+interface ISwiftSensorDeviceForDB {
+    name: string;
+    collector_id: string;
+    collector_ip: string;
+    battery_level: number;
+    signal_strength: number;
+    type: string;
+    temperature?: number | null;
+    status?: number | null;
+    value?: number | null;
+    deviceId: string;
+    min_critical?: number | null,
+    min_warning?: number | null,
+    max_warning?: number | null,
+    max_critical?: number | null
+}

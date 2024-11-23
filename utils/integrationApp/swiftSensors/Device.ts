@@ -1,15 +1,5 @@
-export interface ISwiftSensorDeviceForDB {
-    name: string;
-    collector_id: string;
-    collector_ip: string;
-    battery_level: number;
-    signal_strength: number;
-    type: string;
-    temperature?: number | null;
-    status?: number | null;
-    value?: number | null;
-    deviceId: string;
-}
+// import { ISwiftSensorDeviceForDB } from "./types";
+
 
 class Device {
     #name: string;
@@ -22,6 +12,10 @@ class Device {
     #status: number | null;
     #value: number | null;
     #deviceId: string;
+    #min_critical: number | null;
+    #min_warning: number | null;
+    #max_critical: number | null;
+    #max_warning: number | null;
 
     constructor(data: ISwiftSensorDeviceForDB) {
         this.#name = data.name;
@@ -34,6 +28,10 @@ class Device {
         this.#status = data.status !== undefined ? data.status : null;
         this.#value = data.value !== undefined ? data.value : null;
         this.#deviceId = data.deviceId;
+        this.#min_critical = data.min_critical !== undefined ? data.min_critical : null;
+        this.#min_warning = data.min_warning !== undefined ? data.min_warning : null;
+        this.#max_critical = data.max_critical !== undefined ? data.max_critical : null;
+        this.#max_warning = data.max_warning !== undefined ? data.max_warning : null;
     }
 
     getName(): string {
@@ -80,6 +78,34 @@ class Device {
 
     getDeviceId(): string {
         return this.#deviceId;
+    }
+
+    getMinWarning(conversion: 'f' | 'c' = 'f'): number | null {
+        if (this.#min_warning && this.#type === "Temperature") {
+            return conversion === 'f' ? ((this.#min_warning * (9 / 5)) + 32) : this.#min_warning;
+        }
+        return this.#min_warning;
+    }
+
+    getMinCritical(conversion: 'f' | 'c' = 'f'): number | null {
+        if (this.#min_critical && this.#type === "Temperature") {
+            return conversion === 'f' ? ((this.#min_critical * (9 / 5)) + 32) : this.#min_critical;
+        }
+        return this.#min_critical;
+    }
+
+    getMaxWarning(conversion: 'f' | 'c' = 'f'): number | null {
+        if (this.#max_warning && this.#type === "Temperature") {
+            return conversion === 'f' ? ((this.#max_warning * (9 / 5)) + 32) : this.#max_warning;
+        }
+        return this.#max_warning;
+    }
+
+    getMaxCritical(conversion: 'f' | 'c' = 'f'): number | null {
+        if (this.#max_critical && this.#type === "Temperature") {
+            return conversion === 'f' ? ((this.#max_critical * (9 / 5)) + 32) : this.#max_critical;
+        }
+        return this.#max_critical;
     }
 }
 
