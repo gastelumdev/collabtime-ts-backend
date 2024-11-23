@@ -21,15 +21,8 @@ import scheduledReminders from './utils/scheduledReminders'
 import Column from './models/column.model';
 import Notification from './models/notification.model';
 import app from './app';
-import { Schema } from 'mongoose';
-import { admin, adminColumns, adminDataCollection, adminView, noAccessColumnPermissions, noAccessDataCollectionPermissions, noAccessPermissions, noAccessViewPermissions, viewOnly, viewOnlyColumns, viewOnlyDataCollection, viewOnlyView } from './utils/defaultGroups';
-import UserGroup from './models/userGroup.model';
-import DataCollectionView from './models/dataCollectionView.model';
-import { autoIncrementProjectNumber, helpersRunner, updateSwiftSensorValues } from './utils/helpers';
+import { helpersRunner } from './utils/helpers';
 import SwiftSensorsAPIAuth from './utils/integrationApp/swiftSensors/Auth';
-import { IWorkspaceSettings } from './services/workspace.service';
-import Treemap from './utils/integrationApp/swiftSensors/Treemap';
-import { workspaceIds } from './env';
 import SwiftSensorsIntegration from './utils/integrationApp/swiftSensors/SwiftSensorsIntegration';
 
 
