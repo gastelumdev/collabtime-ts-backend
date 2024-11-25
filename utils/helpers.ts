@@ -12,6 +12,8 @@ import UserWorkspace from "../models/userWorkspace.model";
 import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../services/workspace.service";
 import axios from "axios";
 import SwiftSensorsIntegration from "./integrationApp/swiftSensors/SwiftSensorsIntegration";
+import SwiftSensorsAPIAuth from "./integrationApp/swiftSensors/Auth";
+import { settings, workspaceIds } from "../env";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
@@ -23,7 +25,6 @@ export const convertRowCells = async () => {
         for (let i = 0; i < rows.length; i++) {
             const row: any = await Row.findOne({ _id: rows[i]._id });
             row.position = i + 1;
-            console.log(row.position);
             row.save()
         }
     }
@@ -40,10 +41,8 @@ export const addValues = async () => {
             const values: any = {};
             for (const column of columns) {
                 const cell: any = await Cell.findOne({ dataCollection: dataCollection._id, name: column.name, row: row._id });
-                // console.log(cell);
                 if (cell && cell.value) {
                     const value = cell.value === undefined ? "" : cell.value;
-                    console.log(dataCollection._id, column.name, value)
                     values[column.name] = value;
                 } else {
                     values[column.name] = "";
@@ -75,11 +74,8 @@ export const fullfillMissingRows = async () => {
             values[column.name] = "";
         }
 
-        console.log(values)
-
         if (length < 50) {
             const numberOfMissingRows = 50 - 0;
-            console.log({ numberOfMissingRows })
 
             for (let i = length + 1; i <= 50; i++) {
                 const row = new Row({
@@ -88,7 +84,6 @@ export const fullfillMissingRows = async () => {
                     position: i,
                 })
                 row.save();
-                console.log(row)
             }
         }
     }
@@ -109,12 +104,10 @@ const convertAssignedTo = async () => {
                 assignedToArr.push({ name: splitValue[0], email: splitValue[1] });
             }
         }
-        if (assignedToArr.length > 0) console.log(assignedToArr);
 
         row.values = { ...row.values, assigned_to: assignedToArr };
 
         const updatedRow = await Row.findByIdAndUpdate(row._id, { values: row.values }, { new: true });
-        console.log((updatedRow as any).values);
     }
 
 };
@@ -126,7 +119,6 @@ const checkForEmptyRows = async () => {
 
     for (const row of rows) {
         let isEmpty = true;
-        console.log({ values: row.values })
         for (const key in row.values) {
             const value = row.values[key]
             if (typeof value === "string") {
@@ -139,9 +131,7 @@ const checkForEmptyRows = async () => {
                 }
             }
         }
-        console.log(isEmpty)
         const updatedRow = await Row.findByIdAndUpdate(row._id, { isEmpty }, { new: true });
-        console.log(updatedRow?.isEmpty)
     }
 }
 
@@ -149,8 +139,6 @@ const checkForEmptyRows = async () => {
 
 const createUserGroups = async () => {
     const workspaces = await Workspace.find({});
-
-    // console.log(workspaces)
 
     const adminPermissions = admin;
     const viewOnlyPermissions = viewOnly;
@@ -199,8 +187,6 @@ const createUserGroups = async () => {
             })
         }
 
-        // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
-
         const views = await DataCollectionView.find({ workspace: workspace._id });
 
         for (const view of views) {
@@ -236,9 +222,6 @@ const createUserGroups = async () => {
             permissions: { ...adminPermissions, dataCollections: adminDataCollectionPermissionsResult, views: adminViewPermissionsResult },
             users: users
         })
-
-        // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
-        // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
 
         adminUserGroup.save()
 
@@ -327,10 +310,6 @@ const createUserGroups = async () => {
             })
         }
 
-        // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
-
-        // const views = await DataCollectionView.find({ workspace: workspace._id });
-
         for (const view of views) {
             let noAccessView: any = noAccessViewPermissions;
 
@@ -365,12 +344,7 @@ const createUserGroups = async () => {
             users: []
         })
 
-        // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
-        // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
-
         noAccessUserGroup.save()
-
-        console.log(noAccessUserGroup)
     }
 }
 
@@ -379,7 +353,6 @@ const addPublic = async () => {
 
     for (const dcView of dataCollectionViews) {
         const newDcView = await DataCollectionView.findByIdAndUpdate(dcView._id, { ...dcView.toObject(), public: false });
-        console.log(newDcView)
     }
 }
 
@@ -388,11 +361,9 @@ const addLabelsToUserGroups = async () => {
     const userGroups = await UserGroup.find({});
 
     for (const userGroup of userGroups) {
-        // console.log({ userGroup })
         const newViewsPermissions = []
 
         for (const viewsPermissions of userGroup.permissions.views) {
-            // console.log({ viewsPermissions })
             const newColumnPermissions = []
 
             for (const columnPermissions of viewsPermissions.permissions.columns) {
@@ -402,21 +373,15 @@ const addLabelsToUserGroups = async () => {
                     labelsArray = column.labels.map((item: any) => {
                         return item.title;
                     })
-
-                    // console.log(labelsArray)
                 } else {
                     labelsArray = []
                 }
-
-                // console.log({ ...columnPermissions, permissions: { ...columnPermissions.permissions, labels: labelsArray } })
                 newColumnPermissions.push({ ...columnPermissions, permissions: { ...columnPermissions.permissions, labels: [...labelsArray] } })
             }
 
-            // console.log(util.inspect({ ...viewsPermissions, permissions: { ...viewsPermissions.permissions, columns: newColumnPermissions } }, { showHidden: false, depth: null, colors: true }));
             newViewsPermissions.push({ ...viewsPermissions, permissions: { ...viewsPermissions.permissions, columns: newColumnPermissions } })
         }
         const newUserGroup = { ...userGroup.toObject(), permissions: { ...userGroup.toObject().permissions, views: newViewsPermissions } }
-        console.log(util.inspect(newUserGroup, { showHidden: false, depth: null, colors: true }));
 
         const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup, { new: true })
     }
@@ -449,7 +414,6 @@ export const autoIncrementProjectNumber = async () => {
         const newValues = { ...values, [firstColumn.name]: createPrimaryValues(i, identifier) }
 
         const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row.toObject(), values: newValues }, { new: true });
-        console.log({ ...row, values: newValues })
 
         i++;
     }
@@ -486,7 +450,6 @@ export const setPrimaryColumns = async () => {
         const newColumn = { ...firstColumn?.toObject(), primary: true };
 
         const updatedColumn = await Column.findByIdAndUpdate(newColumn._id, newColumn)
-        console.log(updatedColumn)
     }
 }
 
@@ -495,7 +458,6 @@ const setAllDCsAsMain = async () => {
 
     for (const dc of dataCollections) {
         const updatedDc = await DataCollection.findByIdAndUpdate(dc._id, { ...dc, main: true, belongsToAppModel: false, appModel: null, inParentToDisplay: null })
-        console.log(updatedDc)
     }
 }
 
@@ -504,7 +466,6 @@ const setUserWorkspaces = async () => {
     for (const user of users) {
         const userWorkspaces = user.workspaces;
         for (const userWorkspace of userWorkspaces) {
-            console.log(userWorkspace)
             const userWorkspaceDoc = new UserWorkspace({
                 userId: user._id,
                 workspaceId: userWorkspace.id
@@ -514,221 +475,9 @@ const setUserWorkspaces = async () => {
     }
 }
 
-const addIntegrationSettings = async (workspaceId: string) => {
-
-    const settings: IWorkspaceSettings = {
-        integration: {
-            swiftSensors: {
-                type: "Swift Sensors",
-                apiKey: "ho0cfvh4grq5g4i4lj52krft0o0sq87e",
-                email: "ogastelum@environmentalautomation.com",
-                password: "Queenbee24*!",
-                accessToken: null,
-                expiresIn: null,
-                tokenType: null,
-                refreshToken: null,
-                sessionId: null,
-                accountId: ".2316.",
-                dataCollectionId: "673d2be015a038c6d24b53d4"
-
-            }
-        }
-    }
-
-    const integrationSwiftSensorSettings = settings.integration.swiftSensors;
-    // const treeMapUrl = `https://api.swiftsensors.net/api/client/v1/accounts/${integrationSwiftSensorSettings.accountId}/treemap`;
-    const url = `https://api.swiftsensors.net/api/client/v1/sign-in`;
-
-    const requestData = {
-        email: integrationSwiftSensorSettings.email,
-        password: integrationSwiftSensorSettings.password,
-        language: 'en'
-    }
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': integrationSwiftSensorSettings.apiKey,
-    }
-
-    const signinResponse = await axios.post(url, requestData, { headers });
-    const signinData: { access_token: string; expires_in: number; token_type: string; refresh_token: string; session_id: string; account_id: string } = signinResponse.data;
-
-    settings.integration.swiftSensors.accessToken = signinData.access_token;
-    settings.integration.swiftSensors.expiresIn = signinData.expires_in;
-    settings.integration.swiftSensors.tokenType = signinData.token_type;
-    settings.integration.swiftSensors.refreshToken = signinData.refresh_token;
-    settings.integration.swiftSensors.sessionId = signinData.session_id;
-
-    const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
-}
-
-const swiftSensorDeviceIntegration = async (workspaceId: string) => {
-    const workspace = await Workspace.findOne({ _id: workspaceId });
-    const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
-    const dataCollectionId = dataCollection?._id;
-
-    const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
-
-    console.log(settings)
-
-    const { apiKey, accessToken, accountId, tokenType }: any = settings;
-
-    const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'Authorization': `${tokenType} ${accessToken}`
-    }
-
-    const treemapResponse = await axios.get(url, { headers });
-
-    if (treemapResponse.status === 200) {
-        const treemap = treemapResponse.data.treeMap;
-
-        const account = treemap.a_;
-        const collectorIds = account.children;
-
-        for (const collectorid of collectorIds) {
-            const { name, children, ip } = treemap[collectorid]
-            console.log(`* Collector ${name} has an IP of ${ip}`);
-
-            for (const deviceId of children) {
-                const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
-                console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
-                let profilename, valueResult;
-
-                for (const sensorId of children) {
-                    const { profileName, value } = treemap[sensorId];
-                    let convertedValue = value;
-                    profilename = profileName;
-
-
-                    if (profileName === 'Temperature') {
-                        convertedValue = ((value * (9 / 5)) + 32);
-                    }
-                    if (profileName === "Door") {
-                        convertedValue = value === 0 ? "Open" : "Closed";
-                    }
-                    valueResult = convertedValue;
-                    console.log(`**** ${profileName} has a value of ${convertedValue}`);
-                    console.log("");
-                }
-
-                let values
-
-                if (profilename === 'Temperature') {
-                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
-                } else if (profilename === 'Door') {
-                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
-                } else {
-                    values = { name: name, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
-                }
-
-                console.log({ values })
-
-                const row = await Row.findOne({ dataCollection: dataCollectionId, isEmpty: true }).sort({ position: 1 });
-
-                const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: values, isEmpty: false }, { new: true });
-
-                console.log({ updatedRow })
-            }
-
-            console.log("")
-            console.log("")
-        }
-    }
-
-
-
-}
-
-export const updateSwiftSensorValues = async (workspaceId: string) => {
-    const workspace: IWorkspace | null = await Workspace.findOne({ _id: workspaceId });
-    const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
-    const dataCollectionId = dataCollection?._id;
-
-    const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
-
-    console.log(settings)
-
-    const { apiKey, accessToken, accountId, tokenType }: any = settings;
-
-    const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'Authorization': `${tokenType} ${accessToken}`
-    }
-
-    const treemapResponse = await axios.get(url, { headers });
-
-    const treemap = treemapResponse.data.treeMap;
-
-    const account = treemap.a_;
-    const collectorIds = account.children;
-
-    for (const collectorid of collectorIds) {
-        const { name, children, ip } = treemap[collectorid]
-        console.log(`* Collector ${name} has an IP of ${ip}`);
-
-        for (const deviceId of children) {
-            const { name, batteryLevel, signalStrength, children } = treemap[deviceId];
-            console.log(`**** ${name} has a battery level of ${batteryLevel} and a signal strength of ${signalStrength}`);
-            let profilename, valueResult;
-
-            for (const sensorId of children) {
-                const { profileName, value } = treemap[sensorId];
-                let convertedValue = value;
-                profilename = profileName;
-
-
-                if (profileName === 'Temperature') {
-                    convertedValue = ((value * (9 / 5)) + 32).toFixed(2);
-                }
-                if (profileName === "Door") {
-                    convertedValue = value === 0 ? "Open" : "Closed";
-                }
-                valueResult = convertedValue;
-                console.log(`**** ${profileName} has a value of ${convertedValue}`);
-                console.log("");
-            }
-
-            let values
-
-            if (profilename === 'Temperature') {
-                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, temperature: valueResult }
-            } else if (profilename === 'Door') {
-                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, status: valueResult }
-            } else {
-                values = { name: name, deviceId, collector_id: collectorid, collector_ip: ip, battery_level: batteryLevel, signal_strength: signalStrength, type: profilename, value: valueResult }
-            }
-
-            // console.log({ values })
-
-            const rows = await Row.find({ dataCollection: dataCollectionId, isEmpty: false }).sort({ position: 1 });
-
-            for (const row of rows) {
-                console.log({ rowDeviceId: row.values.deviceId, deviceId })
-                if (row.values.deviceId === deviceId) {
-                    console.log({ values })
-                    const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
-
-                    console.log({ updatedRow })
-                }
-            }
-
-
-        }
-
-        console.log("")
-        console.log("")
-    }
-
-}
-
 export const helpersRunner = async () => {
+    // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
+    // await swiftSensorsAuth.signin(workspaceIds[0], settings);
     // const integration = new SwiftSensorsIntegration();
     // await integration.syncAll()
 }

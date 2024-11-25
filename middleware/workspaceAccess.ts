@@ -2,12 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import Workspace from "../models/workspace.model";
 
 const verifyWorkspace = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("VERIFY WORKSPACE", (<any>req).params.id)
     try {
         const user = (<any>req).user;
-        const workspace = await Workspace.findOne({_id: (<any>req).params.id});
-
-        console.log("VERIFY WORKSPACE", workspace)
+        const workspace = await Workspace.findOne({ _id: (<any>req).params.id });
 
         let allowAccess = false;
 
@@ -20,8 +17,7 @@ const verifyWorkspace = async (req: Request, res: Response, next: NextFunction) 
         if (allowAccess) next()
         else throw new Error("Cannot access workspace")
     } catch (error) {
-        console.log("ERROR", error)
-        res.status(400).send({success: false})
+        res.status(400).send({ success: false })
     }
 }
 

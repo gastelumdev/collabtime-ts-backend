@@ -43,20 +43,17 @@ const setReminders = async () => {
 
 
             if (tasks.length > 0) {
-                console.log("NAME", user.firstname)
-                console.log("TASKS", tasks)
 
                 sendEmail({
                     email: user?.email || "",
                     subject: `Collabtime - Here is a friendly reminder of your day ahead.`,
                     payload: { tasks: tasks },
                     template: "./template/dailyReminders.handlebars",
-                }, (res: Response) => console.log("Email sent."));
+                }, (res: Response) => null);
             }
         }
 
     } catch (error) {
-        console.log(error);
     }
 }
 

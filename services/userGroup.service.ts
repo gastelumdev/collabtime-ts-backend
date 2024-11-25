@@ -65,8 +65,6 @@ export const createInitialSetup = async (workspace: IWorkspace & { _id: string }
         })
     }
 
-    // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
-
     const views = await DataCollectionView.find({ workspace: workspace._id });
 
     for (const view of views) {
@@ -102,9 +100,6 @@ export const createInitialSetup = async (workspace: IWorkspace & { _id: string }
         permissions: { ...adminPermissions, dataCollections: adminDataCollectionPermissionsResult, views: adminViewPermissionsResult },
         users: users
     })
-
-    // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
-    // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
 
     adminUserGroup.save()
 
@@ -193,10 +188,6 @@ export const createInitialSetup = async (workspace: IWorkspace & { _id: string }
         })
     }
 
-    // console.log(util.inspect(adminDataCollectionPermissionsResult, { showHidden: false, depth: null, colors: true }))
-
-    // const views = await DataCollectionView.find({ workspace: workspace._id });
-
     for (const view of views) {
         let noAccessView: any = noAccessViewPermissions;
 
@@ -230,12 +221,6 @@ export const createInitialSetup = async (workspace: IWorkspace & { _id: string }
         permissions: { ...noAccessPermissions, dataCollections: noAccessDataCollectionPermissionsResult, views: noAccessViewPermissionsResult },
         users: []
     })
-
-    // console.log(adminDataCollectionPermissionsResult[1].permissions.columns)
-    // console.log(adminUserGroup.permissions.dataCollections[1].permissions.columns)
-
     noAccessUserGroup.save()
-
-    console.log(noAccessUserGroup)
 }
 

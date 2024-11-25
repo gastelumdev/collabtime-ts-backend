@@ -32,7 +32,6 @@ describe("Workspaces models", () => {
         try {
             const req = await request(baseURL).post(`/workspaces/delete/${createdWorkspace._id.toString()}/`).set('Accept', 'application/json').set('Authorization', `JWT ${accessToken}`);
         } catch (err) {
-            console.log(err)
         }
     });
 

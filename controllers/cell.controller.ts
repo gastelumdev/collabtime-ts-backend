@@ -59,8 +59,6 @@ export const updateCell = async (req: Request, res: Response) => {
                 template: "./template/dataCollectionStatusChange.handlebars",
                 res: res
             }, (res: Response) => {
-                console.log("SUCCESSFUL EMAIL");
-                // res.send({success: true})
             })
         }
 
@@ -159,13 +157,10 @@ const notifyUsers = async ({ cell, workspace, dataCollection, recipients, req, r
 
     notification.save();
 
-    console.log(workspace?.members)
-
     for (const member of workspace?.members || []) {
         const workspaceMember = await User.findOne({ email: member.email });
 
         if (workspaceMember?.email !== rowUser?.email) {
-            console.log(workspaceMember?.email, rowUser?._id)
             io.emit(workspaceMember?._id || "", { message, priority: "Low" });
 
             let memberNotification = new Notification({
@@ -191,8 +186,6 @@ const notifyUsers = async ({ cell, workspace, dataCollection, recipients, req, r
             template: "./template/dataCollectionStatusChange.handlebars",
             res: res
         }, (res: Response) => {
-            console.log("SUCCESSFUL EMAIL");
-            // res.send({success: true})
         })
     }
 

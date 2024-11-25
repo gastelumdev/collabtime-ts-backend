@@ -10,11 +10,8 @@ import Row from "../models/row.models";
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
-        console.log("GETTING DATA COLLECTION VIEWS")
         const dataCollectionViews = await DataCollectionView.find({ workspace: req?.params.workspaceId });
         const response: any = [];
-
-        console.log(dataCollectionViews)
 
         for (const dataCollectionView of dataCollectionViews) {
 
@@ -25,8 +22,6 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
                 columns.push(col);
             }
             dataCollectionViewCopy.columns = columns;
-
-            // if (dataCollectionView.public) console.log(dataCollectionView)
 
             if (dataCollectionViewCopy.viewers.includes((<any>req).user._id) || dataCollectionView.public) {
                 response.push(dataCollectionViewCopy);
@@ -54,23 +49,7 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
         const dataCollectionView: any = req.body;
 
-        console.log(dataCollectionView)
-
-        // const dataCollectionContainingSelectableRows = await DataCollection.findOne({ _id: dataCollectionView.rowsOfDataCollection });
-        // const selectableRows = await Row.find({ dataCollection: dataCollectionContainingSelectableRows?._id });
-
-        // for (const row of selectableRows) {
-        //     console.log(row)
-        //     const newDataCollectionView = new DataCollectionView({ ...dataCollectionView, viewers: [], row: row._id })
-
-        //     console.log(newDataCollectionView)
-
-        //     newDataCollectionView.save();
-        // }
-
         const newDataCollectionView = new DataCollectionView({ ...dataCollectionView })
-
-        console.log(newDataCollectionView)
 
         newDataCollectionView.save();
 
@@ -91,9 +70,6 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
             const newUserGroup = { ...userGroup, permissions: { ...userGroup.permissions, views: newViews } }
 
             const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup)
-
-            console.log(util.inspect(newUserGroup))
-            console.log(updatedUserGroup?.permissions.views)
         }
 
 

@@ -6,27 +6,35 @@ import Device from "./Device";
 import Threshold from "./Threshold";
 import Treemap from "./Treemap";
 
+import Logger from "../../logger/Logger";
+
+const logger = new Logger();
+
 class SwiftSensorsIntegration {
     async syncOne(workspaceId: string) {
         const treemap = await Treemap.initialize(workspaceId);
 
+        const workspace = await Workspace.findOne({ _id: workspaceId })
         const dataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
         const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: 1 });
 
-        for (const device of treemap.devices) {
+        if (treemap !== undefined) {
+            for (const device of treemap.devices) {
 
-            const fullDevice = await this.buildDevice(workspaceId, treemap, device);
-            const values = await this.buildDeviceValues(fullDevice);
+                const fullDevice = await this.buildDevice(workspaceId, treemap, device);
+                const values = await this.buildDeviceValues(fullDevice);
 
-            for (const row of rows) {
-                if (row.values.deviceId === fullDevice.getDeviceId()) {
-                    // console.log({ values })
-                    const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
-
-                    console.log({ updatedRow });
+                for (const row of rows) {
+                    if (row.values.deviceId === fullDevice.getDeviceId()) {
+                        const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
+                        logger.info(`${fullDevice.getName()} updated successfully.`);
+                    }
                 }
             }
+        } else {
+            logger.error(`Treemap for workspace ${workspace?.name} was unable to initialize.`)
         }
+
     }
 
     async syncAll() {
@@ -40,10 +48,8 @@ class SwiftSensorsIntegration {
     async buildDevice(workspaceId: string, treemap: Treemap, device: ISwiftSensorDevice) {
         const collector: ISwiftSensorCollector = treemap.data[device.parent];
         const sensor: ISwiftSensorSensor = treemap.data[device.children[0]]
-        console.log(sensor.thresholdId)
         const thresholdInstance = await Threshold.initialize(workspaceId, sensor.thresholdId as number);
         const threshold = thresholdInstance?.getData()
-        console.log({ collector, device, sensor, threshold });
 
         const fullDevice = new Device({
             name: device.name,
@@ -82,8 +88,6 @@ class SwiftSensorsIntegration {
             max_warning: fullDevice.getMaxWarning(),
             max_critical: fullDevice.getMaxCritical()
         }
-
-        console.log({ values });
 
         return values
     }

@@ -206,7 +206,6 @@ export const updateUser = async (req: Request, res: Response) => {
     const user = req.body;
     const newUser = { ...user }
     const updatedUser = await User.findByIdAndUpdate(req.params.id, newUser, { new: true });
-    console.log(updatedUser)
     res.send(newUser);
 }
 

@@ -43,8 +43,6 @@ export const getWorkspaceColumns = async (req: Request, res: Response) => {
 }
 
 export const createColumn = async (req: Request, res: Response) => {
-    console.log({ body: req.body })
-
     try {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const rows = await Row.find({ dataCollection: dataCollection?._id });
@@ -81,35 +79,17 @@ export const createColumn = async (req: Request, res: Response) => {
             const dataCollectionRef = await DataCollection.findOne({ _id: req.body.dataCollectionRef });
             column.dataCollectionRef = dataCollectionRef
         }
-
-        console.log(column)
         column.save()
-
-        // for (const row of rows) {
-        //     row.values = { ...row.values, [column.name]: "" }
-        //     console.log(row.values)
-
-        //     try {
-        //         // cell.save()
-        //         await Row.findByIdAndUpdate({ _id: row._id }, row);
-
-        //     } catch (error) {
-        //         // console.log(error)
-        //         res.status(400).send({ success: false });
-        //     }
-        // }
 
 
         res.send(column);
     } catch (error) {
-        // console.log(error)
         res.status(400).send({ success: false })
     }
 }
 
 export const updateColumn = async (req: Request, res: Response) => {
     try {
-        console.log("UPDATED COLUMN")
         const prevColumn: any = await Column.findById(req.params.id);
         const newColumn: any = req.body;
 
@@ -125,14 +105,12 @@ export const updateColumn = async (req: Request, res: Response) => {
                     delete values[prevColumn.name];
 
                     const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row, values }, { new: true });
-                    console.log(updatedRow);
                 }
             }
         }
 
 
         const updatedColumn = await Column.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        console.log({ updatedColumn })
         res.send(updatedColumn);
     } catch (error) {
         res.status(400).send({ success: false })
@@ -144,7 +122,6 @@ export const deleteColumn = async (req: Request, res: Response) => {
 
 
         const column = await Column.findOne({ name: req?.body.name, dataCollection: req.params.dataCollectionId });
-        console.log({ column });
         const name: any = column?.name;
         const dataCollection = column?.dataCollection;
         const { dataCollectionId } = req.params;
@@ -156,8 +133,6 @@ export const deleteColumn = async (req: Request, res: Response) => {
         const rowsWithValues = rows.filter((row) => {
             return (row.values[name] !== undefined || row.refs[name] !== undefined) && (row.values[name] !== "");
         });
-
-        console.log(rowsWithValues)
 
         for (const row of rowsWithValues) {
             // const rowCopy: any = await Row.findOne({ _id: row._id });
@@ -179,10 +154,6 @@ export const deleteColumn = async (req: Request, res: Response) => {
                 }
             }
             rowCopy.refs = newRefs;
-            console.log({ rowCopyRefs: rowCopy.refs })
-
-
-            // console.log(row.refs)
             await Row.findByIdAndUpdate(row._id, { $set: { values: rowCopy.values, refs: rowCopy.refs } }, { new: true });
 
         }
@@ -194,28 +165,21 @@ export const deleteColumn = async (req: Request, res: Response) => {
             let newColumn = { ...column, position };
 
             const updatedColumn = await Column.findByIdAndUpdate(column._id, { position: newColumn.position });
-            console.log(updatedColumn)
             position = position + 1;
         }
         res.send({ success: true });
     } catch (error) {
-        console.log(error)
         res.status(400).send({ success: false })
     }
 }
 
 export const reorderColumns = async (req: Request, res: Response) => {
-    // const { dataCollectionId } = req.params;
     const columns = req.body;
-    // console.log(columns)
-
-    // const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
 
     try {
         for (let i = 1; i <= columns.length; i++) {
             const newColumn: any = await Column.findOne({ _id: columns[i - 1]._id });
             newColumn.position = i;
-            console.log(newColumn.position)
             await newColumn?.save();
         }
         res.send({ success: true });

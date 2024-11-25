@@ -23,7 +23,6 @@ export const createMessage = async (req: Request, res: Response) => {
         const workspaceMembers = []
 
         for (const member of workspace?.members || []) {
-            console.log(member.email)
             const workspaceMember = await User.findOne({ email: member.email });
             if (workspaceMember?._id.toString() !== user?._id.toString()) workspaceMembers.push(workspaceMember);
         }
@@ -65,25 +64,18 @@ export const getUnreadMessages = async (req: Request, res: Response) => {
             return item.createdBy._id?.toString() !== user?._id.toString();
         });
 
-        console.log("FILTEREDMESSAGES", filteredMessages)
-
         const finalMessages = [];
 
         for (const message of filteredMessages) {
             for (const teamMember of message.read) {
-                console.log(teamMember)
                 if (teamMember._id?.toString() === user?._id.toString()) {
                     finalMessages.push(message);
                 }
             }
         }
 
-        console.log("USERID", user?._id)
-        console.log("FINALMESSAGES", finalMessages)
-
         res.send(finalMessages);
     } catch (error) {
-        console.log(error)
         res.status(400).send({ success: false });
     }
 }
@@ -106,9 +98,7 @@ export const markAsRead = async (req: Request, res: Response) => {
         }
 
         for (const message of newMessages) {
-            console.log("MESSAGE BEFORE", message);
             const newMessage = await Message.findByIdAndUpdate(message._id, message, { new: true });
-            console.log("MESSAGE AFTER", newMessage)
         }
 
     } catch (error) {

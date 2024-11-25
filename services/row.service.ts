@@ -117,13 +117,11 @@ export const updateRefs = async (workspace: IWorkspace & { _id: string } | null,
  * @param {IUser | null} assigner - The user who made the assignment change.
  */
 export const handleAssignedTo = async (workspace: IWorkspace & { _id: string } | null, dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
-    console.log(newRow)
     // If the assigned to, priority, or status change
     if (newRow.values["assigned_to"] && (newRow.values["assigned_to"].length > row?.values["assigned_to"].length)) {
         for (const assignee of newRow.values['assigned_to']) {
             // Get the email out of the assigned_to value and find that user
             const email = assignee.email;
-            console.log(email)
             const user = await User.findOne({ email: email });
             // Emit a message to the frontend to trigger a toast notification and to update the row
             io.emit(user?._id || "", { message: `New Assignment in ${workspace?.name} - ${dataCollection?.name}` });
@@ -139,7 +137,7 @@ export const handleAssignedTo = async (workspace: IWorkspace & { _id: string } |
                 },
                 template: "./template/dataCollectionStatusChange.handlebars",
                 // res,
-            }, (res: Response) => console.log("Email sent."))
+            }, (res: Response) => null)
 
             // sendCriticalRowEmail(req.body);
         }
@@ -201,7 +199,7 @@ export const handleAcknowledgedRow = async (workspace: IWorkspace & { _id: strin
             },
             template: "./template/rowAcknowledgement.handlebars"
         }, () => {
-            console.log("Email sent");
+            ;
         })
     }
 }
@@ -273,7 +271,6 @@ export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _i
 
         // if any of the last row's values are not empty increase the number of values
         for (const key in lastRowValues) {
-            console.log({ values: lastRowValues[key] })
             if (lastRowValues[key] !== '') {
                 numberOfValues++;
             }

@@ -2,6 +2,9 @@ import axios from "axios";
 import DataCollection from "../../../models/dataCollection.model";
 import Workspace from "../../../models/workspace.model";
 import { IIntegrationSettings, IWorkspace } from "../../../services/workspace.service";
+import Logger from "../../logger/Logger";
+
+const logger = new Logger();
 
 class Treemap {
     workspaceId: string;
@@ -50,8 +53,6 @@ class Treemap {
 
         const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
 
-        console.log(settings)
-
         const { apiKey, accessToken, accountId, tokenType }: any = settings;
 
         const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/treemap`;
@@ -62,29 +63,34 @@ class Treemap {
             'Authorization': `${tokenType} ${accessToken}`
         }
 
-        const treemapResponse = await axios.get(url, { headers });
+        try {
+            const treemapResponse = await axios.get(url, { headers });
 
-        if (treemapResponse.status === 200) {
-            const treemap = treemapResponse.data.treeMap;
-            data = treemap;
+            if (treemapResponse.status === 200) {
+                const treemap = treemapResponse.data.treeMap;
+                data = treemap;
 
-            for (const treemapItemId of Object.keys(treemap)) {
-                if (treemapItemId.startsWith('a')) {
-                    account = treemap[treemapItemId]
-                }
-                if (treemapItemId.startsWith('c')) {
-                    collectors.push(treemap[treemapItemId])
-                }
-                if (treemapItemId.startsWith('d')) {
-                    devices.push(treemap[treemapItemId])
-                }
-                if (treemapItemId.startsWith('s')) {
-                    sensors.push(treemap[treemapItemId])
+                for (const treemapItemId of Object.keys(treemap)) {
+                    if (treemapItemId.startsWith('a')) {
+                        account = treemap[treemapItemId]
+                    }
+                    if (treemapItemId.startsWith('c')) {
+                        collectors.push(treemap[treemapItemId])
+                    }
+                    if (treemapItemId.startsWith('d')) {
+                        devices.push(treemap[treemapItemId])
+                    }
+                    if (treemapItemId.startsWith('s')) {
+                        sensors.push(treemap[treemapItemId])
+                    }
                 }
             }
-        }
 
-        return new Treemap(workspaceId, data, account as ISwiftSensorAccount, collectors, devices, sensors);
+            logger.info(`Treemap retrieved successfully.`)
+            return new Treemap(workspaceId, data, account as ISwiftSensorAccount, collectors, devices, sensors);
+        } catch (error) {
+            logger.error(`Unable to get Swift Sensors treemap. Error: ${error}`)
+        }
     }
 }
 

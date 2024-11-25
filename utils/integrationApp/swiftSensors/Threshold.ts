@@ -14,8 +14,6 @@ class Threshold {
 
             const settings: IIntegrationSettings | undefined = workspace?.settings?.integration.swiftSensors;
 
-            console.log(settings)
-
             const { apiKey, accessToken, accountId, tokenType }: any = settings;
             const url = `https://api.swiftsensors.net/api/client/v1/accounts/${accountId}/thresholds/${thresholdId}`;
 

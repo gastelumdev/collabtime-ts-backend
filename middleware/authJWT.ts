@@ -20,12 +20,9 @@ const verifyToken = (req: Request, res: Response, next: NextFunction) => {
                     }
 
                 } catch (error) {
-                    console.log(error);
                     res.status(500).send({ message: error })
                 }
             } catch (error) {
-                // console.log("Error is:", error);
-                console.log("There is an error in authJWT");
                 res.status(401).send({ message: error });
             }
         });

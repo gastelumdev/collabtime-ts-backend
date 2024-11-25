@@ -132,7 +132,6 @@ export const createNewWorkspace = async (newWorkspace: IWorkspace, user: IUser):
 //     let newUser: any = await User.findOne({ _id: user._id });
 //     newUser = { ...newUser.toObject(), workspaces: [...userWorkspaces] };
 //     const updatedUser = await User.findByIdAndUpdate(user?._id, { workspaces: userWorkspaces }, { new: true });
-//     console.log({ updatedUserWorkspaces: updatedUser?.workspaces })
 
 //     return updatedUser;
 // }

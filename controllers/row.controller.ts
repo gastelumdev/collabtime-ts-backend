@@ -19,15 +19,11 @@ export const getRows = async (req: Request, res: Response) => {
 
     try {
         const user = await User.findOne({ _id: (<any>req).user._id });
-        // console.log(user)
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
 
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
-
-        // console.log({ filters: req.query.filters })
-
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
@@ -54,11 +50,6 @@ export const getRows = async (req: Request, res: Response) => {
         } else {
             filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : {};
         }
-        // console.log("Filters and usergroups are set")
-
-        // const filters = req.query.filters !== 'undefined' ? JSON.parse(req.query.filters as string) : appModel && appModel.filters && appModel.filters !== undefined ? JSON.parse(appModel.filters) : {};
-
-        // console.log({ filters })
         let rows;
 
         if (showEmptyRows) {
@@ -67,42 +58,14 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
         }
 
-        // if (dataCollection?.template === 'filtered') {
-        //     rows = rows.filter((item: any) => {
-
-        //     })
-        // }
-
-        console.log(`These filters are for ${dataCollection?.name}`)
-        console.log({ filters })
-
         for (const filter of Object.keys(filters)) {
             const filterVals = filters[filter]
 
-
-
-            console.log(``)
-            console.log(`The values that we are looking to filter using key ${filter} by for the ${dataCollection?.name} view.`)
-            console.log(filterVals)
-            console.log(``)
-
-            console.log(``)
-            console.log(`There are ${rows.length} rows to go through.`)
-            console.log(``)
-
             rows = rows.filter((row: any) => {
                 const refs = row.refs[filter];
-                // console.log({ rowValuesOfFilter: row.values[filter] })
-
-                // console.log({ userGroupAccess: appModel?.userGroupAccess, userGroupName });
                 if (appModel?.userGroupAccess?.includes(userGroupName)) {
                     return true;
                 }
-
-                // console.log(``)
-                // console.log(`The refs for the ${row.values['Todo']} row.`)
-                // console.log(row.refs)
-                // console.log(``)
 
                 let existsInRef = false;
                 const lowerCaseValues = filterVals.map((item: string) => {
@@ -110,9 +73,6 @@ export const getRows = async (req: Request, res: Response) => {
                 })
 
                 if (refs !== undefined && refs.length > 0) {
-                    // console.log("");
-                    // console.log("Is going to go through refs.")
-                    // console.log("")
 
                     for (const ref of refs) {
                         if (lowerCaseValues.includes(ref.values["item_name"].toLowerCase())) {
@@ -122,21 +82,10 @@ export const getRows = async (req: Request, res: Response) => {
 
                     }
                 } else {
-                    // console.log("");
-                    // console.log("It is not going to go through refs.")
-                    // console.log("The type of row values is " + typeof row.values[filter])
-                    // console.log({ lowerCaseValues })
-                    // console.log("")
                     let isMatch = false;
 
                     if (row.values[filter] !== undefined) {
                         if (typeof row.values[filter] !== 'string') {
-                            // console.log("")
-                            // console.log("This is not a string value. Potential people array...")
-                            // console.log(row.values[filter])
-
-                            // console.log("")
-
 
                             for (const person of row.values[filter]) {
                                 if (lowerCaseValues.includes(person.name.toLowerCase())) {
@@ -160,21 +109,12 @@ export const getRows = async (req: Request, res: Response) => {
                     }
 
                 }
-
-                // console.log({ condition: lowerCaseValues.includes(row.values[filter].toLowerCase()) || existsInRef })
-
-
             })
         }
-
-        // console.log("SENDING ROWS")
-        // console.log({ dataCollectionName: dataCollection?.name })
-        // console.log({ rows })
 
         res.send(rows);
 
     } catch (error) {
-        console.log(error)
         res.status(400).send({ success: false });
     }
 }
@@ -259,7 +199,7 @@ const sendCriticalRowEmail = async (row: IRow) => {
                 },
                 template: "./template/dataCollectionStatusChange.handlebars",
                 // res,
-            }, (res: Response) => console.log("Email sent."));
+            }, (res: Response) => null);
 
             io.emit(user?._id || "", {
                 message: `You have been assigned a critical item in ${workspace?.name} - ${dataCollection?.name}.`,
@@ -294,7 +234,6 @@ export const updateRow = async (req: Request, res: Response) => {
         if (dataCollection?.main) {
             if (dataCollection?.inParentToDisplay && !rowIsEmpty(req.body)) {
                 const subDataCollections = await DataCollection.find({ appModel: dataCollection?._id, main: false });
-                // console.log({ dataCollection })
                 if (row?.isEmpty) {
 
                     for (const dc of subDataCollections) {
@@ -305,19 +244,12 @@ export const updateRow = async (req: Request, res: Response) => {
                             isEmpty: false
                         })
                         newRow.save()
-                        // console.log({ newRow })
-
-                        // console.log({ requestBody: req.body, newRow })
                     }
                 } else {
                     for (const dc of subDataCollections) {
                         const existingRow = await Row.findOne({ position: req.body.position, dataCollection: dc._id });
-                        // console.log({ requestBody: req.body, existingRow })
                         const primaryColumn = await Column.findOne({ dataCollection: dc.appModel, primary: true });
-                        // console.log({ primaryColumn })
-                        // const updatedRow = await Row.findByIdAndUpdate(existingRow?._id, { ...existingRow?.toObject(), values: { ...existingRow?.values, [primaryColumn?.name as string]: req.body.values[primaryColumn?.name as any] } });
                         const updatedRow = await Row.findByIdAndUpdate(existingRow?._id, { ...existingRow?.toObject(), values: req.body.values });
-                        // console.log({ updatedRow });
 
                     }
                 }
@@ -346,13 +278,7 @@ export const updateRow = async (req: Request, res: Response) => {
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
-
-        // if (req.body.fromView) {
-        // console.log("This is being updated from a view")
         io.emit("update views", { message: "" });
-        // }
-        // io.emit(workspace?._id, { message: `Update data collection` });
-        // console.log({ blankRows })
         // Send the blank rows for the frontend to have
         res.send(blankRows);
     } catch (error) {
@@ -408,17 +334,12 @@ export const deleteRows = async (req: Request, res: Response) => {
 }
 
 export const getBlankRows = async (req: Request, res: Response) => {
-    // console.log(req.body)
     try {
         const { dataCollectionId, numberOfRowsToCreate } = req.body;
-
-        // console.log({ params: req.params })
 
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
         const totalNumberOfRows = await Row.count({ dataCollection: dataCollectionId });
         const user = await User.findOne({ _id: (<any>req).user._id });
-        // const numberOfRowsToCreate = req.body.numberOfRowsToCreate;
-
 
         const blankRows = await addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
 
@@ -431,15 +352,6 @@ export const getBlankRows = async (req: Request, res: Response) => {
 export const migrateRows = async (req: Request, res: Response) => {
     try {
         const rows = await Row.find({});
-
-        // for (const row of rows) {
-        //     if (row?.notes != "") {
-        //         row.notesList.push({content: row?.notes, owner: "Carlos Torres", createdAt: (new Date()).toISOString(), read: false})
-        //     }
-        //     await Row.findByIdAndUpdate(row._id, row);
-        // }
-
-
 
         for (const row of rows) {
             const dataCollection = await DataCollection.findOne({ _id: row?.dataCollection });
@@ -493,7 +405,7 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
             },
             template: "./template/rowAcknowledgement.handlebars"
         }, () => {
-            console.log("Email sent");
+
         })
 
         if (row) row.acknowledged = true;
@@ -511,7 +423,6 @@ export const acknowledgeRow = async (req: Request, res: Response) => {
 export const reorderRows = async (req: Request, res: Response) => {
     try {
         const { draggedRowPosition, overRowPosition, numberOfItems } = req.body;
-        // console.log({ draggedRowPosition, overRowPosition, numberOfItems })
         const { dataCollectionId } = req.params;
 
         const movedRow = await Row.find({ dataCollection: dataCollectionId, position: draggedRowPosition + 1 });

@@ -54,9 +54,7 @@ export const getWorkspaceById = async (id: string) => {
  *                                   if the update is successful, or null if no workspace is found with the given ID.
  */
 export const getWorkspaceByIdAndUpdate = async (id: string, newWorkspace: IWorkspace) => {
-    console.log({ newWorkspace, id })
     const workspace = await Workspace.findByIdAndUpdate(id, newWorkspace, { new: true });
-    console.log({ workspace })
     return workspace;
 }
 

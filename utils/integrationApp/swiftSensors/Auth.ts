@@ -1,6 +1,9 @@
 import axios from "axios";
 import { IWorkspace, IWorkspaceSettings } from "../../../services/workspace.service";
 import Workspace from "../../../models/workspace.model";
+import Logger from "../../logger/Logger";
+
+const logger = new Logger();
 
 
 
@@ -33,9 +36,12 @@ class SwiftSensorsAPIAuth {
                 settings.integration.swiftSensors.sessionId = signinData.session_id;
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
+                logger.info(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} was successful`)
+            } else {
+                logger.error(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} failed with status code ${signinResponse.status}`)
             }
         } catch (error) {
-            console.log(error)
+            logger.error(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} login failed with ${error}`)
         }
     }
 
@@ -68,10 +74,12 @@ class SwiftSensorsAPIAuth {
                 const newSettings = { ...workspace?.settings, integration: { ...workspace?.settings?.integration, swiftSensors: { ...settings, accessToken: signinData.access_token, expiresIn: signinData.expires_in, tokenType: signinData.token_type, refreshToken: signinData.refresh_token, sessionId: signinData.session_id } } }
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings: newSettings }, { new: true });
-                console.log({ updatedWorkspace })
+                logger.info(`Swift Sensors login for account ${settings?.email} was successful`)
+            } else {
+                logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with status code ${signinResponse.status}`)
             }
         } catch (error) {
-            console.log(error)
+            logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with ${error}`)
         }
     }
 

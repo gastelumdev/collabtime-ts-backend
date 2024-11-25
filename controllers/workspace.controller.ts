@@ -160,7 +160,6 @@ export const updateWorkspace = async (req: Request, res: Response) => {
  * @note This function is not part of automated testing and needs to have automated tests implemented.
  */
 export const deleteWorkspace = async (req: Request, res: Response) => {
-    console.log("Removing workspace from user")
     try {
         const user = (<any>req).user;
         // Get workspace by the id provided in the request and make sure that the owner matches
@@ -219,7 +218,6 @@ export const getUsers = async (req: Request, res: Response) => {
 
 export const inviteTeamMembers = async (req: Request, res: Response) => {
     const workspace = await Workspace.findByIdAndUpdate(req.params.id, req.body);
-    console.log({ invitees: req.body.invitees })
     try {
 
         if (workspace) {
@@ -295,13 +293,10 @@ export const joinWorkspace = async (req: Request, res: Response) => {
         }
 
         try {
-            console.log({ invitees, member, numberOfFilteredInvitees, numberOfInvitees, workspace })
             const userGroup: any = await UserGroup.findOne({ workspace: workspace?._id, name: "View Only" });
             // const newUserGroup = { ...userGroup, users: [...userGroup.users, user?._id] };
 
             const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, { users: [...userGroup.users, user?._id] }, { new: true });
-            console.log({ updatedUserGroup })
-
             const newUserWorkspace = new UserWorkspace({
                 userId: user?._id,
                 workspaceId: workspace?._id,
@@ -352,7 +347,6 @@ export const removeMember = async (req: Request, res: Response) => {
                         return item.email !== user?.email;
                     });
                     const newColumn = { ...column.toJSON(), people: filteredPeople };
-                    console.log("NEW COLUMN *****************************", newColumn);
 
                     await Column.findByIdAndUpdate(column._id, newColumn);
                 }
@@ -376,7 +370,6 @@ export const removeMember = async (req: Request, res: Response) => {
                     })
 
                     const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, { ...userGroup.toObject(), users: [...newUsers] });
-                    console.log({ updatedUserGroup })
                 }
             }
         }
@@ -416,8 +409,6 @@ export const tagExists = async (req: Request, res: Response) => {
     try {
         const tag = req.body;
 
-        console.log(tag)
-
         const workspaces = await Workspace.find({ _id: req.params.workspaceId });
         const dataCollections = await DataCollection.find({ workspace: req.params.workspaceId });
 
@@ -439,7 +430,6 @@ export const tagExists = async (req: Request, res: Response) => {
             }
         }
 
-        console.log("TAGEXISTS", tagExists)
         res.send({ tagExists: tagExists });
     } catch (error) {
         res.status(400).send({ success: false })

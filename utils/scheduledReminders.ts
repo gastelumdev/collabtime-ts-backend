@@ -18,11 +18,7 @@ const checkDates = (reminder: string) => {
     const nowMinutes = Number(nowTime.split(":")[1]);
     const nowSeconds = (((nowHours - 7) * 60) * 60) + (nowMinutes * 60)
 
-    console.log({ reminder, nowDate: now.toISOString() })
-    console.log({ nowSeconds, reminderSeconds })
-
     if (reminderDate === nowDate) {
-        console.log("TODAY IS THE DAY.");
         if (nowSeconds >= reminderSeconds) {
             return true;
         }
@@ -33,23 +29,15 @@ const checkDates = (reminder: string) => {
 }
 
 const scheduleReminders = async () => {
-    console.log("Running Scheduled Reminders")
     try {
         const rows = await Row.find({ reminder: true });
-
-        console.log(rows)
         for (const row of rows) {
             const column = await Column.findOne({ dataCollection: row.dataCollection, position: 1 });
             if (row.reminders.length > 0) {
                 for (const reminder of row.reminders) {
                     const reminderDate = new Date(reminder.date);
                     const now = new Date();
-
-                    console.log(checkDates(reminder.date));
-
-                    console.log({ reminder: reminderDate.getTime(), now: now.getTime() })
                     if (checkDates(reminder.date)) {
-                        console.log("Send email")
                         if (row.values.assigned_to !== undefined) {
                             for (const assignee of row.values.assigned_to) {
                                 const email = assignee.email;
@@ -68,13 +56,9 @@ const scheduleReminders = async () => {
                                         return rem.date !== reminder.date;
                                     });
 
-                                    console.log({ newReminders });
-                                    console.log({ columnName: column?.name })
-
                                     // const newRow = await Row.findByIdAndUpdate(row._id, { $set: { reminders: newReminders } }, { new: true });
                                     const newRow: any = { ...row, reminder: newReminders.length > 0, reminders: newReminders };
                                     const updatedRow = await Row.findByIdAndUpdate(row._id, { reminders: newRow.reminders, reminder: newRow.reminder }, { new: true });
-                                    console.log(updatedRow)
                                 })
                             }
 
@@ -84,7 +68,6 @@ const scheduleReminders = async () => {
             }
         }
     } catch (err) {
-        console.log(err);
     }
 }
 

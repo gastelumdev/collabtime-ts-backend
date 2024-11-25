@@ -24,6 +24,9 @@ import app from './app';
 import { helpersRunner } from './utils/helpers';
 import SwiftSensorsAPIAuth from './utils/integrationApp/swiftSensors/Auth';
 import SwiftSensorsIntegration from './utils/integrationApp/swiftSensors/SwiftSensorsIntegration';
+import Logger from './utils/logger/Logger';
+
+const logger = new Logger()
 
 
 const sh = shell.execSync;
@@ -42,8 +45,6 @@ const corsOptions = {
 
 const persistedDiskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("FILE", file)
-    console.log(process.env.PERSISTED_ASSETS_DIR)
     cb(null, process.env.PERSISTED_ASSETS_DIR || "");
   },
   filename: (req, file, cb) => {
@@ -59,8 +60,6 @@ export const persistedDocUpload = multer({ storage: persistedDiskStorage });
 
 const localDiskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("FILE", file)
-    console.log(process.env.ASSETS_DIR)
     cb(null, process.env.ASSETS_DIR || "");
   },
   filename: (req, file, cb) => {
@@ -80,7 +79,6 @@ export const notesUpload = multer({ storage: storage });
 const setCrititcalReminders = async () => {
 
   const rows = await Row.find({ acknowledged: false, reminder: true });
-  console.log("ROWS", rows)
 
   for (const row of rows) {
     const dataCollection = await DataCollection.findOne({ _id: row.dataCollection })
@@ -91,7 +89,6 @@ const setCrititcalReminders = async () => {
 
     for (const column of columns) {
       if (column.type === "priority" && row.values[column.name] === "Critical") {
-        console.log(row)
         const task = {
           message: `A critical assingment in ${workspace?.name} - ${dataCollection?.name} has not been acknowledged.`,
           dataCollectionName: dataCollection?.name,
@@ -103,7 +100,7 @@ const setCrititcalReminders = async () => {
           subject: `Collabtime - A critical assignment has not been acknowledged.`,
           payload: task,
           template: "./template/genericMessage.handlebars",
-        }, (res: Response) => console.log("Email sent."))
+        }, (res: Response) => null)
       }
     }
   }
@@ -112,7 +109,6 @@ const setCrititcalReminders = async () => {
 const deleteOldNotifications = async () => {
   let today = new Date();
   let priorDate = new Date(new Date().setDate(today.getDate() - 30));
-  console.log(priorDate.toISOString().split("T")[0])
   await Notification.deleteMany({ "createdAt": { $lt: priorDate.toISOString().split("T")[0] } });
 }
 
@@ -129,7 +125,6 @@ if (process.env.APP_ENVIRONMENT === "production") {
   })
 
   cron.schedule("0 * * * * *", () => {
-    console.log("Another minute by")
     scheduledReminders();
   })
 
@@ -145,11 +140,11 @@ if (process.env.APP_ENVIRONMENT === "production") {
     changeRowPositions()
   })
 
-  // cron.schedule("0 * * * * *", async () => {
-  //   const integration = new SwiftSensorsIntegration();
-  //   await integration.syncAll()
-  //   io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-  // });
+  cron.schedule("0 * * * * *", async () => {
+    const integration = new SwiftSensorsIntegration();
+    await integration.syncAll()
+    io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+  });
 
   cron.schedule("30 0 23 * * *", () => {
     const swiftSensorAuth = new SwiftSensorsAPIAuth();
@@ -175,7 +170,6 @@ const changeRowPositions = async () => {
       const newRow = { ...row, position };
 
       const updatedRow = await Row.findByIdAndUpdate(row._id, { position: newRow.position }, { new: true });
-      console.log(updatedRow);
 
       position = position + increment;
     }
@@ -189,14 +183,11 @@ const addDefaultWorkspace = async () => {
   for (const user of users) {
     let newUser = { ...user }
     if (user.workspaces[0] !== undefined) {
-      console.log({ userId: user.workspaces[0].id })
       newUser = { ...newUser, defaultWorkspaceId: user.workspaces[0].id.toString() };
     } else {
       newUser = { ...newUser, defaultWorkspaceId: null }
     }
-    console.log(newUser.defaultWorkspaceId)
     const updatedUser = await User.findByIdAndUpdate(user._id, { defaultWorkspaceId: newUser.defaultWorkspaceId }, { new: true });
-    console.log(updatedUser);
   }
 }
 
@@ -211,11 +202,11 @@ export const io = new Server(server, { cors: { origin: process.env.CORS_URL } })
 
 io.on("connection", (socket: any) => {
   socket.emit("con", { message: "a new client connected" });
-  console.log("Socket.io running");
+  logger.info("Socket.io running");
 })
 
 server.listen(port, () => {
-  console.log("[ws-server]: Server is running on port " + port)
+  logger.info("[ws-server]: Server is running on port " + port)
   if (process.env.APP_ENVIRONMENT === "production") {
     const source = "/var/data/uploads/";
     const destination = "/opt/render/project/src/";

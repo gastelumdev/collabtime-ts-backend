@@ -27,8 +27,6 @@ export const getSearchContent = async (req: Request, res: Response) => {
         const dataCollections = await DataCollection.find({ workspace: workspaceIds });
         const docs = await Document.find({ workspace: workspaceIds })
 
-        console.log(workspaces);
-
         res.send({ workspaces, dataCollections, docs })
     } catch (error) {
         res.send({ success: false })
@@ -56,18 +54,13 @@ export const searchAll = async (req: Request, res: Response) => {
 
         const docs = await Document.find({ $or: [{ filename: key !== "" ? new RegExp(`^${key}`, 'i') : "" }], workspace: workspaceIds });
 
-        console.log(workspaces)
-        console.log("DATA COLLECTIONS", dataCollections)
-
         res.send({ workspaces, dataCollections, docs })
     } catch (error) {
-        console.log(error);
         res.status(400).send({ success: false })
     }
 }
 
 export const searchTags = async (req: Request, res: Response) => {
-    console.log(req.body.tag);
     try {
         const tag = req.body.tag;
         const user = await User.findOne({ _id: (<any>req).user._id });
@@ -86,7 +79,6 @@ export const searchTags = async (req: Request, res: Response) => {
 
             if (workspace) {
                 for (const workspaceTag of workspace.tags) {
-                    console.log(workspaceTag.name)
                     if (tag !== "" && workspaceTag.name.startsWith(tag)) workspaces.push(workspace);
                 }
             }
@@ -115,7 +107,6 @@ export const searchTags = async (req: Request, res: Response) => {
                 let rowsResult: any[] = [];
                 // Shape data
                 for (const row of rowsQuery) {
-                    console.log("ROW", row)
 
                     for (const rowTag of row.tags) {
                         if (tag !== "" && rowTag.name.startsWith(tag)) rows.push(row);
@@ -144,8 +135,6 @@ export const searchTags = async (req: Request, res: Response) => {
             }
 
         }
-
-        console.log(data)
 
         res.send({ workspaces, dataCollections, docs: documents, data });
     } catch (error) {
