@@ -12,6 +12,7 @@ class Device {
     #status: number | null;
     #value: number | null;
     #deviceId: string;
+    #threshold_name: string | null;
     #min_critical: number | null;
     #min_warning: number | null;
     #max_critical: number | null;
@@ -28,6 +29,7 @@ class Device {
         this.#status = data.status !== undefined ? data.status : null;
         this.#value = data.value !== undefined ? data.value : null;
         this.#deviceId = data.deviceId;
+        this.#threshold_name = data.threshold_name;
         this.#min_critical = data.min_critical !== undefined ? data.min_critical : null;
         this.#min_warning = data.min_warning !== undefined ? data.min_warning : null;
         this.#max_critical = data.max_critical !== undefined ? data.max_critical : null;
@@ -66,7 +68,7 @@ class Device {
     }
 
     getStatus(): string | null {
-        if (this.#status) {
+        if (this.#status !== null) {
             return this.#status == 0 ? 'Open' : 'Closed';
         }
         return null;
@@ -78,6 +80,10 @@ class Device {
 
     getDeviceId(): string {
         return this.#deviceId;
+    }
+
+    getThresholdName(): string | null {
+        return this.#threshold_name;
     }
 
     getMinWarning(conversion: 'f' | 'c' = 'f'): number | null {

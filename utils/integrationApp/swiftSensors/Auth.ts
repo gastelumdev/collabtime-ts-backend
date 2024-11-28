@@ -74,7 +74,7 @@ class SwiftSensorsAPIAuth {
                 const newSettings = { ...workspace?.settings, integration: { ...workspace?.settings?.integration, swiftSensors: { ...settings, accessToken: signinData.access_token, expiresIn: signinData.expires_in, tokenType: signinData.token_type, refreshToken: signinData.refresh_token, sessionId: signinData.session_id } } }
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings: newSettings }, { new: true });
-                logger.info(`Swift Sensors login for account ${settings?.email} was successful`)
+                logger.info(`Swift Sensors login with refresh token for account ${settings?.email} was successful`)
             } else {
                 logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with status code ${signinResponse.status}`)
             }

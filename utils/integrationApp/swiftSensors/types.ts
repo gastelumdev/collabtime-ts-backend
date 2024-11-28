@@ -59,8 +59,22 @@ interface ISwiftSensorDeviceForDB {
     status?: number | null;
     value?: number | null;
     deviceId: string;
+    threshold_name: string | null;
     min_critical?: number | null,
     min_warning?: number | null,
     max_warning?: number | null,
     max_critical?: number | null
+}
+
+interface IThreshold {
+    id: number;
+    name: string;
+    description: string;
+    unitTypeId: number;
+    maxCritical?: number;
+    minCritical?: number;
+    maxWarning?: number;
+    minWarning?: number;
+    sensorIds: number[];
+    accountId: string;
 }

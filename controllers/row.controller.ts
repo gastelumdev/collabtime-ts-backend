@@ -14,6 +14,10 @@ import { addBlankRows, checkIfLastRow } from "../utils/rows";
 import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleLastRowUpdate, handleNewNote, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
 import UserGroup from "../models/userGroup.model";
+import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
+import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
+import { fToC } from "../utils/helpers";
+import DataCollectionView from "../models/dataCollectionView.model";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -276,8 +280,67 @@ export const updateRow = async (req: Request, res: Response) => {
         // Sets row to empty/non-empty based on its values
         handleRowEmptiness(req.body);
 
+        if (workspace?.type === "integration" && dataCollection?.name === "Devices") {
+
+            const rowThresholdName = req.body.values.threshold_name;
+            const previousRowThresholdName = row?.values.threshold_name;
+            const treemap = await Treemap.initialize(workspace?._id);
+            const sensorId = Number(treemap?.data[req.body.values.deviceId].children[0].split("_")[1]);
+            const thresholdInstance = await Threshold.initialize(workspace?._id);
+            const thresholds = thresholdInstance?.getData()
+
+            const previousThreshold = thresholds.find((item: IThreshold) => {
+                return item.name === previousRowThresholdName;
+            });
+
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.name === rowThresholdName;
+            });
+
+            if (previousThreshold !== undefined) {
+                const previousSensorIds = previousThreshold.sensorIds;
+                const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
+                    return id !== sensorId;
+                });
+                previousThreshold.sensorIds = newPreviousSensorIds;
+                const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
+            }
+
+            if (threshold !== undefined) {
+                const sensorIds = threshold.sensorIds;
+                const newSensorIds = [...sensorIds, sensorId];
+                threshold.sensorIds = newSensorIds;
+                const newThreshold = await Threshold.update(workspace?._id, threshold);
+            }
+        }
+
+        if (workspace?.type === "integration" && dataCollection?.name === "Thresholds") {
+            const values = req.body.values;
+
+            const thresholdInstance = await Threshold.initialize(workspace._id);
+            const thresholds = thresholdInstance?.getData();
+
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.id == values.id;
+            })
+
+            const newValues = {
+                id: values.id,
+                name: values.name,
+                description: values.description,
+                maxCritical: fToC(Number(values.max_critical)),
+                maxWarning: fToC(Number(values.max_warning)),
+                minCritical: fToC(Number(values.min_critical)),
+                minWarning: fToC(Number(values.min_warning)),
+                unitTypeId: threshold.unitTypeId,
+                sensorIds: threshold.sensorIds,
+                accountId: threshold.accountId
+            }
+            const newThreshold = await Threshold.update(workspace._id, newValues);
+        }
+
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
-        const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
+        const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner)
         io.emit("update views", { message: "" });
         // Send the blank rows for the frontend to have
         res.send(blankRows);

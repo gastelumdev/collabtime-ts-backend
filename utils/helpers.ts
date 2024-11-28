@@ -13,6 +13,8 @@ import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../service
 import axios from "axios";
 import SwiftSensorsIntegration from "./integrationApp/swiftSensors/SwiftSensorsIntegration";
 import SwiftSensorsAPIAuth from "./integrationApp/swiftSensors/Auth";
+import { settings, thresholdDataCollectionIds, workspaceIds } from "../env";
+import Threshold from "./integrationApp/swiftSensors/Threshold";
 // import { settings, workspaceIds } from "../env";
 
 export const convertRowCells = async () => {
@@ -478,6 +480,19 @@ const setUserWorkspaces = async () => {
 export const helpersRunner = async () => {
     // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
     // await swiftSensorsAuth.signin(workspaceIds[0], settings);
+
     // const integration = new SwiftSensorsIntegration();
-    // await integration.syncAll()
+    // await integration.syncAll();
+
+    // const thresholdsInstance = await Threshold.initialize(workspaceIds[0]);
+    // const thresholds = thresholdsInstance?.getData()
+    // Threshold.setup(workspaceIds[0], thresholds, false);
+}
+
+export const cToF = (value: number) => {
+    return ((value * (9 / 5)) + 32)
+}
+
+export const fToC = (value: number) => {
+    return ((value - 32) * (5 / 9));
 }

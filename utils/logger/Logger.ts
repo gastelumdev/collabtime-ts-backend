@@ -26,12 +26,12 @@ class Logger {
     }
 
     info(message: string) {
-        this.fileLogger.info(message);
+        // this.fileLogger.info(message);
         this.consoleLogger.info(message);
     }
 
     error(message: string) {
-        this.fileLogger.error(message);
+        // this.fileLogger.error(message);
         this.consoleLogger.error(message);
     }
 }
