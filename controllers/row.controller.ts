@@ -18,6 +18,7 @@ import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
 import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
 import { fToC } from "../utils/helpers";
 import DataCollectionView from "../models/dataCollectionView.model";
+import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftSensorsIntegration";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -280,63 +281,69 @@ export const updateRow = async (req: Request, res: Response) => {
         // Sets row to empty/non-empty based on its values
         handleRowEmptiness(req.body);
 
-        if (workspace?.type === "integration" && dataCollection?.name === "Devices") {
+        if (workspace?.type === "integration") {
 
-            const rowThresholdName = req.body.values.threshold_name;
-            const previousRowThresholdName = row?.values.threshold_name;
-            const treemap = await Treemap.initialize(workspace?._id);
-            const sensorId = Number(treemap?.data[req.body.values.deviceId].children[0].split("_")[1]);
-            const thresholdInstance = await Threshold.initialize(workspace?._id);
-            const thresholds = thresholdInstance?.getData()
+            if (dataCollection?.name === "Devices") {
+                const rowThresholdName = req.body.values.threshold_name;
+                const previousRowThresholdName = row?.values.threshold_name;
+                const treemap = await Treemap.initialize(workspace?._id);
+                const sensorId = Number(treemap?.data[req.body.values.deviceId].children[0].split("_")[1]);
+                const thresholdInstance = await Threshold.initialize(workspace?._id);
+                const thresholds = thresholdInstance?.getData()
 
-            const previousThreshold = thresholds.find((item: IThreshold) => {
-                return item.name === previousRowThresholdName;
-            });
-
-            const threshold = thresholds.find((item: IThreshold) => {
-                return item.name === rowThresholdName;
-            });
-
-            if (previousThreshold !== undefined) {
-                const previousSensorIds = previousThreshold.sensorIds;
-                const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
-                    return id !== sensorId;
+                const previousThreshold = thresholds.find((item: IThreshold) => {
+                    return item.name === previousRowThresholdName;
                 });
-                previousThreshold.sensorIds = newPreviousSensorIds;
-                const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
+
+                const threshold = thresholds.find((item: IThreshold) => {
+                    return item.name === rowThresholdName;
+                });
+
+                if (previousThreshold !== undefined) {
+                    const previousSensorIds = previousThreshold.sensorIds;
+                    const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
+                        return id !== sensorId;
+                    });
+                    previousThreshold.sensorIds = newPreviousSensorIds;
+                    const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
+                }
+
+                if (threshold !== undefined) {
+                    const sensorIds = threshold.sensorIds;
+                    const newSensorIds = [...sensorIds, sensorId];
+                    threshold.sensorIds = newSensorIds;
+                    const newThreshold = await Threshold.update(workspace?._id, threshold);
+                }
             }
 
-            if (threshold !== undefined) {
-                const sensorIds = threshold.sensorIds;
-                const newSensorIds = [...sensorIds, sensorId];
-                threshold.sensorIds = newSensorIds;
-                const newThreshold = await Threshold.update(workspace?._id, threshold);
+            if (dataCollection?.name === "Thresholds") {
+                const values = req.body.values;
+
+                const thresholdInstance = await Threshold.initialize(workspace._id);
+                const thresholds = thresholdInstance?.getData();
+
+                const threshold = thresholds.find((item: IThreshold) => {
+                    return item.id == values.id;
+                })
+
+                const newValues = {
+                    id: values.id,
+                    name: values.name,
+                    description: values.description,
+                    maxCritical: fToC(Number(values.max_critical)),
+                    maxWarning: fToC(Number(values.max_warning)),
+                    minCritical: fToC(Number(values.min_critical)),
+                    minWarning: fToC(Number(values.min_warning)),
+                    unitTypeId: threshold.unitTypeId,
+                    sensorIds: threshold.sensorIds,
+                    accountId: threshold.accountId
+                }
+                const newThreshold = await Threshold.update(workspace._id, newValues);
             }
-        }
 
-        if (workspace?.type === "integration" && dataCollection?.name === "Thresholds") {
-            const values = req.body.values;
-
-            const thresholdInstance = await Threshold.initialize(workspace._id);
-            const thresholds = thresholdInstance?.getData();
-
-            const threshold = thresholds.find((item: IThreshold) => {
-                return item.id == values.id;
-            })
-
-            const newValues = {
-                id: values.id,
-                name: values.name,
-                description: values.description,
-                maxCritical: fToC(Number(values.max_critical)),
-                maxWarning: fToC(Number(values.max_warning)),
-                minCritical: fToC(Number(values.min_critical)),
-                minWarning: fToC(Number(values.min_warning)),
-                unitTypeId: threshold.unitTypeId,
-                sensorIds: threshold.sensorIds,
-                accountId: threshold.accountId
-            }
-            const newThreshold = await Threshold.update(workspace._id, newValues);
+            const integration = new SwiftSensorsIntegration();
+            await integration.syncAll()
+            io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
         }
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
