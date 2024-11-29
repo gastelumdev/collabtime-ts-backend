@@ -1,5 +1,5 @@
 import axios from "axios";
-import { IWorkspace, IWorkspaceSettings } from "../../../services/workspace.service";
+import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../../../services/workspace.service";
 import Workspace from "../../../models/workspace.model";
 import Logger from "../../logger/Logger";
 
@@ -80,6 +80,10 @@ class SwiftSensorsAPIAuth {
             }
         } catch (error) {
             logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with ${error}`)
+
+
+            const workspace = await Workspace.findOne({ _id: workspaceId });
+            await this.signin(workspace?._id, workspace?.settings as IWorkspaceSettings);
         }
     }
 
