@@ -14,7 +14,6 @@ import axios from "axios";
 import SwiftSensorsIntegration from "./integrationApp/swiftSensors/SwiftSensorsIntegration";
 import SwiftSensorsAPIAuth from "./integrationApp/swiftSensors/Auth";
 import Threshold from "./integrationApp/swiftSensors/Threshold";
-import { settings, workspaceIds } from "../env";
 
 export const convertRowCells = async () => {
     const dataCollections = await DataCollection.find({ _id: "65c3c566290dd890c63ef4c9" });
