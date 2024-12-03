@@ -67,6 +67,7 @@ export type TCell = {
 export type TLabel = {
     title: string;
     color: string;
+    default?: boolean;
 };
 
 export type TTableData = any;

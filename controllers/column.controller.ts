@@ -6,6 +6,7 @@ import Cell from "../models/cell.models";
 import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
 import { io } from "../index";
+import { TLabel } from "../types";
 
 export const getColumns = async (req: Request, res: Response) => {
 
@@ -49,8 +50,6 @@ export const createColumn = async (req: Request, res: Response) => {
         const columns = await Column.find({ dataCollection: dataCollection?._id });
         const columnsLength = columns.length;
 
-
-
         for (const column of columns) {
             if (column.name == req.body.name) {
                 io.emit("update", { message: "Column already exists." })
@@ -69,21 +68,36 @@ export const createColumn = async (req: Request, res: Response) => {
 
         const column = new Column({ ...(req.body), dataCollection: dataCollection?._id, people: people });
         column.position = columnsLength + 1
-        let value
+        let value = null;
 
         if (column.type === "text") value = ""
-        if (column.type === "label" || column.type === "priority") value = (column.labels || [])[0].title;
+        if (column.type === "label" || column.type === "priority" || column.type === 'status') {
+            const label: any = column.labels?.find((item: TLabel) => {
+                return item.default;
+            });
+            value = label.title;
+        }
         if (column.type === "people") value = "Select person";
         if (column.type === "date") value = (new Date()).toISOString();
         if (column.type === "reference") {
             const dataCollectionRef = await DataCollection.findOne({ _id: req.body.dataCollectionRef });
             column.dataCollectionRef = dataCollectionRef
         }
+
+        console.log({ value })
+
+        for (const row of rows) {
+            const values = { ...row.values, [column.name]: value };
+            const updatedRow = await Row.findByIdAndUpdate(row._id, { values: values }, { new: true });
+            console.log({ updatedRow })
+        }
+
         column.save()
 
 
         res.send(column);
     } catch (error) {
+        console.log({ error })
         res.status(400).send({ success: false })
     }
 }

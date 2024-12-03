@@ -29,9 +29,6 @@ export const getRows = async (req: Request, res: Response) => {
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
         const archived = req.query.archived === 'undefined' ? false : Boolean(req.query.archived);
 
-        // console.log(req.query.archived === undefined)
-        console.log({ archived, archivedValueFromReq: req.query.archived, comparison: req.query.archived === undefined })
-
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
