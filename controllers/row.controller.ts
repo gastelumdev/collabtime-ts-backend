@@ -27,6 +27,10 @@ export const getRows = async (req: Request, res: Response) => {
         const sort = Number(req.query.sort) === 1 || req.query.sort === undefined ? 1 : -1;
         const skip = req.query.skip === undefined ? 0 : Number(req.query.skip);
         const limit = req.query.limit === undefined ? 0 : Number(req.query.limit);
+        const archived = req.query.archived === 'undefined' ? false : Boolean(req.query.archived);
+
+        // console.log(req.query.archived === undefined)
+        console.log({ archived, archivedValueFromReq: req.query.archived, comparison: req.query.archived === undefined })
 
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
 
@@ -58,9 +62,9 @@ export const getRows = async (req: Request, res: Response) => {
         let rows;
 
         if (showEmptyRows) {
-            rows = await Row.find({ dataCollection: dataCollection?._id }).sort({ position: sort }).skip(skip).limit(limit);
+            rows = await Row.find({ dataCollection: dataCollection?._id, archived: archived }).sort({ position: sort }).skip(skip).limit(limit);
         } else {
-            rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false }).sort({ position: sort }).skip(skip).limit(limit);
+            rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false, archived: archived }).sort({ position: sort }).skip(skip).limit(limit);
         }
 
         for (const filter of Object.keys(filters)) {

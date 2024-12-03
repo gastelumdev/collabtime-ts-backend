@@ -47,6 +47,7 @@ export const getWorkspaces = async (req: Request, res: Response) => {
     const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
     try {
         const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
+        console.log({ data })
 
         res.status(200).send(data);
     } catch (err) {

@@ -51,6 +51,7 @@ export interface IRow {
     parentRowId: Schema.Types.ObjectId | string | null;
     isVisible: boolean;
     isEmpty: boolean;
+    archived: boolean;
 }
 
 export interface IRowDocument extends IRow, Document { }

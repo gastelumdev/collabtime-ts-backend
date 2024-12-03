@@ -23,6 +23,7 @@ const rowSchema: Schema<IRowDocument> = new Schema({
     showSubrows: { type: Boolean, default: true },
     isVisible: { type: Boolean, default: true },
     isEmpty: { type: Boolean, default: true },
+    archived: { type: Boolean, default: false }
 }, {
     timestamps: true
 });

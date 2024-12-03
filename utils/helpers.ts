@@ -475,6 +475,23 @@ const setUserWorkspaces = async () => {
     }
 }
 
+export const cToF = (value: number) => {
+    return ((value * (9 / 5)) + 32)
+}
+
+export const fToC = (value: number) => {
+    return ((value - 32) * (5 / 9));
+}
+
+const setRowsToArchived = async () => {
+    const rows = await Row.find({});
+
+    for (const row of rows) {
+        const updatedRow = await Row.findByIdAndUpdate(row?._id, { archived: false }, { new: true });
+        console.log({ updatedRow });
+    }
+}
+
 export const helpersRunner = async () => {
     // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
     // await swiftSensorsAuth.signin(workspaceIds[0], settings);
@@ -485,12 +502,7 @@ export const helpersRunner = async () => {
     // const thresholdsInstance = await Threshold.initialize(workspaceIds[0]);
     // const thresholds = thresholdsInstance?.getData()
     // Threshold.setup(workspaceIds[0], thresholds, false);
+
+    // setRowsToArchived()
 }
 
-export const cToF = (value: number) => {
-    return ((value * (9 / 5)) + 32)
-}
-
-export const fToC = (value: number) => {
-    return ((value - 32) * (5 / 9));
-}
