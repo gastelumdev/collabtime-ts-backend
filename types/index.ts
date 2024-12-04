@@ -68,6 +68,7 @@ export type TLabel = {
     title: string;
     color: string;
     default?: boolean;
+    users?: string[];
 };
 
 export type TTableData = any;

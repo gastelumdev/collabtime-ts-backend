@@ -13,6 +13,10 @@ import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { IUser } from "./auth.service";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
+import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
+import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
+import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftSensorsIntegration";
+import { fToC } from "../utils/helpers";
 
 export interface INote {
     content: string;
@@ -311,4 +315,117 @@ export const rowIsEmpty = (row: IRow & { _id: string }) => {
     }
 
     return isEmpty;
+}
+
+export const handleIntegrations = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+    if (workspace?.type === "integration") {
+
+        if (dataCollection?.name === "Devices") {
+            const rowThresholdName = reqbody.values.threshold_name;
+            const previousRowThresholdName = row?.values.threshold_name;
+            const treemap = await Treemap.initialize(workspace?._id);
+            const sensorId = Number(treemap?.data[reqbody.values.deviceId].children[0].split("_")[1]);
+            const thresholdInstance = await Threshold.initialize(workspace?._id);
+            const thresholds = thresholdInstance?.getData()
+
+            const previousThreshold = thresholds.find((item: IThreshold) => {
+                return item.name === previousRowThresholdName;
+            });
+
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.name === rowThresholdName;
+            });
+
+            if (previousThreshold !== undefined) {
+                const previousSensorIds = previousThreshold.sensorIds;
+                const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
+                    return id !== sensorId;
+                });
+                previousThreshold.sensorIds = newPreviousSensorIds;
+                const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
+            }
+
+            if (threshold !== undefined) {
+                const sensorIds = threshold.sensorIds;
+                const newSensorIds = [...sensorIds, sensorId];
+                threshold.sensorIds = newSensorIds;
+                const newThreshold = await Threshold.update(workspace?._id, threshold);
+            }
+        }
+
+        if (dataCollection?.name === "Thresholds") {
+            const values = reqbody.values;
+
+            const thresholdInstance = await Threshold.initialize(workspace._id);
+            const thresholds = thresholdInstance?.getData();
+
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.id == values.id;
+            })
+
+            const newValues = {
+                id: values.id,
+                name: values.name,
+                description: values.description,
+                maxCritical: fToC(Number(values.max_critical)),
+                maxWarning: fToC(Number(values.max_warning)),
+                minCritical: fToC(Number(values.min_critical)),
+                minWarning: fToC(Number(values.min_warning)),
+                unitTypeId: threshold.unitTypeId,
+                sensorIds: threshold.sensorIds,
+                accountId: threshold.accountId
+            }
+            const newThreshold = await Threshold.update(workspace._id, newValues);
+        }
+
+        const integration = new SwiftSensorsIntegration();
+        await integration.syncAll()
+        io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+    }
+}
+
+export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+    let newValue = null;
+
+    // Handles notifying users based on new value
+    console.log({ previousValues: row?.values.assigned_to, newValues: reqbody.values.assigned_to })
+    for (const key of Object.keys(reqbody.values)) {
+        const value = reqbody.values[key];
+        console.log(typeof value)
+        if (typeof value === 'string') {
+            if (row?.values[key] !== value) {
+                newValue = { key, value };
+            }
+        }
+    }
+
+    if (newValue) {
+        const column = await Column.findOne({ dataCollection: dataCollection?._id, name: newValue?.key });
+        console.log(column)
+        if (column?.labels) {
+            for (const label of column?.labels) {
+                if (label.users) {
+                    if (label.title === newValue.value) {
+                        for (const user of label.users) {
+                            sendEmail({
+                                email: user || "",
+                                subject: `Collabtime Notification - ${workspace?.name}`,
+                                payload: {
+                                    message: `${workspace?.name} - ${dataCollection?.name} \nA value in the ${newValue.key} column has changed to ${newValue.value}`,
+                                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}`,
+                                    dataCollectionName: dataCollection?.name,
+                                    workspaceName: workspace?.name,
+                                },
+                                template: "./template/rowAcknowledgement.handlebars"
+                            }, () => {
+
+                            })
+                        }
+                    }
+
+                }
+            }
+        }
+
+    }
 }

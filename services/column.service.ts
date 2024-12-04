@@ -1,8 +1,10 @@
 import { Document, Schema, Model } from "mongoose";
 
 export type TLabel = {
+    users: string[];
     title: string;
     color: string;
+    default: boolean;
 };
 
 export interface IColumn {
