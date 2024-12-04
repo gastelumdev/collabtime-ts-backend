@@ -388,10 +388,8 @@ export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow
     let newValue = null;
 
     // Handles notifying users based on new value
-    console.log({ previousValues: row?.values.assigned_to, newValues: reqbody.values.assigned_to })
     for (const key of Object.keys(reqbody.values)) {
         const value = reqbody.values[key];
-        console.log(typeof value)
         if (typeof value === 'string') {
             if (row?.values[key] !== value) {
                 newValue = { key, value };
@@ -401,7 +399,6 @@ export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow
 
     if (newValue) {
         const column = await Column.findOne({ dataCollection: dataCollection?._id, name: newValue?.key });
-        console.log(column)
         if (column?.labels) {
             for (const label of column?.labels) {
                 if (label.users) {

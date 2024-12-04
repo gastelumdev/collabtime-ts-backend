@@ -32,7 +32,7 @@ export interface IWorkspace {
     workspaceTags: ITag[];
     tags: ITag[];
     createdAt: Date | null;
-    type: 'basic' | 'integration';
+    type: 'basic' | 'resource planning' | 'integration';
     settings: IWorkspaceSettings | null;
 }
 

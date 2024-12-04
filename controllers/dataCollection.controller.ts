@@ -10,167 +10,10 @@ import User from "../models/auth.model";
 import sendEmail from "../utils/sendEmail";
 import DataCollectionView from "../models/dataCollectionView.model";
 import { createPrimaryValues } from "../utils/helpers";
+import { editDataCollection, IDataCollection, removeDataCollection, setupDataCollection } from "../services/dataCollection.service";
+import { IWorkspace } from "../services/workspace.service";
 
-const getDataCollectionTemplates = (template: string, dataCollectionId: string, people?: TUser[], primaryColumnName?: string, autoIncremented?: boolean, autoIncrementPrefix?: string) => {
-    const itemName = {
-        dataCollection: dataCollectionId,
-        name: primaryColumnName || "item_name",
-        type: "text",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-        autoIncrementPrefix: autoIncrementPrefix,
-        autoIncremented: autoIncremented
-    };
-    const assignedTo = {
-        dataCollection: dataCollectionId,
-        name: "assigned_to",
-        type: "people",
-        permanent: true,
-        people: people,
-        includeInForm: true,
-        includeInExport: true,
-    };
-    const priority = {
-        dataCollection: dataCollectionId,
-        name: "priority",
-        type: "priority",
-        permanent: true,
-        labels: [
-            { title: "Low", color: "#28B542" },
-            { title: "High", color: "#FFA500" },
-            { title: "Critical", color: "#FF0000" },
-        ],
-        includeInForm: true,
-        includeInExport: true,
-    };
-    const status = {
-        dataCollection: dataCollectionId,
-        name: "status",
-        type: "status",
-        permanent: true,
-        labels: [
-            { title: "Ready to start", color: "#121f82" },
-            { title: "Working on it", color: "#146c96" },
-            { title: "Pending review", color: "#FFA500" },
-            { title: "Done", color: "#28B542" },
-        ],
-        includeInForm: true,
-        includeInExport: true,
-    };
-    const plannerStatus = {
-        dataCollection: dataCollectionId,
-        name: "status",
-        type: "label",
-        permanent: true,
-        labels: [
-            { title: "Not started", color: "#ffffff" },
-            { title: "In progress", color: "#146c96" },
-            { title: "Completed", color: "#046906" },
-        ],
-        includeInForm: true,
-        includeInExport: true,
-    };
-    const bucket = {
-        dataCollection: dataCollectionId,
-        name: "bucket",
-        type: "label",
-        permanent: true,
-        labels: [
-            { title: "Initiation Todos", color: "#121f82" },
-            { title: "Engineering and Design", color: "#146c96" },
-            { title: "Ops", color: "#FFA500" },
-            { title: "Job Closeout", color: "#28B542" },
-        ],
-        includeInForm: true,
-        includeInExport: true,
-    };
-    const taskName = {
-        dataCollection: dataCollectionId,
-        name: primaryColumnName || "task",
-        type: "text",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-        autoIncrementPrefix: autoIncrementPrefix,
-        autoIncremented: autoIncremented
-    };
 
-    const startDate = {
-        dataCollection: dataCollectionId,
-        name: "start_date",
-        type: "date",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-    }
-    const date = {
-        dataCollection: dataCollectionId,
-        name: "due_date",
-        type: "date",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-    };
-
-    const todo = {
-        dataCollection: dataCollectionId,
-        name: "todo",
-        type: "text",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-    }
-
-    const item_number = {
-        dataCollection: dataCollectionId,
-        name: "item_number",
-        type: "text",
-        permanent: true,
-        people: [],
-        includeInForm: true,
-        includeInExport: true,
-    }
-
-    if (template === "tasks") {
-        return [
-            itemName,
-            assignedTo,
-            priority,
-            status,
-            date,
-        ];
-    }
-
-    if (template === "planner") {
-        return [
-            todo,
-            bucket,
-            assignedTo,
-            plannerStatus,
-            startDate,
-            date,
-            priority,
-        ]
-    }
-
-    if (template === 'filtered') {
-        return [
-            item_number
-        ]
-    }
-
-    return [
-        itemName
-    ];
-}
-
-const rowAppNames = ['planner', 'filtered']
 
 export const getDataCollections = async (req: Request, res: Response) => {
     const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
@@ -188,82 +31,8 @@ export const createDataCollection = async (req: Request, res: Response) => {
         const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
         const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
 
-        const people: any = [];
+        setupDataCollection(workspace as IWorkspace & { _id: string }, dataCollection);
 
-        for (const member of workspace?.members || []) {
-            let person = await User.findOne({ email: member.email })
-            people.push(person);
-        }
-
-        let initialColumns: any = [];
-        let initialColumnsFromUserTemplate: any = [];
-
-        if (dataCollection.template == "default" || dataCollection.template == "tasks" || dataCollection.template == "planner" || dataCollection.template == 'filtered') {
-            initialColumns = getDataCollectionTemplates(dataCollection.template, dataCollection._id, people, dataCollection.primaryColumnName, dataCollection.autoIncremented, dataCollection.autoIncrementPrefix);
-        } else {
-            const columns = await Column.find({ dataCollection: dataCollection.template });
-            initialColumnsFromUserTemplate = columns;
-        }
-
-        const columnIds = [];
-        const values: any = {};
-
-        let position = 1;
-
-        for (const initialColumn of initialColumns || []) {
-            const column = new Column(initialColumn);
-            column.position = position;
-            column.primary = position === 1 ? true : false;
-            position++;
-            columnIds.push(column._id);
-            column.save();
-            values[column.name] = "";
-        }
-
-        for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
-            const column = new Column({
-                dataCollection: dataCollection._id,
-                name: initialColumnFromUser.name,
-                type: initialColumnFromUser.type,
-                position: initialColumnFromUser.position,
-                permanent: initialColumnFromUser.permanent,
-                people: initialColumnFromUser.people,
-                labels: initialColumnFromUser.labels,
-                dataCollectionRef: initialColumnFromUser.dataCollectionRef,
-                includeInForm: initialColumnFromUser.includeInForm,
-                includeInExport: initialColumnFromUser.includeInExport,
-                autoIncremented: initialColumnFromUser.autoIncremented,
-                autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
-
-            });
-            column.save();
-            values[column.name] = "";
-        }
-
-        dataCollection.columns = columnIds;
-
-        for (let i = 1; i <= 50; i++) {
-            let newRow;
-            if (dataCollection.autoIncremented) {
-                newRow = {
-                    dataCollection: dataCollection._id,
-                    values: { ...values, [dataCollection.primaryColumnName]: createPrimaryValues(i, dataCollection.autoIncrementPrefix) },
-                    position: i * 1024,
-                }
-            } else {
-                newRow = {
-                    dataCollection: dataCollection._id,
-                    values: values,
-                    position: i * 1024,
-                }
-            }
-            const row = new Row(newRow)
-            row.save();
-        }
-
-
-
-        dataCollection.save();
         if (dataCollection.inParentToDisplay !== null) {
             if (['planner'].includes(dataCollection.template)) {
                 const rowsOfParentToDisplay = await Row.find({ dataCollection: dataCollection.inParentToDisplay, isEmpty: false })
@@ -308,6 +77,15 @@ export const createDataCollection = async (req: Request, res: Response) => {
             }
         }
 
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
+
+            for (const workspace of workspaces) {
+                const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
+                setupDataCollection(workspace, dataCollection)
+            }
+        }
+
         res.send(dataCollection);
     } catch (error) {
         res.status(400).send({ success: false });
@@ -316,15 +94,18 @@ export const createDataCollection = async (req: Request, res: Response) => {
 
 export const updateDataCollection = async (req: Request, res: Response) => {
     try {
-        if (req.body.inParentToDisplay) {
-            const dataCollections = await DataCollection.find({ appModel: req.body._id });
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollection = await DataCollection.findOne({ _id: req?.params.id })
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
 
-            for (const dc of dataCollections) {
-                const updatedDc = await DataCollection.findByIdAndUpdate(dc._id, { ...dc.toObject(), name: req.body.name }, { new: true });
+            for (const workspace of workspaces) {
+                const dc = await DataCollection.findOne({ workspace: workspace._id, name: dataCollection?.name });
+                await editDataCollection(workspace, req.body, dc?._id.toString());
             }
         }
-        const dataCollection = await DataCollection.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.send(dataCollection);
+        const result = await editDataCollection(workspace as IWorkspace & { _id: string }, req.body, req?.params.id)
+        res.send(result);
     } catch (error) {
         res.status(400).send({ success: false })
     }
@@ -334,22 +115,22 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
     const dataCollectionId = new mongoose.Types.ObjectId(req?.params.id);
 
     try {
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollection = await DataCollection.findOne({ _id: req?.params.id })
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
 
-        const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
-        if (dataCollection?.inParentToDisplay) {
-            const subDataCollections = await DataCollection.find({ appModel: dataCollection._id });
+            for (const workspace of workspaces) {
+                const dc = await DataCollection.findOne({ workspace: workspace._id, name: dataCollection?.name });
+                if (dc) {
+                    await removeDataCollection(dc?._id);
+                }
 
-            for (const subDataCollection of subDataCollections) {
-                const deletedRows = await Row.deleteMany({ dataCollection: subDataCollection._id });
-                const deletedDC = await DataCollection.findByIdAndDelete({ _id: subDataCollection._id });
             }
         }
 
-        await Cell.deleteMany({ dataCollection: dataCollectionId });
-        await Row.deleteMany({ dataCollection: dataCollectionId });
-        await Column.deleteMany({ dataCollection: dataCollectionId });
-        await DataCollectionView.deleteMany({ dataCollection: dataCollectionId });
-        await DataCollection.findByIdAndDelete({ _id: dataCollectionId });
+        await removeDataCollection(dataCollectionId);
+
         res.send({ success: true });
     } catch (error) {
         res.status(400).send({ success: false });
