@@ -7,6 +7,9 @@ import { admin, adminColumns, adminView, viewOnly, viewOnlyColumns, viewOnlyView
 import util from 'util';
 import DataCollection from "../models/dataCollection.model";
 import Row from "../models/row.models";
+import { addView, editView, IDataCollectionView, removeView } from "../services/dataCollectionView.service";
+import Workspace from "../models/workspace.model";
+import { IColumn } from "../services/column.service";
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
@@ -47,31 +50,27 @@ export const getDataCollectionViewsByRowId = async (req: Request, res: Response)
 
 export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
-        const dataCollectionView: any = req.body;
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollection = await DataCollection.findOne({ _id: req.body.dataCollection });
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
 
-        const newDataCollectionView = new DataCollectionView({ ...dataCollectionView })
+            for (const workspace of workspaces) {
+                const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
+                const columns = await Column.find({ dataCollection: dc?._id }).sort({ position: 1 });
 
-        newDataCollectionView.save();
+                const originalColumnIds = req.body.columns.map((item: IColumn & { _id: string }) => {
+                    return item.name;
+                })
 
-        const userGroups = await UserGroup.find({ dataCollection: dataCollectionView.dataCollection });
+                const filteredColumns = columns.filter((item: IColumn & { _id: string }) => {
+                    return originalColumnIds.includes(item.name);
+                })
 
-        const dataCollectionViewColumns = dataCollectionView.columns;
-
-
-
-        for (const userGroup of userGroups) {
-            const newColumnPermissions = []
-            for (const dataCollectionViewColumn of dataCollectionViewColumns) {
-                newColumnPermissions.push({ column: dataCollectionViewColumn._id, name: dataCollectionViewColumn.name, permissions: userGroup.name === "All Privileges" ? adminColumns : viewOnlyColumns })
+                await addView({ ...req.body, workspace: workspace._id, dataCollection: dc?._id, columns: filteredColumns });
             }
-
-            const newViews = [...userGroup.permissions.views, { name: dataCollectionView?.name, view: newDataCollectionView.toObject()._id, dataCollection: dataCollectionView.dataCollection, permissions: userGroup.name === "All Privileges" ? { ...adminView, columns: newColumnPermissions } : { ...viewOnlyView, columns: newColumnPermissions } }]
-
-            const newUserGroup = { ...userGroup, permissions: { ...userGroup.permissions, views: newViews } }
-
-            const updatedUserGroup = await UserGroup.findByIdAndUpdate(userGroup._id, newUserGroup)
         }
-
+        const newDataCollectionView = await addView(req.body);
 
 
         res.send(newDataCollectionView)
@@ -82,23 +81,58 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
 
 export const updateDataCollectionView = async (req: Request, res: Response) => {
     try {
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollectionView = await DataCollectionView.findOne({ _id: req.body._id })
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionView?.dataCollection });
 
-        const dataCollectionView = req.body;
+        console.log({ workspace, dataCollection, dataCollectionView })
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
 
-        await DataCollectionView.findByIdAndUpdate({ _id: dataCollectionView._id }, { ...dataCollectionView }, { new: true });
+            for (const workspace of workspaces) {
+                const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
+                const view = await DataCollectionView.findOne({ name: dataCollectionView?.name, dataCollection: dc?._id, workspace: workspace?._id })
+
+                const columns = await Column.find({ dataCollection: dc?._id }).sort({ position: 1 });
+
+                const originalColumnIds = req.body.columns.map((item: IColumn & { _id: string }) => {
+                    return item.name;
+                })
+
+                const filteredColumns = columns.filter((item: IColumn & { _id: string }) => {
+                    return originalColumnIds.includes(item.name);
+                })
+
+                await editView({ ...req.body, _id: view?._id, workspace: workspace?._id, dataCollection: dc?._id, columns: filteredColumns });
+            }
+        }
+        await editView(req.body as IDataCollectionView & { _id: string })
 
         res.send({ success: true });
     }
     catch (err) {
+        console.log({ err })
         res.status(400).send({ success: false });
     }
 }
 
 export const deleteDataCollectionView = async (req: Request, res: Response) => {
     try {
-        const dataCollectionViewId = new mongoose.Types.ObjectId(req?.params.dataCollectionViewId);
+        const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
+        const dataCollectionView = await DataCollectionView.findOne({ _id: req.params.dataCollectionViewId })
+        const dataCollection = await DataCollection.findOne({ _id: dataCollectionView?.dataCollection });
 
-        await DataCollectionView.findByIdAndDelete(dataCollectionViewId)
+        if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
+            const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
+
+            for (const workspace of workspaces) {
+                const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
+                const view = await DataCollectionView.findOne({ name: dataCollectionView?.name, dataCollection: dc?._id, workspace: workspace?._id })
+
+                await removeView(view?._id);
+            }
+        }
+        await removeView(req?.params.dataCollectionViewId)
 
         res.send({ success: true });
     } catch (err) {

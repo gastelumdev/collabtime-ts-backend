@@ -76,19 +76,41 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
 }
 
 export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCollectionId: string, columnId: string) => {
-    if (prevColumn.width === newColumn.width && prevColumn.name !== newColumn.name) {
-        const rows = await Row.find({ dataCollection: prevColumn?.dataCollection });
+    const defaultValue = newColumn.labels?.find((item: TLabel) => {
+        return item.default;
+    })?.title;
+    if (prevColumn.name !== newColumn.name) {
+        const rows = await Row.find({ dataCollection: dataCollectionId });
 
         for (const row of rows) {
+
             const values = row.values;
 
-            const value = values[prevColumn.name]
+            let value = values[prevColumn.name];
             if (value !== undefined) {
+
+                if (row.isEmpty && value !== defaultValue) {
+                    value = defaultValue;
+                }
+
                 values[newColumn.name] = value;
                 delete values[prevColumn.name];
 
                 const updatedRow = await Row.findByIdAndUpdate(row._id, { ...row, values }, { new: true });
             }
+        }
+    } else {
+        const rows = await Row.find({ dataCollection: dataCollectionId });
+
+        for (const row of rows) {
+            let value = row.values[prevColumn.name];
+
+            if (row.isEmpty && value !== defaultValue) {
+                value = defaultValue;
+                const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...row.values, [prevColumn.name]: value } }, { new: true });
+            }
+
+
         }
     }
 
