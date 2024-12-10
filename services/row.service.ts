@@ -390,6 +390,12 @@ export const handleIntegrations = async (row: IRow, reqbody: IRow & { _id: strin
         else {
             const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { archived: false }, { new: true });
         }
+
+        if (reqbody.values.proposal_status === 'Approved') {
+            const now = new Date();
+            console.log({ now })
+            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { values: { ...reqbody.values, date_approved: now.toISOString() } })
+        }
     }
 }
 
