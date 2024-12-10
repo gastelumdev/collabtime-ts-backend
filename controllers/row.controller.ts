@@ -90,7 +90,6 @@ export const getRows = async (req: Request, res: Response) => {
                     }
                 } else {
                     let isMatch = false;
-
                     if (row.values[filter] !== undefined) {
                         if (typeof row.values[filter] !== 'string') {
 

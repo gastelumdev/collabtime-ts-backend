@@ -317,7 +317,7 @@ export const rowIsEmpty = (row: IRow & { _id: string }) => {
     return isEmpty;
 }
 
-export const handleIntegrations = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+export const handleIntegrations = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
     if (workspace?.type === "integration") {
 
         if (dataCollection?.name === "Devices") {
@@ -381,6 +381,15 @@ export const handleIntegrations = async (row: IRow, reqbody: IRow, workspace: IW
         const integration = new SwiftSensorsIntegration();
         await integration.syncAll()
         io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+    }
+
+    if (workspace?.type === 'resource planning') {
+        if (reqbody.values.proposal_status === 'Rejected' || reqbody.values.project_status === 'Completed') {
+            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { archived: true }, { new: true });
+        }
+        else {
+            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { archived: false }, { new: true });
+        }
     }
 }
 

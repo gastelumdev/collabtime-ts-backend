@@ -85,7 +85,6 @@ export const updateDataCollectionView = async (req: Request, res: Response) => {
         const dataCollectionView = await DataCollectionView.findOne({ _id: req.body._id })
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionView?.dataCollection });
 
-        console.log({ workspace, dataCollection, dataCollectionView })
         if (workspace?._id.toString() === "675095e5347da06d5cf8180a") {
             const workspaces = await Workspace.find({ type: 'resource planning', _id: { $ne: "675095e5347da06d5cf8180a" } });
 
@@ -111,7 +110,6 @@ export const updateDataCollectionView = async (req: Request, res: Response) => {
         res.send({ success: true });
     }
     catch (err) {
-        console.log({ err })
         res.status(400).send({ success: false });
     }
 }
