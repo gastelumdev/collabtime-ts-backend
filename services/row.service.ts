@@ -392,11 +392,51 @@ export const handleIntegrations = async (row: IRow, reqbody: IRow & { _id: strin
         }
 
         if (reqbody.values.proposal_status === 'Approved') {
+            // process.env.TZ = "America/Los_Angeles";
             const now = new Date();
-            console.log({ now })
-            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { values: { ...reqbody.values, date_approved: now.toISOString() } })
+            const newTime = now.getTime() - (8 * 60 * 60 * 1000);
+            const newDate = new Date(newTime);
+
+            const rows = await Row.find({ dataCollection: row.dataCollection });
+            let jobNumber = '';
+
+            if (reqbody.values.job_type === 'Negotiated') {
+                const negotiatedRows = rows.filter((item: IRow) => {
+                    if (item.values.job_number) {
+                        return item.values.job_number.startsWith('4224');
+                    }
+                    return false;
+
+                });
+
+                if (negotiatedRows.length === 0) {
+                    jobNumber = '4224-001';
+                } else {
+                    const lastRow = negotiatedRows[negotiatedRows.length - 1];
+                    const lastRowJobNumber = lastRow.values.job_number;
+                    const numberToIncrement = lastRowJobNumber.split("-")[1];
+                    jobNumber = createPrimaryValuesForJobNumber(Number(numberToIncrement) + 1, '4224')
+                }
+
+
+            }
+
+            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { values: { ...reqbody.values, date_approved: newDate, job_number: jobNumber } })
         }
     }
+}
+
+export const createPrimaryValuesForJobNumber = (i: number, identifier: string) => {
+    let leadingZeroes = ""
+    if (i >= 100) {
+        leadingZeroes = ""
+    } else if (i >= 10 && i < 100) {
+        leadingZeroes = "0"
+    } else {
+        leadingZeroes = "00"
+    }
+
+    return `${identifier}-${leadingZeroes}${i}`;
 }
 
 export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
