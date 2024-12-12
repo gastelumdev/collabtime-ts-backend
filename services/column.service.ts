@@ -61,7 +61,10 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
     if (column.type === "people") value = [];
     if (column.type === "date") value = (new Date()).toISOString();
     if (column.type === "reference") {
-        const dataCollectionRef = await DataCollection.findOne({ _id: reqbody.dataCollectionRef });
+
+        const dataCollectionForRef = await DataCollection.findOne({ _id: reqbody.dataCollectionRef });
+        const dataCollectionRef = await DataCollection.findOne({ workspace: workspace._id, name: dataCollectionForRef?.name });
+        console.log({ dataCollectionForRef: dataCollectionForRef, dataCollectionRef })
         column.dataCollectionRef = dataCollectionRef
     }
 

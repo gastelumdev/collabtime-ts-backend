@@ -1,6 +1,7 @@
 import Column from "../models/column.model";
 import Row from "../models/row.models";
 import { IRow } from "../services/row.service";
+import { createPrimaryValues } from "./helpers";
 
 export const checkIfLastRow = async (row: any) => {
     const rows = await Row.find({ dataCollection: row.dataCollection }).sort({ position: 1 });
@@ -14,16 +15,38 @@ export const checkIfLastRow = async (row: any) => {
 }
 
 export const addBlankRows = async (dataCollection: any, user: any, count: number, lastRowPosition: number) => {
-    const columns = await Column.find({ dataCollection: dataCollection?._id })
+    const columns = await Column.find({ dataCollection: dataCollection?._id });
+    const rows = await Row.find({ dataCollection: dataCollection._id }).sort({ position: 1 });
+    const lastRow = rows[rows.length - 1];
 
-    // This object will contain all the columns as keys with empty values
-    const emptyRowValues: any = {};
-    for (const column of columns) {
-        emptyRowValues[column.name] = "";
-    }
+    lastRowPosition = lastRow.position;
 
+    let suffixValue = 0;
     const newRows = []
     for (let i = 1; i <= count; i++) {
+
+        // This object will contain all the columns as keys with empty values
+        const emptyRowValues: any = {};
+
+        console.log(i)
+        if (i !== 1) {
+            suffixValue = suffixValue + 1;
+            console.log({ suffixValue })
+        }
+
+        for (const column of columns) {
+            if (suffixValue === 0) {
+                suffixValue = Number(lastRow.values[column.name].split("-")[1]) + 1;
+                console.log({ suffixValue })
+            }
+
+            if (column.autoIncremented) {
+
+                emptyRowValues[column.name] = createPrimaryValues(suffixValue, column.autoIncrementPrefix);
+            }
+        }
+        console.log({ emptyRowValues })
+        console.log({ lastRowPosition })
         lastRowPosition = lastRowPosition + 1024;
         const newRow = new Row({
             dataCollection: dataCollection?._id,

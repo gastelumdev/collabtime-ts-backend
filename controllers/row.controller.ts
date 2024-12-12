@@ -35,6 +35,8 @@ export const getRows = async (req: Request, res: Response) => {
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        console.log({ dataCollectionId: req.params.dataCollectionId })
+        console.log({ dataCollection })
 
         let filters = null;
         let appModel: any = null;
