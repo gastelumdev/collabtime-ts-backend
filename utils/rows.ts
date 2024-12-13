@@ -28,16 +28,13 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
         // This object will contain all the columns as keys with empty values
         const emptyRowValues: any = {};
 
-        console.log(i)
         if (i !== 1) {
             suffixValue = suffixValue + 1;
-            console.log({ suffixValue })
         }
 
         for (const column of columns) {
             if (suffixValue === 0) {
                 suffixValue = Number(lastRow.values[column.name].split("-")[1]) + 1;
-                console.log({ suffixValue })
             }
 
             if (column.autoIncremented) {
@@ -45,8 +42,6 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
                 emptyRowValues[column.name] = createPrimaryValues(suffixValue, column.autoIncrementPrefix);
             }
         }
-        console.log({ emptyRowValues })
-        console.log({ lastRowPosition })
         lastRowPosition = lastRowPosition + 1024;
         const newRow = new Row({
             dataCollection: dataCollection?._id,

@@ -21,19 +21,22 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
             const dataCollectionViewCopy = dataCollectionView;
             const columns: any = []
             for (const column of dataCollectionView.columns) {
+
                 const col = await Column.findById({ _id: column._id })
                 columns.push(col);
             }
             dataCollectionViewCopy.columns = columns;
 
-            if (dataCollectionViewCopy.viewers.includes((<any>req).user._id) || dataCollectionView.public) {
+            if (dataCollectionViewCopy.viewers.includes((<any>req).user._id.toString()) || dataCollectionView.public) {
                 response.push(dataCollectionViewCopy);
             }
+
 
         }
 
         res.send(response);
     } catch (err) {
+        console.log({ err })
         res.status(400).send({ success: false })
     }
 }

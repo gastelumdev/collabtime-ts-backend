@@ -492,6 +492,23 @@ const setRowsToArchived = async () => {
     }
 }
 
+const utility = async () => {
+    const dataCollection = await DataCollection.findOne({ _id: "6750e04db9bb3fb62838500e" });
+    const rows = await Row.find({ dataCollection: '6750e04db9bb3fb62838500e' });
+    const columns = await Column.find({ dataCollection: '6750e04db9bb3fb62838500e' })
+
+    for (const row of rows) {
+        const newValues: any = {};
+
+        for (const column of columns) {
+            newValues[column.name as typeof newValues] = row.values[column.name];
+        }
+
+        console.log({ newValues })
+        const updatedRow = await Row.findByIdAndUpdate({ _id: row._id }, { values: newValues }, { new: true });
+    }
+}
+
 export const helpersRunner = async () => {
     // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
     // await swiftSensorsAuth.signin(workspaceIds[0], settings);
@@ -504,5 +521,7 @@ export const helpersRunner = async () => {
     // Threshold.setup(workspaceIds[0], thresholds, false);
 
     // setRowsToArchived()
+
+    // utility()
 }
 

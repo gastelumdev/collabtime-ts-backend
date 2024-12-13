@@ -417,8 +417,6 @@ export const handleIntegrations = async (row: IRow, reqbody: IRow & { _id: strin
                     const numberToIncrement = lastRowJobNumber.split("-")[1];
                     jobNumber = createPrimaryValuesForJobNumber(Number(numberToIncrement) + 1, '4224')
                 }
-
-
             }
 
             const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { values: { ...reqbody.values, date_approved: newDate, job_number: jobNumber } })

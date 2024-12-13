@@ -59,12 +59,11 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
         value = label.title;
     }
     if (column.type === "people") value = [];
-    if (column.type === "date") value = (new Date()).toISOString();
+    if (column.type === "date") value = "";
     if (column.type === "reference") {
 
         const dataCollectionForRef = await DataCollection.findOne({ _id: reqbody.dataCollectionRef });
         const dataCollectionRef = await DataCollection.findOne({ workspace: workspace._id, name: dataCollectionForRef?.name });
-        console.log({ dataCollectionForRef: dataCollectionForRef, dataCollectionRef })
         column.dataCollectionRef = dataCollectionRef
     }
 
@@ -126,40 +125,37 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
     const column = await Column.findOne({ name: reqbody.name, dataCollection: dataCollectionId });
     const name: any = column?.name;
     const dataCollection = column?.dataCollection;
-
-    await Column.findByIdAndDelete(column?._id);
+    const columns = await Column.find({ dataCollection: dataCollection }).sort({ position: 1 });
 
     const rows = await Row.find({ dataCollection: dataCollectionId });
 
-    const rowsWithValues = rows.filter((row) => {
-        return (row.values[name] !== undefined || row.refs[name] !== undefined) && (row.values[name] !== "");
-    });
-
-    for (const row of rowsWithValues) {
+    for (const row of rows) {
         // const rowCopy: any = await Row.findOne({ _id: row._id });
         const rowCopy: any = row;
         let values = rowCopy.values;
         let refs = rowCopy.refs;
-        delete values[name];
-        rowCopy.values = values;
 
-        let newRefs = {};
+        const newValues: any = {};
+        const newRefs: any = {};
 
-        if (refs !== undefined) {
-            const refsKeys = Object.keys(refs);
+        for (const col of columns) {
+            if (col.name !== column?.name) {
+                if (values[col.name] !== undefined) {
+                    newValues[col.name] = values[col.name];
+                }
 
-            for (const key of refsKeys) {
-                if (key !== column?.name) {
-                    newRefs = { ...newRefs, [column?.name as any]: refs[column?.name as any] };
+                if (refs[col.name] !== undefined) {
+                    newRefs[col.name] = refs[col.name];
                 }
             }
         }
-        rowCopy.refs = newRefs;
-        await Row.findByIdAndUpdate(row._id, { $set: { values: rowCopy.values, refs: rowCopy.refs } }, { new: true });
 
+        console.log({ values: newValues, refs: newRefs })
+
+        const updatedRow = await Row.findByIdAndUpdate(row._id, { values: newValues, refs: newRefs }, { new: true });
     }
 
-    const columns = await Column.find({ dataCollection: dataCollection }).sort({ position: 1 });
+
     let position = 1;
 
     for (const column of columns) {
@@ -168,4 +164,6 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
         const updatedColumn = await Column.findByIdAndUpdate(column._id, { position: newColumn.position });
         position = position + 1;
     }
+
+    await Column.findByIdAndDelete(column?._id);
 }
