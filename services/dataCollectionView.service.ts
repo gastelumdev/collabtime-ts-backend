@@ -37,7 +37,6 @@ export const addView = async (view: IDataCollectionView) => {
 
 export const editView = async (view: IDataCollectionView & { _id: string }) => {
     const dataCollectionView = view;
-
     await DataCollectionView.findByIdAndUpdate(dataCollectionView._id, { ...dataCollectionView }, { new: true });
 }
 

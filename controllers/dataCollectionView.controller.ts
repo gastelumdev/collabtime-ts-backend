@@ -17,13 +17,19 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
         const response: any = [];
 
         for (const dataCollectionView of dataCollectionViews) {
-
             const dataCollectionViewCopy = dataCollectionView;
             const columns: any = []
-            for (const column of dataCollectionView.columns) {
+            for (const viewColumn of dataCollectionView.columns) {
 
-                const col = await Column.findById({ _id: column._id })
-                columns.push(col);
+                const dcColumn = await Column.findById({ _id: viewColumn._id })
+                if (dcColumn) {
+                    if (viewColumn.width !== undefined) {
+                        columns.push({ ...dcColumn?.toObject(), width: viewColumn.width })
+                    } else {
+                        columns.push(dcColumn);
+                    }
+                }
+
             }
             dataCollectionViewCopy.columns = columns;
 
@@ -36,7 +42,6 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
 
         res.send(response);
     } catch (err) {
-        console.log({ err })
         res.status(400).send({ success: false })
     }
 }
