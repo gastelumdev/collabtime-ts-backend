@@ -10,6 +10,7 @@ import Row from "../models/row.models";
 import { addView, editView, IDataCollectionView, removeView } from "../services/dataCollectionView.service";
 import Workspace from "../models/workspace.model";
 import { IColumn } from "../services/column.service";
+import UserColumn from "../models/userColumn.model";
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
@@ -23,11 +24,9 @@ export const getDataCollectionViews = async (req: Request, res: Response) => {
 
                 const dcColumn = await Column.findById({ _id: viewColumn._id })
                 if (dcColumn) {
-                    if (viewColumn.width !== undefined) {
-                        columns.push({ ...dcColumn?.toObject(), width: viewColumn.width })
-                    } else {
-                        columns.push(dcColumn);
-                    }
+                    const userColumn = await UserColumn.findOne({ dataCollectionViewId: dataCollectionView._id, userId: (<any>req).user._id, columnId: viewColumn._id })
+
+                    columns.push({ ...dcColumn?.toObject(), width: userColumn?.width });
                 }
 
             }
@@ -75,10 +74,10 @@ export const createDataCollectionView = async (req: Request, res: Response) => {
                     return originalColumnIds.includes(item.name);
                 })
 
-                await addView({ ...req.body, workspace: workspace._id, dataCollection: dc?._id, columns: filteredColumns });
+                await addView({ ...req.body, workspace: workspace._id, dataCollection: dc?._id, columns: filteredColumns }, (<any>req).user);
             }
         }
-        const newDataCollectionView = await addView(req.body);
+        const newDataCollectionView = await addView(req.body, (<any>req).user);
 
 
         res.send(newDataCollectionView)
@@ -110,10 +109,10 @@ export const updateDataCollectionView = async (req: Request, res: Response) => {
                     return originalColumnIds.includes(item.name);
                 })
 
-                await editView({ ...req.body, _id: view?._id, workspace: workspace?._id, dataCollection: dc?._id, columns: filteredColumns });
+                await editView({ ...req.body, _id: view?._id, workspace: workspace?._id, dataCollection: dc?._id, columns: filteredColumns }, (<any>req).user);
             }
         }
-        await editView(req.body as IDataCollectionView & { _id: string })
+        await editView(req.body as IDataCollectionView & { _id: string }, (<any>req).user)
 
         res.send({ success: true });
     }
@@ -135,10 +134,10 @@ export const deleteDataCollectionView = async (req: Request, res: Response) => {
                 const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
                 const view = await DataCollectionView.findOne({ name: dataCollectionView?.name, dataCollection: dc?._id, workspace: workspace?._id })
 
-                await removeView(view?._id);
+                await removeView(view?._id, (<any>req).user);
             }
         }
-        await removeView(req?.params.dataCollectionViewId)
+        await removeView(req?.params.dataCollectionViewId, (<any>req).user)
 
         res.send({ success: true });
     } catch (err) {
