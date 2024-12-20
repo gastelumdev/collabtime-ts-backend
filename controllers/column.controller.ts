@@ -10,6 +10,7 @@ import { TLabel } from "../types";
 import { editColumn, IColumn, removeColumn, setupColumn } from "../services/column.service";
 import { IWorkspace } from "../services/workspace.service";
 import { IDataCollection } from "../services/dataCollection.service";
+import UserColumn from "../models/userColumn.model";
 
 export const getColumns = async (req: Request, res: Response) => {
 
@@ -18,7 +19,20 @@ export const getColumns = async (req: Request, res: Response) => {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position");
 
-        res.send(columns);
+        const response = [];
+
+        for (const column of columns) {
+            const userColumn = await UserColumn.findOne({ dataCollectionId: dataCollection?._id, columnId: column._id, userId: (<any>req).user });
+
+            if (userColumn) {
+                response.push({ ...column.toObject(), width: userColumn?.width });
+            } else {
+                response.push({ ...column.toObject(), width: "180px" });
+            }
+
+        }
+
+        res.send(response);
     } catch (error) {
         res.status(400).send({ success: false });
     }
@@ -99,11 +113,11 @@ export const updateColumn = async (req: Request, res: Response) => {
                 const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
                 const column = await Column.findOne({ dataCollection: dc?._id, name: prevColumn.name });
 
-                await editColumn(prevColumn, newColumn, dc?._id, column?._id)
+                await editColumn(prevColumn, newColumn, dc?._id, column?._id, (<any>req).user)
             }
         }
 
-        const result = await editColumn(prevColumn, newColumn, newColumn.dataCollection, req.params.id);
+        const result = await editColumn(prevColumn, newColumn, newColumn.dataCollection, req.params.id, (<any>req).user);
         res.send(result);
     } catch (error) {
         res.status(400).send({ success: false })
@@ -121,10 +135,10 @@ export const deleteColumn = async (req: Request, res: Response) => {
                 const dc = await DataCollection.findOne({ workspace: workspace?._id, name: dataCollection?.name });
                 const column = await Column.findOne({ dataCollection: dc?._id, name: req.body.name });
 
-                await removeColumn(column as IColumn & { _id: string }, dc?._id);
+                await removeColumn(column as IColumn & { _id: string }, dc?._id, (<any>req).user);
             }
         }
-        await removeColumn(req.body, req.params.dataCollectionId)
+        await removeColumn(req.body, req.params.dataCollectionId, (<any>req).user)
         res.send({ success: true });
     } catch (error) {
         res.status(400).send({ success: false })

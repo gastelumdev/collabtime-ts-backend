@@ -10,6 +10,8 @@ import User from "../models/auth.model";
 import { createPrimaryValues } from "../utils/helpers";
 import { TDataCollection, TUser } from "../types";
 import DataCollectionView from "../models/dataCollectionView.model";
+import { createUserColumn, deleteUserColumn, updateUserColumn } from "./userColumn.service";
+import { IUser } from "./auth.service";
 
 export type TForm = {
     active: boolean;
@@ -234,7 +236,7 @@ export const removeWorkspaceDataCollections = async (workspace: IWorkspace & { _
     }
 }
 
-export const setupDataCollection = async (workspace: IWorkspace & { _id: string }, dataCollection: any) => {
+export const setupDataCollection = async (workspace: IWorkspace & { _id: string }, dataCollection: any, user: IUser) => {
     const people: any = [];
 
     for (const member of workspace?.members || []) {
@@ -308,10 +310,12 @@ export const setupDataCollection = async (workspace: IWorkspace & { _id: string 
         row.save();
     }
 
+    createUserColumn(user, null, dataCollection)
+
     dataCollection.save();
 }
 
-export const editDataCollection = async (workspace: IWorkspace & { _id: string }, reqbody: IDataCollection & { _id: string }, dataCollectionId: string) => {
+export const editDataCollection = async (workspace: IWorkspace & { _id: string }, reqbody: IDataCollection & { _id: string }, dataCollectionId: string, user: IUser) => {
     if (reqbody.inParentToDisplay) {
         const dataCollections = await DataCollection.find({
             appModel: dataCollectionId
@@ -321,11 +325,14 @@ export const editDataCollection = async (workspace: IWorkspace & { _id: string }
             const updatedDc = await DataCollection.findByIdAndUpdate(dc._id, { ...dc.toObject(), name: reqbody.name }, { new: true });
         }
     }
+
     const dataCollection = await DataCollection.findByIdAndUpdate(dataCollectionId, { ...reqbody, _id: dataCollectionId, workspace: workspace._id }, { new: true });
+
+
     return dataCollection;
 }
 
-export const removeDataCollection = async (dataCollectionId: mongoose.Types.ObjectId) => {
+export const removeDataCollection = async (dataCollectionId: mongoose.Types.ObjectId, user: IUser) => {
     const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
     if (dataCollection?.inParentToDisplay) {
         const subDataCollections = await DataCollection.find({ appModel: dataCollection._id });
@@ -335,6 +342,8 @@ export const removeDataCollection = async (dataCollectionId: mongoose.Types.Obje
             const deletedDC = await DataCollection.findByIdAndDelete({ _id: subDataCollection._id });
         }
     }
+
+    deleteUserColumn(user, null, dataCollection)
 
     await Cell.deleteMany({ dataCollection: dataCollectionId });
     await Row.deleteMany({ dataCollection: dataCollectionId });

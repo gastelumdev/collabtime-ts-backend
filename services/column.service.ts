@@ -6,6 +6,8 @@ import Row from "../models/row.models";
 import { IWorkspace } from "./workspace.service";
 import { IDataCollection } from "./dataCollection.service";
 import { IRow } from "./row.service";
+import { deleteUserColumn, updateUserColumn } from "./userColumn.service";
+import { IUser } from "./auth.service";
 
 export type TLabel = {
     users: string[];
@@ -77,7 +79,7 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
     return column;
 }
 
-export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCollectionId: string, columnId: string) => {
+export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCollectionId: string, columnId: string, user: IUser) => {
     const defaultValue = newColumn.labels?.find((item: TLabel) => {
         return item.default;
     })?.title;
@@ -111,21 +113,20 @@ export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCo
                 value = defaultValue;
                 const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...row.values, [prevColumn.name]: value } }, { new: true });
             }
-
-
         }
     }
 
-
     const updatedColumn = await Column.findByIdAndUpdate(columnId, { ...newColumn, _id: columnId, dataCollection: dataCollectionId }, { new: true });
+
+    const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
+    updateUserColumn(user, null, dataCollection);
     return updatedColumn;
 }
 
-export const removeColumn = async (reqbody: IColumn & { _id: string }, dataCollectionId: string) => {
+export const removeColumn = async (reqbody: IColumn & { _id: string }, dataCollectionId: string, user: IUser) => {
     const column = await Column.findOne({ name: reqbody.name, dataCollection: dataCollectionId });
     const name: any = column?.name;
-    const dataCollection = column?.dataCollection;
-    const columns = await Column.find({ dataCollection: dataCollection }).sort({ position: 1 });
+    const columns = await Column.find({ dataCollection: column?.dataCollection }).sort({ position: 1 });
 
     const rows = await Row.find({ dataCollection: dataCollectionId });
 
@@ -155,7 +156,6 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
         const updatedRow = await Row.findByIdAndUpdate(row._id, { values: newValues, refs: newRefs }, { new: true });
     }
 
-
     let position = 1;
 
     for (const column of columns) {
@@ -166,4 +166,7 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
     }
 
     await Column.findByIdAndDelete(column?._id);
+
+    const dataCollection = await DataCollection.findOne({ _id: column?.dataCollection });
+    deleteUserColumn(user, null, dataCollection)
 }

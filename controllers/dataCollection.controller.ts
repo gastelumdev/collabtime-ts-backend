@@ -31,7 +31,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
         const workspace = await Workspace.findOne({ _id: req?.params.workspaceId });
         const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
 
-        setupDataCollection(workspace as IWorkspace & { _id: string }, dataCollection);
+        setupDataCollection(workspace as IWorkspace & { _id: string }, dataCollection, (<any>req).user);
 
         if (dataCollection.inParentToDisplay !== null) {
             if (['planner'].includes(dataCollection.template)) {
@@ -82,7 +82,7 @@ export const createDataCollection = async (req: Request, res: Response) => {
 
             for (const workspace of workspaces) {
                 const dataCollection = new DataCollection({ ...(req.body), workspace: workspace?._id });
-                setupDataCollection(workspace, dataCollection)
+                setupDataCollection(workspace, dataCollection, (<any>req).user)
             }
         }
 
@@ -101,10 +101,10 @@ export const updateDataCollection = async (req: Request, res: Response) => {
 
             for (const workspace of workspaces) {
                 const dc = await DataCollection.findOne({ workspace: workspace._id, name: dataCollection?.name });
-                await editDataCollection(workspace, req.body, dc?._id.toString());
+                await editDataCollection(workspace, req.body, dc?._id.toString(), (<any>req).user);
             }
         }
-        const result = await editDataCollection(workspace as IWorkspace & { _id: string }, req.body, req?.params.id)
+        const result = await editDataCollection(workspace as IWorkspace & { _id: string }, req.body, req?.params.id, (<any>req).user)
         res.send(result);
     } catch (error) {
         res.status(400).send({ success: false })
@@ -123,13 +123,13 @@ export const deleteDataCollection = async (req: Request, res: Response) => {
             for (const workspace of workspaces) {
                 const dc = await DataCollection.findOne({ workspace: workspace._id, name: dataCollection?.name });
                 if (dc) {
-                    await removeDataCollection(dc?._id);
+                    await removeDataCollection(dc?._id, (<any>req).user);
                 }
 
             }
         }
 
-        await removeDataCollection(dataCollectionId);
+        await removeDataCollection(dataCollectionId, (<any>req).user);
 
         res.send({ success: true });
     } catch (error) {
