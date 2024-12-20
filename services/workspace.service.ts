@@ -81,7 +81,11 @@ export const getUserWorkspaces = async (userWorkspaceObjects: any) => {
     const workspaces = [];
     for (const userWorkspaceObject of userWorkspaceObjects) {
         const workspace = await Workspace.findOne({ _id: userWorkspaceObject.workspaceId });
-        workspaces.push(workspace);
+
+        if (workspace) {
+            workspaces.push(workspace);
+        }
+
     }
     return workspaces;
 }

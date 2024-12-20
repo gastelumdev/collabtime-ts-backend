@@ -45,8 +45,10 @@ import UserWorkspace from "../models/userWorkspace.model";
 export const getWorkspaces = async (req: Request, res: Response) => {
     const user = await authModel.getUserById((<any>req).user._id as string);
     const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
+
     try {
         const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
+        console.log({ data })
 
         res.status(200).send(data);
     } catch (err) {
