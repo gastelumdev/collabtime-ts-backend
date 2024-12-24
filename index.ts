@@ -161,12 +161,6 @@ if (process.env.APP_ENVIRONMENT === "production") {
   })
 }
 
-cron.schedule("0 * * * * *", async () => {
-  const integration = new SwiftSensorsIntegration();
-  await integration.syncAll()
-  io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-});
-
 const changeRowPositions = async () => {
   const dcs = await DataCollection.find({});
 
