@@ -1,0 +1,91 @@
+import { io } from "../..";
+import { IDataCollection } from "../../services/dataCollection.service";
+import { IRow } from "../../services/row.service";
+import { IWorkspace } from "../../services/workspace.service";
+import { fToC } from "../helpers";
+import SwiftSensorsIntegration from "./swiftSensors/SwiftSensorsIntegration";
+import Threshold from "./swiftSensors/Threshold";
+import Treemap from "./swiftSensors/Treemap";
+import Logger from "../logger/Logger";
+
+const logger = new Logger();
+
+export const handleIntegrationAppValueChange = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+    if (dataCollection?.name === "Devices") {
+        try {
+            // Initialize the new and the previous threshold names
+            const rowThresholdName = reqbody.values.threshold_name;
+            const previousRowThresholdName = row?.values.threshold_name;
+            // Initialize the Swift Sensor treemap based on the workspace
+            const treemap = await Treemap.initialize(workspace?._id);
+            // Get the sensor id from the treemap children data
+            // NOTE: the sensorId is the second part of the string
+            const sensorId = Number(treemap?.data[reqbody.values.deviceId].children[0].split("_")[1]);
+            // Initialize the threshold based on the workspace and get the data
+            const thresholdInstance = await Threshold.initialize(workspace?._id);
+            const thresholds = thresholdInstance?.getData()
+            // Go through the thresholds and find the previous
+            const previousThreshold = thresholds.find((item: IThreshold) => {
+                return item.name === previousRowThresholdName;
+            });
+            // Go through the thresholds and find 
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.name === rowThresholdName;
+            });
+
+            if (previousThreshold !== undefined) {
+                const previousSensorIds = previousThreshold.sensorIds;
+                const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
+                    return id !== sensorId;
+                });
+                previousThreshold.sensorIds = newPreviousSensorIds;
+                const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
+            }
+
+            if (threshold !== undefined) {
+                const sensorIds = threshold.sensorIds;
+                const newSensorIds = [...sensorIds, sensorId];
+                threshold.sensorIds = newSensorIds;
+                const newThreshold = await Threshold.update(workspace?._id, threshold);
+            }
+        } catch (error) {
+            logger.error('Something went wrong when updating the thresholds')
+        }
+
+    }
+
+    if (dataCollection?.name === "Thresholds") {
+        try {
+            const values = reqbody.values;
+
+            const thresholdInstance = await Threshold.initialize(workspace._id);
+            const thresholds = thresholdInstance?.getData();
+
+            const threshold = thresholds.find((item: IThreshold) => {
+                return item.id == values.id;
+            })
+
+
+            const newValues = {
+                id: values.id,
+                name: values.name,
+                description: values.description,
+                maxCritical: fToC(Number(values.max_critical)),
+                maxWarning: fToC(Number(values.max_warning)),
+                minCritical: fToC(Number(values.min_critical)),
+                minWarning: fToC(Number(values.min_warning)),
+                unitTypeId: threshold.unitTypeId,
+                sensorIds: threshold.sensorIds,
+                accountId: threshold.accountId
+            }
+            const newThreshold = await Threshold.update(workspace._id, newValues);
+        } catch (error) {
+            logger.error('Something went wrong when updating the thresholds')
+        }
+
+    }
+
+    const integration = new SwiftSensorsIntegration();
+    await integration.syncAll()
+    io.emit("update swift sensor data", { msg: "Swift sensor data updated" })
+}

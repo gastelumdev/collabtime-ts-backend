@@ -48,7 +48,6 @@ export const getWorkspaces = async (req: Request, res: Response) => {
 
     try {
         const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
-        console.log({ data })
 
         res.status(200).send(data);
     } catch (err) {
@@ -165,8 +164,8 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
     try {
         const user = (<any>req).user;
         // Get workspace by the id provided in the request and make sure that the owner matches
-        const workspace = await workspaceModel.getOneByIdBasedOnOwner(req.params.id, user._id);
-
+        // const workspace = await workspaceModel.getOneByIdBasedOnOwner(req.params.id, user._id.toString());
+        const workspace = await Workspace.findOne({ _id: req.params.id });
         if (workspace) {
             // Remove the workspace from the user's workspaces
             // await authModel.removeWorkspaceFromUser(workspace?._id, user);

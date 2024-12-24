@@ -41,8 +41,8 @@ class Threshold {
             }
 
         } catch (err) {
-            logger.error(`Swift Sensors thresholds for ${email} fetched unsuccessfully`)
-            return null;
+            logger.error(`Swift Sensors thresholds for ${email} fetched unsuccessfully`);
+            // throw new Error("403 Response");
         }
     }
 
@@ -68,6 +68,7 @@ class Threshold {
             const thresholdResponse = await axios.post(url, threshold, { headers });
 
             if (thresholdResponse.status === 200) {
+                logger.info(`Swift Sensors thresholds for ${email} updated successfully`)
                 return thresholdResponse.data;
             } else {
                 logger.error(`Swift Sensor for ${workspace?.name}, id ${threshold.id}, updated unsuccessfully`)
@@ -126,8 +127,6 @@ class Threshold {
                     });
 
                     const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: newLabels }, { new: true });
-
-                    console.log({ updatedColumn })
                 }
 
             }
@@ -166,7 +165,6 @@ class Threshold {
         //         const rows = await Row.find({ dataCollection: thresholdsDataCollection?._id }).sort({ position: 1 });
 
         //         for (const row of rows) {
-        //             console.log({ newThreshold })
         //             if (row?.values.id === newThreshold.id) {
 
         //                 const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: newThreshold }, { new: true });

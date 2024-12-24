@@ -13,40 +13,46 @@ const logger = new Logger();
 
 class SwiftSensorsIntegration {
     async syncOne(workspaceId: string) {
-        const treemap = await Treemap.initialize(workspaceId);
-        const thresholdInstance = await Threshold.initialize(workspaceId);
-        const thresholds = thresholdInstance?.getData()
+        try {
+            const treemap = await Treemap.initialize(workspaceId);
+            const thresholdInstance = await Threshold.initialize(workspaceId);
+            const thresholds = thresholdInstance?.getData()
 
-        const workspace = await Workspace.findOne({ _id: workspaceId })
-        const devicesDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
-        const thresholdsDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Thresholds' });
-        const rows = await Row.find({ dataCollection: devicesDataCollection?._id, isEmpty: false }).sort({ position: 1 });
+            const workspace = await Workspace.findOne({ _id: workspaceId })
+            const devicesDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
+            const thresholdsDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Thresholds' });
+            const rows = await Row.find({ dataCollection: devicesDataCollection?._id, isEmpty: false }).sort({ position: 1 });
 
-        const thresholdLabels = thresholds.map((item: IThreshold) => {
-            return { title: item.name, color: '#00508A' }
-        })
+            const thresholdLabels = thresholds.map((item: IThreshold) => {
+                return { title: item.name, color: '#00508A' }
+            })
 
-        const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
-        const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
+            const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
+            const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
 
-        if (treemap !== undefined) {
-            for (const device of treemap.devices) {
+            if (treemap && treemap !== undefined) {
+                for (const device of treemap.devices) {
 
-                const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
-                const values = await this.buildDeviceValues(fullDevice);
+                    const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
+                    const values = await this.buildDeviceValues(fullDevice);
 
-                for (const row of rows) {
-                    if (row.values.deviceId === fullDevice.getDeviceId()) {
-                        const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
-                        logger.info(`${fullDevice.getName()} updated successfully.`);
+                    for (const row of rows) {
+                        if (row.values.deviceId === fullDevice.getDeviceId()) {
+                            const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
+                            logger.info(`${fullDevice.getName()} updated successfully.`);
+                        }
                     }
                 }
+            } else {
+                logger.error(`Treemap for workspace ${workspace?.name} was unable to initialize.`)
+                throw new Error()
             }
-        } else {
-            logger.error(`Treemap for workspace ${workspace?.name} was unable to initialize.`)
+
+            Threshold.setup(workspaceId, thresholds, false);
+        } catch (error) {
+            logger.error('Something went wrong when updating the thresholds')
         }
 
-        Threshold.setup(workspaceId, thresholds, false);
     }
 
     async syncAll() {
@@ -54,7 +60,7 @@ class SwiftSensorsIntegration {
 
 
         for (const workspace of workspaces) {
-
+            logger.info(`Integration for workspace ${workspace._id} has started`)
             await this.syncOne(workspace._id);
         }
     }

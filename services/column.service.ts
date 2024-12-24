@@ -151,8 +151,6 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
             }
         }
 
-        console.log({ values: newValues, refs: newRefs })
-
         const updatedRow = await Row.findByIdAndUpdate(row._id, { values: newValues, refs: newRefs }, { new: true });
     }
 

@@ -11,7 +11,7 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
-import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleIntegrations, handleLastRowUpdate, handleNewNote, handleNotifyingUsersOnLabelChange, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
+import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleAppValueChanges, handleLastRowUpdate, handleNewNote, handleNotifyingUsersOnLabelChange, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
 import UserGroup from "../models/userGroup.model";
 import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
@@ -282,11 +282,9 @@ export const updateRow = async (req: Request, res: Response) => {
         // Sets row to empty/non-empty based on its values
         handleRowEmptiness(req.body);
 
-        handleIntegrations(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
+        handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
 
         handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
-
-
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner)
@@ -294,7 +292,8 @@ export const updateRow = async (req: Request, res: Response) => {
         // Send the blank rows for the frontend to have
         res.send(blankRows);
     } catch (error) {
-        res.status(400).send({ success: false })
+        console.log({ error })
+        res.status(400).send({ success: false });
     }
 }
 

@@ -17,6 +17,8 @@ import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
 import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
 import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftSensorsIntegration";
 import { fToC } from "../utils/helpers";
+import { handleIntegrationAppValueChange } from "../utils/integrationApp";
+import { handleResourcePlanningAppValueChange } from "../utils/resourcePlanningApp";
 
 export interface INote {
     content: string;
@@ -317,125 +319,17 @@ export const rowIsEmpty = (row: IRow & { _id: string }) => {
     return isEmpty;
 }
 
-export const handleIntegrations = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
     if (workspace?.type === "integration") {
-
-        if (dataCollection?.name === "Devices") {
-            const rowThresholdName = reqbody.values.threshold_name;
-            const previousRowThresholdName = row?.values.threshold_name;
-            const treemap = await Treemap.initialize(workspace?._id);
-            const sensorId = Number(treemap?.data[reqbody.values.deviceId].children[0].split("_")[1]);
-            const thresholdInstance = await Threshold.initialize(workspace?._id);
-            const thresholds = thresholdInstance?.getData()
-
-            const previousThreshold = thresholds.find((item: IThreshold) => {
-                return item.name === previousRowThresholdName;
-            });
-
-            const threshold = thresholds.find((item: IThreshold) => {
-                return item.name === rowThresholdName;
-            });
-
-            if (previousThreshold !== undefined) {
-                const previousSensorIds = previousThreshold.sensorIds;
-                const newPreviousSensorIds = previousSensorIds.filter((id: number) => {
-                    return id !== sensorId;
-                });
-                previousThreshold.sensorIds = newPreviousSensorIds;
-                const newPreviousThreshold = await Threshold.update(workspace?._id, previousThreshold);
-            }
-
-            if (threshold !== undefined) {
-                const sensorIds = threshold.sensorIds;
-                const newSensorIds = [...sensorIds, sensorId];
-                threshold.sensorIds = newSensorIds;
-                const newThreshold = await Threshold.update(workspace?._id, threshold);
-            }
-        }
-
-        if (dataCollection?.name === "Thresholds") {
-            const values = reqbody.values;
-
-            const thresholdInstance = await Threshold.initialize(workspace._id);
-            const thresholds = thresholdInstance?.getData();
-
-            const threshold = thresholds.find((item: IThreshold) => {
-                return item.id == values.id;
-            })
-
-            const newValues = {
-                id: values.id,
-                name: values.name,
-                description: values.description,
-                maxCritical: fToC(Number(values.max_critical)),
-                maxWarning: fToC(Number(values.max_warning)),
-                minCritical: fToC(Number(values.min_critical)),
-                minWarning: fToC(Number(values.min_warning)),
-                unitTypeId: threshold.unitTypeId,
-                sensorIds: threshold.sensorIds,
-                accountId: threshold.accountId
-            }
-            const newThreshold = await Threshold.update(workspace._id, newValues);
-        }
-
-        const integration = new SwiftSensorsIntegration();
-        await integration.syncAll()
-        io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+        handleIntegrationAppValueChange(row, reqbody, workspace, dataCollection);
     }
 
     if (workspace?.type === 'resource planning') {
-        if (reqbody.values.proposal_status === 'Rejected' || reqbody.values.project_status === 'Completed') {
-            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { archived: true }, { new: true });
-        }
-        else {
-            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { archived: false }, { new: true });
-        }
-
-        if (reqbody.values.proposal_status === 'Approved') {
-            // process.env.TZ = "America/Los_Angeles";
-            const now = new Date();
-            const newTime = now.getTime() - (8 * 60 * 60 * 1000);
-            const newDate = new Date(newTime);
-
-            const rows = await Row.find({ dataCollection: row.dataCollection });
-            let jobNumber = '';
-
-            if (reqbody.values.job_type === 'Negotiated') {
-                const negotiatedRows = rows.filter((item: IRow) => {
-                    if (item.values.job_number) {
-                        return item.values.job_number.startsWith('4224');
-                    }
-                    return false;
-
-                });
-
-                if (negotiatedRows.length === 0) {
-                    jobNumber = '4224-001';
-                } else {
-                    const lastRow = negotiatedRows[negotiatedRows.length - 1];
-                    const lastRowJobNumber = lastRow.values.job_number;
-                    const numberToIncrement = lastRowJobNumber.split("-")[1];
-                    jobNumber = createPrimaryValuesForJobNumber(Number(numberToIncrement) + 1, '4224')
-                }
-            }
-
-            const updatedRow = await Row.findByIdAndUpdate(reqbody._id, { values: { ...reqbody.values, date_approved: newDate, job_number: jobNumber } })
-        }
+        handleResourcePlanningAppValueChange(row as IRow & { _id: string }, reqbody, workspace, dataCollection);
     }
 }
 
-export const createPrimaryValuesForJobNumber = (i: number, identifier: string) => {
-    let leadingZeroes = ""
-    if (i >= 100) {
-        leadingZeroes = ""
-    } else if (i >= 10 && i < 100) {
-        leadingZeroes = "0"
-    } else {
-        leadingZeroes = "00"
-    }
 
-    return `${identifier}-${leadingZeroes}${i}`;
-}
 
 export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
     let newValue = null;

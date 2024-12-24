@@ -80,7 +80,6 @@ export const updateUserColumn = async (user: IUser, view: IDataCollectionView & 
             const userColumn = await UserColumn.findOne({ userId: user._id, dataCollectionId: dc._id, columnId: column._id });
             if (userColumn) {
                 if (column.width !== userColumn?.width) {
-                    console.log({ column })
                     const updatedColumn = await UserColumn.findByIdAndUpdate(userColumn?._id, { width: column.width });
                 }
             } else {

@@ -114,7 +114,7 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
-if (process.env.APP_ENVIRONMENT === "production") {
+if (process.env.APP_ENVIRONMENT === "production" || process.env.APP_ENVIRONMENT === "staging") {
 
   cron.schedule("0 0 7 * * 1,2,3,4,5", () => {
     setReminders()
@@ -140,6 +140,15 @@ if (process.env.APP_ENVIRONMENT === "production") {
     changeRowPositions()
   })
 
+
+
+  cron.schedule("0 0 23 * * *", () => {
+    // setReminders()
+
+  });
+}
+
+if (process.env.APP_ENVIRONMENT === "production") {
   cron.schedule("0 * * * * *", async () => {
     const integration = new SwiftSensorsIntegration();
     await integration.syncAll()
@@ -150,12 +159,13 @@ if (process.env.APP_ENVIRONMENT === "production") {
     const swiftSensorAuth = new SwiftSensorsAPIAuth();
     swiftSensorAuth.refreshAll();
   })
-
-  cron.schedule("0 0 23 * * *", () => {
-    // setReminders()
-
-  });
 }
+
+cron.schedule("0 * * * * *", async () => {
+  const integration = new SwiftSensorsIntegration();
+  await integration.syncAll()
+  io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+});
 
 const changeRowPositions = async () => {
   const dcs = await DataCollection.find({});

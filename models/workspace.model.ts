@@ -91,5 +91,6 @@ export const getOneByIdBasedOnOwner = async (workspaceId: string, userId: string
  * @note This function is not part of automated testing and needs to have automated tests implemented.
  */
 export const getWorkspaceByIdAndDelete = async (id: string, userId: string) => {
-    await Workspace.findByIdAndDelete({ _id: id, owner: userId });
+
+    const deletedWorkspace = await Workspace.findByIdAndDelete({ _id: id, owner: userId });
 }

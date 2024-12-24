@@ -488,7 +488,6 @@ const setRowsToArchived = async () => {
 
     for (const row of rows) {
         const updatedRow = await Row.findByIdAndUpdate(row?._id, { archived: false }, { new: true });
-        console.log({ updatedRow });
     }
 }
 
@@ -504,7 +503,6 @@ const utility = async () => {
             newValues[column.name as typeof newValues] = row.values[column.name];
         }
 
-        console.log({ newValues })
         const updatedRow = await Row.findByIdAndUpdate({ _id: row._id }, { values: newValues }, { new: true });
     }
 }

@@ -1,8 +1,9 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import DataCollection from "../../../models/dataCollection.model";
 import Workspace from "../../../models/workspace.model";
 import { IIntegrationSettings, IWorkspace } from "../../../services/workspace.service";
 import Logger from "../../logger/Logger";
+import { io } from "../../..";
 
 const logger = new Logger();
 
@@ -88,8 +89,11 @@ class Treemap {
 
             logger.info(`Treemap retrieved successfully.`)
             return new Treemap(workspaceId, data, account as ISwiftSensorAccount, collectors, devices, sensors);
-        } catch (error) {
-            logger.error(`Unable to get Swift Sensors treemap. Error: ${error}`)
+        } catch (error: any) {
+            logger.error(`Unable to get Swift Sensors treemap. ${error.message}`)
+            io.emit(`integrations error ${workspaceId}`, { integrationType: 'Swift Sensors', errorMsg: `Unable to get Swift Sensors treemap. ${error.message}` });
+        } finally {
+            return null;
         }
     }
 }
