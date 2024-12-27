@@ -4,6 +4,7 @@ import Workspace from "../../../models/workspace.model";
 import { IIntegrationSettings, IWorkspace } from "../../../services/workspace.service";
 import Logger from "../../logger/Logger";
 import { io } from "../../..";
+import { setActive, setInactive } from "..";
 
 const logger = new Logger();
 
@@ -88,10 +89,14 @@ class Treemap {
             }
 
             logger.info(`Treemap retrieved successfully.`)
+            setActive(workspaceId);
             return new Treemap(workspaceId, data, account as ISwiftSensorAccount, collectors, devices, sensors);
         } catch (error: any) {
             logger.error(`Unable to get Swift Sensors treemap. ${error.message}`)
             io.emit(`integrations error ${workspaceId}`, { integrationType: 'Swift Sensors', errorMsg: `Unable to get Swift Sensors treemap. ${error.message}` });
+
+            setInactive(workspaceId);
+
         } finally {
             return null;
         }

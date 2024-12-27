@@ -7,6 +7,7 @@ import SwiftSensorsIntegration from "./swiftSensors/SwiftSensorsIntegration";
 import Threshold from "./swiftSensors/Threshold";
 import Treemap from "./swiftSensors/Treemap";
 import Logger from "../logger/Logger";
+import Workspace from "../../models/workspace.model";
 
 const logger = new Logger();
 
@@ -88,4 +89,18 @@ export const handleIntegrationAppValueChange = async (row: IRow, reqbody: IRow &
     const integration = new SwiftSensorsIntegration();
     await integration.syncAll()
     io.emit("update swift sensor data", { msg: "Swift sensor data updated" })
+}
+
+export const setInactive = async (workspaceId: string) => {
+    const workspace = await Workspace.findOne({ _id: workspaceId });
+    workspace!.settings!.integration.swiftSensors.active = false;
+
+    const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings: workspace?.settings })
+}
+
+export const setActive = async (workspaceId: string) => {
+    const workspace = await Workspace.findOne({ _id: workspaceId });
+    workspace!.settings!.integration.swiftSensors.active = true;
+
+    const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings: workspace?.settings })
 }

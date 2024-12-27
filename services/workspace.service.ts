@@ -52,6 +52,7 @@ export interface IIntegrationSettings {
     sessionId: string | null;
     accountId: string | null;
     dataCollectionId: string | null;
+    active: boolean;
 }
 
 export interface IWorkspaceDocument extends IWorkspace, Document {

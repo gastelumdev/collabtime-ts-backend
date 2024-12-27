@@ -2,6 +2,8 @@ import axios from "axios";
 import { IIntegrationSettings, IWorkspace, IWorkspaceSettings } from "../../../services/workspace.service";
 import Workspace from "../../../models/workspace.model";
 import Logger from "../../logger/Logger";
+import { io } from "../../..";
+import { setActive, setInactive } from "..";
 
 const logger = new Logger();
 
@@ -34,14 +36,19 @@ class SwiftSensorsAPIAuth {
                 settings.integration.swiftSensors.tokenType = signinData.token_type;
                 settings.integration.swiftSensors.refreshToken = signinData.refresh_token;
                 settings.integration.swiftSensors.sessionId = signinData.session_id;
+                settings.integration.swiftSensors.active = true;
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
                 logger.info(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} was successful`)
+                setActive(workspaceId)
             } else {
                 logger.error(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} failed with status code ${signinResponse.status}`)
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} login failed with ${error}`)
+            io.emit(`integrations error ${workspaceId}`, { integrationType: 'Swift Sensors', errorMsg: `Swift Sensors login for account ${integrationSwiftSensorSettings.email} login failed with ${error.message}` });
+
+            setInactive(workspaceId);
         }
     }
 
@@ -75,12 +82,15 @@ class SwiftSensorsAPIAuth {
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings: newSettings }, { new: true });
                 logger.info(`Swift Sensors login with refresh token for account ${settings?.email} was successful`)
+                setActive(workspaceId)
             } else {
                 logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with status code ${signinResponse.status}`)
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error(`Swift Sensors login with refresh token for account ${settings?.email} login failed with ${error}`)
+            io.emit(`integrations error ${workspaceId}`, { integrationType: 'Swift Sensors', errorMsg: `Swift Sensors login with refresh token for account ${settings?.email} login failed with ${error.message}` });
 
+            setInactive(workspaceId);
 
             const workspace = await Workspace.findOne({ _id: workspaceId });
             await this.signin(workspace?._id, workspace?.settings as IWorkspaceSettings);
