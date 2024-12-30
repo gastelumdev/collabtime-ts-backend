@@ -266,6 +266,7 @@ export const updateRow = async (req: Request, res: Response) => {
 
         // Set the first user to interact with the row as the creator
         if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
+        // req.body.isEmpty = false;
 
         // Update the row
         await Row.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -280,7 +281,7 @@ export const updateRow = async (req: Request, res: Response) => {
         // Handles the completion status of a row and its child rows based on the "status" field.
         handleCompletedRow(row, req.body)
         // Sets row to empty/non-empty based on its values
-        handleRowEmptiness(req.body);
+        // handleRowEmptiness(req.body);
 
         handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
 
