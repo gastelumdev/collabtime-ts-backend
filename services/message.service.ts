@@ -1,6 +1,5 @@
 import { Document, Schema, Model } from "mongoose";
 import { IUser } from "./auth.service";
-import { TInvitee } from "./workspace.service";
 
 export interface IMessage {
     content: string;
@@ -10,7 +9,7 @@ export interface IMessage {
     read: IUser[];
 }
 
-export interface IMessageDocument extends IMessage, Document {}
+export interface IMessageDocument extends IMessage, Document { }
 
 export interface IMessageModel extends Model<IMessageDocument> {
     buildMessage(args: IMessage): IMessageDocument;

@@ -20,6 +20,9 @@ import { fToC } from "../utils/helpers";
 import DataCollectionView from "../models/dataCollectionView.model";
 import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftSensorsIntegration";
 import { IDataCollection } from "../services/dataCollection.service";
+import Event from "../models/event.model"
+import { handleEvent, saveEvent } from "../services/event.service";
+import { IUser } from "../services/auth.service";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -234,9 +237,6 @@ export const updateRow = async (req: Request, res: Response) => {
         let dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const assigner = await User.findOne({ _id: (<any>req).user._id });
 
-
-
-
         if (dataCollection?.main) {
             if (dataCollection?.inParentToDisplay && !rowIsEmpty(req.body)) {
                 const subDataCollections = await DataCollection.find({ appModel: dataCollection?._id, main: false });
@@ -273,7 +273,8 @@ export const updateRow = async (req: Request, res: Response) => {
         // Updates references in all rows across all data collections in a workspace if a specific column value changes.
         updateRefs(workspace, dataCollection, row, req.body);
         // Handles changes to the "assigned_to" field of a row, sending notifications and emails if the assigned user changes.
-        handleAssignedTo(workspace, dataCollection, row, req.body, assigner);
+        // handleAssignedTo(workspace, dataCollection, row, req.body, assigner);
+
         // Handles the addition of a new note to a row, sending notifications and updating the frontend if the notes list changes.
         handleNewNote(workspace, dataCollection, row, req.body, assigner);
         // Handles the acknowledgment of a row, sending an email notification to the row's creator if the row is acknowledged.
@@ -288,12 +289,175 @@ export const updateRow = async (req: Request, res: Response) => {
         handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
-        const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner)
+        const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
+
+        const columns = await Column.find({ dataCollection: dataCollection?._id });
+
+        let modifiedColumn = null;
+        const allAssigneeIds = []
+
+        for (const column of columns) {
+            if (column.type === "people") {
+                const assignedUsers = req.body.values[column.name];
+                for (const assignedUser of assignedUsers) {
+                    const assignee = await User.findOne({ email: assignedUser.email })
+                    allAssigneeIds.push(assignee?._id.toString())
+                }
+            }
+        }
+
+        console.log({ allAssigneeIds })
+
+        for (const column of columns) {
+            const newRow = req.body;
+            if (column.type !== 'people' && column.type !== 'reference') {
+                if (row?.values[column.name] !== req.body.values[column.name]) {
+                    handleEvent({
+                        actionBy: assigner as IUser,
+                        assignee: null,
+                        workspace: workspace?._id as string,
+                        dataCollection: dataCollection?._id as string,
+                        type: 'data',
+                        priority: 100,
+                        message: `Row value changed from "${row?.values[column.name]}" to "${req.body.values[column.name]}" in ${dataCollection?.name} data collection by ${assigner?.firstname} ${assigner?.lastname}.`,
+                        associatedUserIds: allAssigneeIds as string[]
+                    }, null, allAssigneeIds as string[])
+                }
+            } else if (column.type === 'people') {
+                if (newRow.values[column.name].length > row?.values[column.name].length) {
+                    for (const user of newRow.values[column.name]) {
+                        const missingUser = row?.values[column.name].find((item: { name: string, email: string }) => {
+                            return item.email === user.email;
+                        });
+
+                        if (missingUser === undefined) {
+                            const selectedUser = await User.findOne({ email: user.email });
+                            const message = `An item was assigned to ${selectedUser?.firstname} ${selectedUser?.lastname} by ${assigner?.firstname} ${assigner?.lastname} in "${dataCollection?.name}" data collection.`;
+                            handleEvent({
+                                actionBy: assigner as IUser,
+                                assignee: selectedUser,
+                                workspace: workspace?._id as string,
+                                dataCollection: dataCollection?._id as string,
+                                type: 'assignment',
+                                priority: 100,
+                                message,
+                                associatedUserIds: allAssigneeIds as string[]
+                            }, {
+                                email: user.email,
+                                subject: `Assigned Item in ${workspace?.name} - ${dataCollection?.name}`,
+                                payload: {
+                                    message,
+                                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
+                                    workspaceName: workspace ? workspace?.name : null,
+                                },
+                                template: "./template/event.handlebars",
+                                // res,
+                            }, [selectedUser?._id] as string[])
+                        }
+                    }
+                }
+
+                if (newRow.values[column.name].length < row?.values[column.name].length) {
+                    for (const user of row?.values[column.name]) {
+                        const missingUser = newRow.values[column.name].find((item: { name: string, email: string }) => {
+                            return item.email === user.email;
+                        });
+
+                        if (missingUser === undefined) {
+                            const deselectedUser = await User.findOne({ email: user.email });
+                            const message = `An item was unassigned from ${deselectedUser?.firstname} ${deselectedUser?.lastname} by ${assigner?.firstname} ${assigner?.lastname} ${deselectedUser?.lastname} in "${dataCollection?.name}" data collection.`
+                            handleEvent({
+                                actionBy: assigner as IUser,
+                                assignee: deselectedUser,
+                                workspace: workspace?._id as string,
+                                dataCollection: dataCollection?._id as string,
+                                type: 'assignment',
+                                priority: 100,
+                                message,
+                                associatedUserIds: allAssigneeIds as string[]
+                            }, {
+                                email: user.email,
+                                subject: `Unassigned Item in ${workspace?.name} - ${dataCollection?.name}`,
+                                payload: {
+                                    message,
+                                    link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}`,
+                                    workspaceName: dataCollection ? dataCollection?.name : null,
+                                },
+                                template: "./template/event.handlebars",
+                                // res,
+                            }, [deselectedUser?._id] as string[]);
+                        }
+                    }
+                }
+
+            } else if (column.type === 'reference') {
+                if (newRow.refs[column.name].length > row?.refs[column.name].length) {
+                    for (const ref of newRow.refs[column.name]) {
+                        const missingRef = row?.refs[column.name].find((item: any) => {
+                            return item._id === ref._id;
+                        })
+
+                        if (missingRef === undefined) {
+                            const referencedDataCollection = await DataCollection.findOne({ _id: ref.dataCollection })
+
+                            handleEvent({
+                                actionBy: assigner as IUser,
+                                assignee: null,
+                                workspace: workspace?._id as string,
+                                dataCollection: dataCollection?._id as string,
+                                type: 'data',
+                                priority: 100,
+                                message: `A reference of ${ref.values[column.dataCollectionRefLabel]} in ${referencedDataCollection?.name} data collection was added by ${assigner?.firstname} ${assigner?.lastname} in "${dataCollection?.name}" data collection.`,
+                                associatedUserIds: allAssigneeIds as string[]
+                            }, null, allAssigneeIds as string[]);
+
+                        }
+                    }
+                }
+
+                if (newRow.refs[column.name].length < row?.refs[column.name].length) {
+                    for (const ref of row?.refs[column.name]) {
+                        const missingRef = newRow.refs[column.name].find((item: any) => {
+                            return item._id === ref._id;
+                        });
+
+                        if (missingRef === undefined) {
+                            const referencedDataCollection = await DataCollection.findOne({ _id: ref.dataCollection })
+
+                            handleEvent({
+                                actionBy: assigner as IUser,
+                                assignee: null,
+                                workspace: workspace?._id as string,
+                                dataCollection: dataCollection?._id as string,
+                                type: 'data',
+                                priority: 100,
+                                message: `A reference of ${ref.values[column.dataCollectionRefLabel]} in ${referencedDataCollection?.name} data collection was removed by ${assigner?.firstname} ${assigner?.lastname} in "${dataCollection?.name}" data collection.`,
+                                associatedUserIds: allAssigneeIds as string[]
+                            }, null, allAssigneeIds as string[]);
+                        }
+                    }
+                }
+            } else {
+                handleEvent({
+                    actionBy: assigner as IUser,
+                    assignee: null,
+                    workspace: workspace?._id as string,
+                    dataCollection: dataCollection?._id as string,
+                    type: 'data',
+                    priority: 100,
+                    message: "A modification was made that was not recorded",
+                    associatedUserIds: allAssigneeIds as string[]
+                })
+            }
+
+        }
+
+
+
         io.emit("update views", { message: "" });
         // Send the blank rows for the frontend to have
         res.send(blankRows);
     } catch (error) {
-        console.log({ error })
         res.status(400).send({ success: false });
     }
 }
