@@ -11,7 +11,7 @@ import User from "../models/auth.model";
 import Notification from "../models/notification.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
-import { IUser } from "./auth.service";
+import { getAllAssigneeIds, IUser } from "./auth.service";
 import { addBlankRows, checkIfLastRow } from "../utils/rows";
 import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
 import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
@@ -19,6 +19,7 @@ import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftS
 import { fToC } from "../utils/helpers";
 import { handleIntegrationAppValueChange } from "../utils/integrationApp";
 import { handleResourcePlanningAppValueChange } from "../utils/resourcePlanningApp";
+import { handleEvent } from "./event.service";
 
 export interface INote {
     content: string;
@@ -164,22 +165,45 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
     // if there are more notes in the req body than in the db, then there is a new note
     // in which we want to notify the user and update the frontend via sockets
     if (row?.notesList.length !== newRow.notesList.length) {
-        for (const member of workspace?.members || []) {
-            const user = await User.findOne({ email: member.email });
 
-            io.emit(user?._id || "", { message: `${assigner?.firstname} ${assigner?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection` });
-            // io.emit("update row", { message: "" })
+        const columns = await Column.find({ dataCollection: dataCollection?._id });
+        const allAssigneeIds = await getAllAssigneeIds(columns, newRow);
+        let allAssigneeEmails = [];
 
-            const notification = new Notification({
-                message: `${assigner?.firstname} ${assigner?.lastname} has added a new note to ${dataCollection?.name[0].toUpperCase()}${dataCollection?.name.slice(1)} Data Collection`,
-                workspaceId: workspace?._id,
-                assignedTo: user?._id,
-                dataSource: "",
-                priority: "Low",
-                read: false,
-            })
-            notification.save()
+        for (const assigneeId of allAssigneeIds) {
+            const user = await User.findOne({ _id: assigneeId });
+            if (user) {
+                allAssigneeEmails.push(user?.email);
+            }
         }
+
+        const columnName = dataCollection?.primaryColumnName || columns[0].name;
+
+        const note = `Note: "${row?.notesList[row?.notesList.length - 1].content}"`;
+
+        const message = `A new note has been created in ${row?.values[columnName]} in ${dataCollection?.name} by ${assigner?.firstname} ${assigner?.lastname}.`
+
+        handleEvent({
+            actionBy: assigner as IUser,
+            assignee: null,
+            workspace: workspace?._id as string,
+            dataCollection: dataCollection?._id as string,
+            type: 'info',
+            priority: 100,
+            message,
+            associatedUserIds: allAssigneeIds as string[]
+        }, {
+            email: allAssigneeEmails,
+            subject: `New note in ${workspace?.name} - ${dataCollection?.name}`,
+            payload: {
+                message,
+                note,
+                link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
+                workspaceName: workspace ? workspace?.name : null,
+            },
+            template: "./template/newNote.handlebars",
+            // res,
+        }, allAssigneeIds as string[])
     }
 }
 

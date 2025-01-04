@@ -42,7 +42,7 @@ export const saveEvent = (event: IEvent) => {
     }
 }
 
-export const handleEvent = (event: IEvent, email: { email: string; subject: string; payload: { message: string; link: string, workspaceName: string | null }, template: string } | null = null, allAssigneeIds: string[] = []) => {
+export const handleEvent = (event: IEvent, email: { email: string | string[]; subject: string; payload: { message: string; note?: string; link: string, workspaceName: string | null }, template: string } | null = null, allAssigneeIds: string[] = []) => {
     saveEvent(event)
     if (event.type === 'error') {
         logger.error(event.message);

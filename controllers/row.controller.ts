@@ -22,7 +22,7 @@ import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftS
 import { IDataCollection } from "../services/dataCollection.service";
 import Event from "../models/event.model"
 import { handleEvent, saveEvent } from "../services/event.service";
-import { IUser } from "../services/auth.service";
+import { getAllAssigneeIds, IUser } from "../services/auth.service";
 
 export const getRows = async (req: Request, res: Response) => {
 
@@ -292,21 +292,7 @@ export const updateRow = async (req: Request, res: Response) => {
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
 
         const columns = await Column.find({ dataCollection: dataCollection?._id });
-
-        let modifiedColumn = null;
-        const allAssigneeIds = []
-
-        for (const column of columns) {
-            if (column.type === "people") {
-                const assignedUsers = req.body.values[column.name];
-                for (const assignedUser of assignedUsers) {
-                    const assignee = await User.findOne({ email: assignedUser.email })
-                    allAssigneeIds.push(assignee?._id.toString())
-                }
-            }
-        }
-
-        console.log({ allAssigneeIds })
+        const allAssigneeIds = await getAllAssigneeIds(columns, req.body);
 
         for (const column of columns) {
             const newRow = req.body;
@@ -391,9 +377,21 @@ export const updateRow = async (req: Request, res: Response) => {
                 }
 
             } else if (column.type === 'reference') {
-                if (newRow.refs[column.name].length > row?.refs[column.name].length) {
-                    for (const ref of newRow.refs[column.name]) {
-                        const missingRef = row?.refs[column.name].find((item: any) => {
+                let newRowRefs = newRow.refs || {};
+                let rowRefs = row?.refs || {};
+
+                if (newRowRefs[column.name] === undefined) {
+                    newRowRefs[column.name] = [];
+                }
+
+                if (rowRefs[column.name] === undefined) {
+                    rowRefs[column.name] = [];
+                }
+
+                if (newRowRefs[column.name].length > rowRefs[column.name].length) {
+
+                    for (const ref of newRowRefs[column.name]) {
+                        const missingRef = rowRefs[column.name].find((item: any) => {
                             return item._id === ref._id;
                         })
 
@@ -415,9 +413,9 @@ export const updateRow = async (req: Request, res: Response) => {
                     }
                 }
 
-                if (newRow.refs[column.name].length < row?.refs[column.name].length) {
-                    for (const ref of row?.refs[column.name]) {
-                        const missingRef = newRow.refs[column.name].find((item: any) => {
+                if (newRowRefs[column.name].length < rowRefs[column.name].length) {
+                    for (const ref of rowRefs[column.name]) {
+                        const missingRef = newRowRefs[column.name].find((item: any) => {
                             return item._id === ref._id;
                         });
 
@@ -437,6 +435,7 @@ export const updateRow = async (req: Request, res: Response) => {
                         }
                     }
                 }
+
             } else {
                 handleEvent({
                     actionBy: assigner as IUser,
@@ -464,9 +463,11 @@ export const updateRow = async (req: Request, res: Response) => {
 
 export const deleteRow = async (req: Request, res: Response) => {
     const row = await Row.findOne({ _id: req.params.id })
+    const user = await User.findOne({ _id: (<any>req).user._id });
+    const workspace = await Workspace.findOne({ _id: req.params.workspaceId })
     let cells: any = row?.cells;
 
-    const dataCollection = await DataCollection.findOne({ _id: row?._id });
+    const dataCollection = await DataCollection.findOne({ _id: row?.dataCollection });
 
     if (dataCollection?.appModel && !dataCollection.main) {
         const subDataCollections = await DataCollection.find({ appModel: dataCollection._id })
@@ -485,7 +486,23 @@ export const deleteRow = async (req: Request, res: Response) => {
         for (const cell of cells || []) {
             await Cell.findByIdAndDelete({ _id: cell._id })
         }
-        await Row.findByIdAndDelete({ _id: row?._id });
+        const deletedRow = await Row.findByIdAndDelete({ _id: row?._id });
+
+        if (deletedRow) {
+            const columns = await Column.find({ dataCollection: dataCollection?._id })
+            const allAssigneeIds = await getAllAssigneeIds(columns, row as IRow);
+            handleEvent({
+                actionBy: user as IUser,
+                assignee: null,
+                workspace: workspace?._id as string,
+                dataCollection: dataCollection?._id as string,
+                type: 'data',
+                priority: 100,
+                message: dataCollection?.primaryColumnName ? `Item "${row?.values[dataCollection?.primaryColumnName]}" in "${dataCollection?.name}" was deleted by ${user?.firstname} ${user?.lastname}.` : `An item was deleted in "${dataCollection?.name}" by ${user?.firstname} ${user?.lastname}.`,
+                associatedUserIds: allAssigneeIds as string[]
+            }, null, allAssigneeIds as string[])
+        }
+        io.emit("update views", { message: "" });
         res.send(row);
     } catch (error) {
         res.status(400).send({ success: false });

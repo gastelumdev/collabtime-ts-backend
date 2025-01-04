@@ -2,6 +2,8 @@ import { Document, Model, Schema } from "mongoose";
 import User from "../models/auth.model";
 import { TInvitee } from "../types";
 import { IWorkspace } from "./workspace.service";
+import { IColumn } from "./column.service";
+import { IRow } from "./row.service";
 
 export interface IUserWorkspace {
     id: string;
@@ -49,3 +51,18 @@ export const removeWorkspaceFromUser = (workspaceId: string, user: IUser): Array
     return newUserWorkspaces;
 }
 
+export const getAllAssigneeIds = async (columns: IColumn[], row: IRow) => {
+    const allAssigneeIds = []
+
+    for (const column of columns) {
+        if (column.type === "people") {
+            const assignedUsers = row.values[column.name];
+            for (const assignedUser of assignedUsers) {
+                const assignee = await User.findOne({ email: assignedUser.email })
+                allAssigneeIds.push(assignee?._id.toString())
+            }
+        }
+    }
+
+    return allAssigneeIds;
+}
