@@ -21,7 +21,7 @@ export interface IEvent {
     acknowledged?: boolean;
     requiresAcknowledgement?: boolean;
     message: string;
-    read?: IUser[];
+    read?: string[];
     associatedUserIds: string[];
 }
 
@@ -50,6 +50,7 @@ export const handleEvent = (event: IEvent, email: { email: string | string[]; su
         logger.info(event.message);
     }
     io.emit('notify', { event, allAssigneeIds });
+    io.emit('update notification marker', {})
 
     if (email) {
         sendEmail(email, (res: Response) => null)

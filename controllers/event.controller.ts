@@ -35,8 +35,16 @@ export const getEvents = async (req: Request, res: Response) => {
                 dataCollection = await DataCollection.findOne({ _id: event.dataCollection });
             }
 
+            if (!event.read?.includes(user._id.toString())) {
+                const read = [...event.read as [], user._id.toString()];
+                result.push({ ...event.toObject(), workspace, dataCollection, read });
 
-            result.push({ ...event.toObject(), workspace, dataCollection });
+                await Event.findByIdAndUpdate(event._id, { read }, { new: true });
+            } else {
+                result.push({ ...event.toObject(), workspace, dataCollection });
+            }
+
+            io.emit('update notification marker', {})
         }
 
         res.send(result);
@@ -45,3 +53,23 @@ export const getEvents = async (req: Request, res: Response) => {
     }
 }
 
+export const getUnreadEvents = async (req: Request, res: Response) => {
+    try {
+        const workspaceId = req.params.workspaceId;
+        const userId = (<any>req).user._id;
+        const events = await Event.find({ workspace: workspaceId, priority: { $gte: 100 } }).sort({ createdAt: -1 });
+
+        const result = [];
+
+        for (const event of events) {
+            if (!event.read?.includes(userId)) {
+
+                result.push(event)
+            }
+        }
+
+        res.send(result);
+    } catch (error) {
+        res.status(400).send({ success: false })
+    }
+}
