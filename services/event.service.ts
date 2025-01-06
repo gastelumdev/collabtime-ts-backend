@@ -16,7 +16,7 @@ export interface IEvent {
     assignee: IUser | null;
     workspace: Schema.Types.ObjectId | string;
     dataCollection: Schema.Types.ObjectId | string | null;
-    type: 'system' | 'info' | 'error' | 'auth' | 'data' | 'assignment' | 'settings' | 'layout' | 'message' | 'upload';
+    type: 'system' | 'info' | 'error' | 'auth' | 'data' | 'assignment' | 'acknowledgement' | 'settings' | 'layout' | 'message' | 'upload';
     priority: number;
     acknowledged?: boolean;
     requiresAcknowledgement?: boolean;
@@ -42,7 +42,7 @@ export const saveEvent = (event: IEvent) => {
     }
 }
 
-export const handleEvent = (event: IEvent, email: { email: string | string[]; subject: string; payload: { message: string; note?: string; link: string, workspaceName: string | null }, template: string } | null = null, allAssigneeIds: string[] = []) => {
+export const handleEvent = (event: IEvent, email: { email: string | string[]; subject: string; payload: { message: string; note?: string; link: string, workspaceName?: string | null, dataCollectionName?: string | null }, template: string } | null = null, allAssigneeIds: string[] = []) => {
     saveEvent(event)
     if (event.type === 'error') {
         logger.error(event.message);

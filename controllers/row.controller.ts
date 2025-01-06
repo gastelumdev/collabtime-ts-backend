@@ -310,9 +310,11 @@ export const updateRow = async (req: Request, res: Response) => {
                     }, null, allAssigneeIds as string[])
                 }
             } else if (column.type === 'people') {
-                if (newRow.values[column.name].length > row?.values[column.name].length) {
-                    for (const user of newRow.values[column.name]) {
-                        const missingUser = row?.values[column.name].find((item: { name: string, email: string }) => {
+                const newRowUsers = newRow.values[column.name] || [];
+                const prevRowUsers = row?.values[column.name] == '' ? [] : row?.values[column.name];
+                if (newRowUsers.length > prevRowUsers.length) {
+                    for (const user of newRowUsers) {
+                        const missingUser = prevRowUsers.find((item: { name: string, email: string }) => {
                             return item.email === user.email;
                         });
 
@@ -343,9 +345,9 @@ export const updateRow = async (req: Request, res: Response) => {
                     }
                 }
 
-                if (newRow.values[column.name].length < row?.values[column.name].length) {
-                    for (const user of row?.values[column.name]) {
-                        const missingUser = newRow.values[column.name].find((item: { name: string, email: string }) => {
+                if (newRowUsers.length < prevRowUsers.length) {
+                    for (const user of prevRowUsers) {
+                        const missingUser = newRowUsers.find((item: { name: string, email: string }) => {
                             return item.email === user.email;
                         });
 

@@ -219,19 +219,29 @@ export const handleAcknowledgedRow = async (workspace: IWorkspace & { _id: strin
     // if existing row has not been acknowledged,
     // send an email to the row creator
     if (row?.acknowledged === false && newRow.acknowledged === true) {
-        const rowOwner = await User.findOne({ _id: row.createdBy })
-        sendEmail({
+        const columns = await Column.find({ dataCollection: dataCollection?._id });
+        const allAssigneeIds = await getAllAssigneeIds(columns, newRow);
+        const rowOwner = await User.findOne({ _id: row.createdBy });
+        const message = `${dataCollection?.name} assignment has been acknowledged by ${assigner?.firstname} ${assigner?.lastname}`;
+        handleEvent({
+            actionBy: assigner as IUser,
+            assignee: null,
+            workspace: workspace?._id as string,
+            dataCollection: dataCollection?._id as string,
+            type: 'acknowledgement',
+            priority: 100,
+            message,
+            associatedUserIds: allAssigneeIds as string[]
+        }, {
             email: rowOwner?.email || "",
             subject: `Collabtime Acknowledgment - ${workspace?.name}`,
             payload: {
-                message: `${workspace?.name} - ${dataCollection?.name} assignment has been acknowledged by ${assigner?.firstname} ${assigner?.lastname}`,
+                message,
                 link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}/dataCollections/${dataCollection?._id}`,
                 dataCollectionName: dataCollection?.name
             },
             template: "./template/rowAcknowledgement.handlebars"
-        }, () => {
-            ;
-        })
+        }, allAssigneeIds as string[])
     }
 }
 
