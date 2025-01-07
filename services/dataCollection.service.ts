@@ -232,6 +232,7 @@ export const removeWorkspaceDataCollections = async (workspace: IWorkspace & { _
         const dataCollectionId = dataCollection._id;
         await Row.deleteMany({ dataCollection: dataCollectionId });
         await Column.deleteMany({ dataCollection: dataCollectionId });
+        await DataCollectionView.deleteMany({ dataCollection: dataCollectionId });
         await DataCollection.findByIdAndDelete({ _id: dataCollectionId });
     }
 }

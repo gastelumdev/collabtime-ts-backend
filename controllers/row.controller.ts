@@ -66,12 +66,18 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, archived: archived }).sort({ position: sort }).skip(skip).limit(limit);
         } else {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false, archived: archived }).sort({ position: sort }).skip(skip).limit(limit);
+            const nextEmptyRow = await Row.findOne({ dataCollection: dataCollection?._id, isEmpty: true, archived: archived }).sort({ position: sort })
+            if (nextEmptyRow) {
+                rows.push(nextEmptyRow)
+            }
+
         }
 
         for (const filter of Object.keys(filters)) {
             const filterVals = filters[filter]
 
             rows = rows.filter((row: any) => {
+                if (row.isEmpty) return true;
                 const refs = row.refs[filter];
                 if (appModel?.userGroupAccess?.includes(userGroupName)) {
                     return true;
@@ -286,7 +292,7 @@ export const updateRow = async (req: Request, res: Response) => {
 
         handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
 
-        handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
+        handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string }, assigner)
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);

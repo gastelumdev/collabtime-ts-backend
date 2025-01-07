@@ -365,7 +365,7 @@ export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: st
 
 
 
-export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, assigner: IUser | null) => {
     let newValue = null;
 
     // Handles notifying users based on new value
@@ -385,19 +385,31 @@ export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow
                 if (label.users) {
                     if (label.title === newValue.value) {
                         for (const user of label.users) {
-                            sendEmail({
+                            const columns = await Column.find({ dataCollection: dataCollection?._id });
+                            const allAssigneeIds = await getAllAssigneeIds(columns, reqbody);
+                            const rowOwner = await User.findOne({ _id: row.createdBy });
+                            const message = `A value in the ${newValue.key} column data collection ${dataCollection?.name} has changed to ${newValue.value}`;
+                            handleEvent({
+                                actionBy: assigner as IUser,
+                                assignee: null,
+                                workspace: workspace?._id as string,
+                                dataCollection: dataCollection?._id as string,
+                                type: 'data',
+                                priority: 100,
+                                message,
+                                associatedUserIds: allAssigneeIds as string[]
+                            }, {
                                 email: user || "",
                                 subject: `Collabtime Notification - ${workspace?.name}`,
                                 payload: {
-                                    message: `${workspace?.name} - ${dataCollection?.name} \nA value in the ${newValue.key} column has changed to ${newValue.value}`,
+                                    message,
                                     link: `${process.env.CLIENT_URL || "http://localhost:5173"}/workspaces/${workspace?._id}`,
                                     dataCollectionName: dataCollection?.name,
                                     workspaceName: workspace?.name,
                                 },
                                 template: "./template/rowAcknowledgement.handlebars"
-                            }, () => {
+                            }, allAssigneeIds as string[])
 
-                            })
                         }
                     }
 

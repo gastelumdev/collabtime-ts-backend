@@ -14,6 +14,7 @@ import axios from "axios";
 import SwiftSensorsIntegration from "./integrationApp/swiftSensors/SwiftSensorsIntegration";
 import SwiftSensorsAPIAuth from "./integrationApp/swiftSensors/Auth";
 import Threshold from "./integrationApp/swiftSensors/Threshold";
+import * as authModel from "../models/auth.model";
 // import { settings, workspaceIds } from "../env";
 
 export const convertRowCells = async () => {
@@ -492,24 +493,13 @@ const setRowsToArchived = async () => {
     }
 }
 
+import * as workspaceService from "../services/workspace.service";
+
 const utility = async () => {
-    const dataCollection = await DataCollection.findOne({ _id: "6750e04db9bb3fb62838500e" });
-    const rows = await Row.find({ dataCollection: '6750e04db9bb3fb62838500e' });
-    const columns = await Column.find({ dataCollection: '6750e04db9bb3fb62838500e' })
+    const user = await authModel.getUserById('6556993800b829946a77fef7');
+    const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
 
-    for (const row of rows) {
-        const newValues: any = {};
-
-        for (const column of columns) {
-            if (row.values[column.name] === "Label 1") {
-                newValues[column.name] = "";
-            } else {
-                newValues[column.name] = row.values[column.name]
-            }
-        }
-
-        const updatedRow = await Row.findByIdAndUpdate({ _id: row._id }, { values: newValues }, { new: true });
-    }
+    const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
 }
 
 export const helpersRunner = async () => {
