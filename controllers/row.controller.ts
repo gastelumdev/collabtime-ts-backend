@@ -317,7 +317,8 @@ export const updateRow = async (req: Request, res: Response) => {
                 }
             } else if (column.type === 'people') {
                 const newRowUsers = newRow.values[column.name] || [];
-                const prevRowUsers = row?.values[column.name] == '' ? [] : row?.values[column.name];
+                const prevRowUsers = row?.values[column.name] == '' || row?.values[column.name] === undefined ? [] : row?.values[column.name];
+
                 if (newRowUsers.length > prevRowUsers.length) {
                     for (const user of newRowUsers) {
                         const missingUser = prevRowUsers.find((item: { name: string, email: string }) => {
@@ -478,7 +479,7 @@ export const deleteRow = async (req: Request, res: Response) => {
     const dataCollection = await DataCollection.findOne({ _id: row?.dataCollection });
 
     if (dataCollection?.appModel && !dataCollection.main) {
-        const subDataCollections = await DataCollection.find({ appModel: dataCollection._id })
+        const subDataCollections = await DataCollection.find({ appModel: dataCollection._id });
 
         for (const subDc of subDataCollections) {
             const appRowsToDelete = await Row.find({ position: row?.position, dataCollection: subDc._id });

@@ -57,10 +57,13 @@ export const getAllAssigneeIds = async (columns: IColumn[], row: IRow) => {
     for (const column of columns) {
         if (column.type === "people") {
             const assignedUsers = row.values[column.name];
-            for (const assignedUser of assignedUsers) {
-                const assignee = await User.findOne({ email: assignedUser.email })
-                allAssigneeIds.push(assignee?._id.toString())
+            if (assignedUsers !== undefined) {
+                for (const assignedUser of assignedUsers) {
+                    const assignee = await User.findOne({ email: assignedUser.email })
+                    allAssigneeIds.push(assignee?._id.toString())
+                }
             }
+
         }
     }
 
