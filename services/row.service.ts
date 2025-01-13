@@ -178,8 +178,8 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
         }
 
         const columnName = dataCollection?.primaryColumnName || columns[0].name;
-
-        const note = `Note: "${row?.notesList[row?.notesList.length - 1].content}"`;
+        console.log({ row, newRow })
+        const note = `Note: "${newRow?.notesList[newRow?.notesList.length - 1].content}"`;
 
         const message = `A new note has been created in ${row?.values[columnName]} in ${dataCollection?.name} by ${assigner?.firstname} ${assigner?.lastname}.`
 

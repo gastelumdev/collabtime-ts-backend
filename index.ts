@@ -140,8 +140,6 @@ if (process.env.APP_ENVIRONMENT === "production" || process.env.APP_ENVIRONMENT 
     changeRowPositions()
   })
 
-
-
   cron.schedule("0 0 23 * * *", () => {
     // setReminders()
 
@@ -149,16 +147,16 @@ if (process.env.APP_ENVIRONMENT === "production" || process.env.APP_ENVIRONMENT 
 }
 
 if (process.env.APP_ENVIRONMENT === "production") {
-  cron.schedule("0 * * * * *", async () => {
-    const integration = new SwiftSensorsIntegration();
-    await integration.syncAll()
-    io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-  });
+  // cron.schedule("0 * * * * *", async () => {
+  //   const integration = new SwiftSensorsIntegration();
+  //   await integration.syncAll()
+  //   io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
+  // });
 
-  cron.schedule("30 0 23 * * *", () => {
-    const swiftSensorAuth = new SwiftSensorsAPIAuth();
-    swiftSensorAuth.refreshAll();
-  })
+  // cron.schedule("30 0 23 * * *", () => {
+  //   const swiftSensorAuth = new SwiftSensorsAPIAuth();
+  //   swiftSensorAuth.refreshAll();
+  // })
 }
 
 const changeRowPositions = async () => {
