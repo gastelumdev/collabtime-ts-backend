@@ -494,6 +494,7 @@ const setRowsToArchived = async () => {
 }
 
 import * as workspaceService from "../services/workspace.service";
+import { io } from "..";
 
 const utility = async () => {
     const user = await authModel.getUserById('6556993800b829946a77fef7');
@@ -507,13 +508,8 @@ export const helpersRunner = async () => {
     // await swiftSensorsAuth.signin(workspaceIds[0], settings);
 
     // const integration = new SwiftSensorsIntegration();
-    // await integration.syncAll();
-
-    // const thresholdsInstance = await Threshold.initialize(workspaceIds[0]);
-    // const thresholds = thresholdsInstance?.getData()
-    // Threshold.setup(workspaceIds[0], thresholds, false);
-
-    // setRowsToArchived()
+    // await integration.syncAll()
+    // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
 
     // utility()
 }

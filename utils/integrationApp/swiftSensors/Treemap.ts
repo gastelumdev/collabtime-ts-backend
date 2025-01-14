@@ -68,7 +68,10 @@ class Treemap {
         try {
             const treemapResponse = await axios.get(url, { headers });
 
+
+
             if (treemapResponse.status === 200) {
+
                 const treemap = treemapResponse.data.treeMap;
                 data = treemap;
 
@@ -96,9 +99,6 @@ class Treemap {
             io.emit(`integrations error ${workspaceId}`, { integrationType: 'Swift Sensors', errorMsg: `Unable to get Swift Sensors treemap. ${error.message}` });
 
             setInactive(workspaceId);
-
-        } finally {
-            return null;
         }
     }
 }
