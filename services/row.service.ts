@@ -181,7 +181,7 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
         console.log({ row, newRow })
         const note = `Note: "${newRow?.notesList[newRow?.notesList.length - 1].content}"`;
 
-        const message = `A new note has been created in ${row?.values[columnName]} in ${dataCollection?.name} by ${assigner?.firstname} ${assigner?.lastname}.`
+        const message = `A new note has been created in "${row?.values[columnName]}" in the "${dataCollection?.name}" data collection by ${assigner?.firstname} ${assigner?.lastname}.`
 
         handleEvent({
             actionBy: assigner as IUser,
@@ -353,9 +353,9 @@ export const rowIsEmpty = (row: IRow & { _id: string }) => {
     return isEmpty;
 }
 
-export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, assigner: IUser) => {
     if (workspace?.type === "integration") {
-        handleIntegrationAppValueChange(row, reqbody, workspace, dataCollection);
+        handleIntegrationAppValueChange(row as IRow & { _id: string }, reqbody, workspace, dataCollection, assigner);
     }
 
     if (workspace?.type === 'resource planning') {

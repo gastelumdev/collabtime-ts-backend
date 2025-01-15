@@ -290,7 +290,7 @@ export const updateRow = async (req: Request, res: Response) => {
         // Sets row to empty/non-empty based on its values
         // handleRowEmptiness(req.body);
 
-        handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string })
+        handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string }, assigner as IUser)
 
         handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string }, assigner)
 

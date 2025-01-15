@@ -191,8 +191,11 @@ export const getAllWorkspaceUsers = async (req: Request, res: Response) => {
 
         for (const member of members) {
             const user = await User.findOne({ email: member.email });
-            users.push(user);
+            if (user) users.push(user);
+
         }
+
+        console.log({ users })
 
         res.send(users)
     } catch (error) {

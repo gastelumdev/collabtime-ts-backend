@@ -8,10 +8,13 @@ import Threshold from "./swiftSensors/Threshold";
 import Treemap from "./swiftSensors/Treemap";
 import Logger from "../logger/Logger";
 import Workspace from "../../models/workspace.model";
+import Row from "../../models/row.models";
+import { handleEvent } from "../../services/event.service";
+import { IUser } from "../../services/auth.service";
 
 const logger = new Logger();
 
-export const handleIntegrationAppValueChange = async (row: IRow, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }) => {
+export const handleIntegrationAppValueChange = async (row: IRow & { _id: string }, reqbody: IRow & { _id: string }, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, assigner: IUser) => {
     if (dataCollection?.name === "Devices") {
         try {
             // Initialize the new and the previous threshold names
@@ -80,10 +83,24 @@ export const handleIntegrationAppValueChange = async (row: IRow, reqbody: IRow &
                 accountId: threshold.accountId
             }
             const newThreshold = await Threshold.update(workspace._id, newValues);
+
+            if (!newThreshold) {
+                await Row.findByIdAndUpdate(row._id, row, { new: true });
+
+                handleEvent({
+                    actionBy: assigner as IUser,
+                    assignee: null,
+                    workspace: workspace?._id as string,
+                    dataCollection: dataCollection?._id as string,
+                    type: 'error',
+                    priority: 100,
+                    message: `Invalid action in ${dataCollection?.name} data collection by ${assigner?.firstname} ${assigner?.lastname}. Thresholds values must be in ascending order starting with min critical and ending with max critical.`,
+                    associatedUserIds: [assigner._id?.toString()] as string[]
+                }, null, [assigner._id?.toString()] as string[])
+            }
         } catch (error) {
             logger.error('Something went wrong when updating the thresholds')
         }
-
     }
 
     const integration = new SwiftSensorsIntegration();
