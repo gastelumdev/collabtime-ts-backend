@@ -44,9 +44,12 @@ export const updateDocument = async (req: Request, res: Response) => {
 }
 
 export const deleteDocument = async (req: Request, res: Response) => {
+    console.log(req.body)
     try {
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
         const dataCollections = await DataCollection.find({ workspace: workspace?._id });
+
+        const document = await Document.findByIdAndDelete(req.body._id);
 
         for (const dataCollection of dataCollections) {
             const cells = await Cell.find({ dataCollection: dataCollection._id, type: "upload" });
@@ -68,8 +71,8 @@ export const deleteDocument = async (req: Request, res: Response) => {
             fs.unlinkSync(process.env.PERSISTED_ROOT_DIR + req.body.file.filename)
         }
 
-        const document = await Document.findByIdAndDelete(req.body._id);
-        console.log({ document })
+
+
         res.send(document)
     } catch (error) {
         console.log(error)
