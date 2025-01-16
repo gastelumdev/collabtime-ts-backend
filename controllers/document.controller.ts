@@ -69,8 +69,10 @@ export const deleteDocument = async (req: Request, res: Response) => {
         }
 
         const document = await Document.findByIdAndDelete(req.body._id);
+        console.log({ document })
         res.send(document)
     } catch (error) {
+        console.log(error)
         res.status(400).send({ success: false })
     }
 }
