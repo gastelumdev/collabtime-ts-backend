@@ -271,7 +271,7 @@ export const updateRow = async (req: Request, res: Response) => {
         }
 
         // Set the first user to interact with the row as the creator
-        if (req.body.createdBy === null) req.body.createdBy = assigner?._id;
+        if (req.body.isEmpty) req.body.createdBy = assigner?._id;
         // req.body.isEmpty = false;
 
         // Update the row
