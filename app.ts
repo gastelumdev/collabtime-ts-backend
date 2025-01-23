@@ -18,7 +18,8 @@ import tagRouter from "./routes/tag.routes";
 import messageRouter from "./routes/message.routes";
 import dataCollectionViewRouter from './routes/dataCollectionView.routes';
 import userGroupRouter from './routes/userGroup.routes';
-import eventRouter from './routes/event.routes'
+import eventRouter from './routes/event.routes';
+import miscRouter from './routes/misc.routes';
 
 
 const app: any = express();
@@ -51,7 +52,7 @@ app.use(messageRouter);
 app.use(dataCollectionViewRouter);
 app.use(userGroupRouter);
 app.use(eventRouter);
-
+app.use(miscRouter);
 
 
 export default app;

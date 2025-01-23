@@ -18,6 +18,7 @@ const columnSchema: Schema<IColumnDocument> = new Schema({
     autoIncrementPrefix: { type: String },
     primary: { type: Boolean },
     createdAt: { type: Date, default: Date.now },
+    prefix: { type: String, default: null }
 }, {
     timestamps: true,
 });

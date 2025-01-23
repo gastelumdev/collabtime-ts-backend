@@ -33,6 +33,7 @@ export interface IColumn {
     autoIncrementPrefix: string;
     primary: boolean;
     createdAt: Date;
+    prefix?: string | null;
 }
 
 export interface IColumnDocument extends IColumn, Document { }
