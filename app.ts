@@ -20,6 +20,7 @@ import dataCollectionViewRouter from './routes/dataCollectionView.routes';
 import userGroupRouter from './routes/userGroup.routes';
 import eventRouter from './routes/event.routes';
 import miscRouter from './routes/misc.routes';
+import resourcePlanningRoutes from './routes/apps/resourcePlanning.routes'
 
 
 const app: any = express();
@@ -53,6 +54,7 @@ app.use(dataCollectionViewRouter);
 app.use(userGroupRouter);
 app.use(eventRouter);
 app.use(miscRouter);
+app.use(resourcePlanningRoutes)
 
 
 export default app;

@@ -34,10 +34,12 @@ export const getRows = async (req: Request, res: Response) => {
         const archived = req.query.archived === 'undefined' ? false : Boolean(req.query.archived);
 
         const showEmptyRows = req.query.showEmptyRows !== undefined ? req.query.showEmptyRows === 'false' ? false : true : true;
+        const showCreateRow = req.query.showCreateRow !== undefined ? req.query.showCreateRow === 'false' ? false : true : true;
 
         const sortBy: string = (req.query.sortBy === "createdAt" || req.query.sortBy === undefined ? "createdAt" : `values.${req.query.sortBy}`) as string;
 
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
+        const workspace = await Workspace.findOne({ _id: dataCollection?.workspace })
 
         let filters = null;
         let appModel: any = null;
@@ -68,7 +70,10 @@ export const getRows = async (req: Request, res: Response) => {
             rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false, archived: archived }).sort({ position: sort }).skip(skip).limit(limit);
             const nextEmptyRow = await Row.findOne({ dataCollection: dataCollection?._id, isEmpty: true, archived: archived }).sort({ position: sort })
             if (nextEmptyRow) {
-                rows.push(nextEmptyRow)
+                if (showCreateRow) {
+                    rows.push(nextEmptyRow)
+                }
+
             }
 
         }
