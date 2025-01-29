@@ -4,7 +4,7 @@ import { IColumn, IColumnDocument, IColumnModel } from "../services/column.servi
 const columnSchema: Schema<IColumnDocument> = new Schema({
     dataCollection: { type: Schema.Types.ObjectId },
     name: { type: String },
-    type: { type: String },
+    type: { type: String, defualt: "text" },
     position: { type: Number },
     width: { type: String },
     permanent: { type: Boolean },

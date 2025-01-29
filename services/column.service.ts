@@ -19,7 +19,7 @@ export type TLabel = {
 export interface IColumn {
     dataCollection: Schema.Types.ObjectId;
     name: string;
-    type: string;
+    type: "text" | "number" | "date" | "people" | "reference" | "label" | "priority" | "status";
     position: number;
     width: string;
     permanent: boolean;
