@@ -1,6 +1,6 @@
 
 import { Response } from 'express';
-// import PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 
 interface IAddress {
     line1: string;

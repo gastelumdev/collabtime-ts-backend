@@ -4,6 +4,6 @@ import * as miscController from '../controllers/misc.controller';
 
 const router = Router();
 
-router.get('/purchaseOrder', miscController.purchaseOrder);
+// router.get('/workspace/:workspaceId/purchaseOrder/:vendorName', miscController.purchaseOrder);
 
 export default router;

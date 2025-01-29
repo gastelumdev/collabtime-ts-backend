@@ -9,5 +9,6 @@ router.get("/workspaces/:workspaceId/billOfMaterialsView", verifyToken, resource
 router.get("/workspaces/:workspaceId/parts", verifyToken, resourcePlanningController.getParts);
 router.get("/workspaces/:workspaceId/partsColumns", verifyToken, resourcePlanningController.getPartsColumns);
 router.put("/workspaces/:workspaceId/updateBillOfMaterialsPartValues", verifyToken, resourcePlanningController.updateBillOfMaterialPartValues)
+router.get('/workspace/:workspaceId/project/:projectId/purchaseOrder/:vendorName', resourcePlanningController.purchaseOrder);
 
 export default router;
