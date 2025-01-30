@@ -8,6 +8,9 @@ import { IDataCollection } from "./dataCollection.service";
 import { IRow } from "./row.service";
 import { deleteUserColumn, updateUserColumn } from "./userColumn.service";
 import { IUser } from "./auth.service";
+import Logger from '../utils/logger/Logger';
+
+const logger = new Logger()
 
 export type TLabel = {
     users: string[];
@@ -54,7 +57,7 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
     column.position = columnsLength + 1
     let value = null;
 
-    if (column.type === "text") value = ""
+    if (column.type === "text" || column.type === "number") value = ""
     if (column.type === "label" || column.type === "priority" || column.type === 'status') {
         const label: any = column.labels?.find((item: TLabel) => {
             return item.default;
@@ -77,6 +80,7 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
 
     column.save()
 
+    logger.info(`${column.name} column has been created`)
     return column;
 }
 
@@ -94,7 +98,7 @@ export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCo
             let value = values[prevColumn.name];
             if (value !== undefined) {
 
-                if (row.isEmpty && value !== defaultValue) {
+                if (row.isEmpty && ['label', 'priority', 'status'].includes(prevColumn.type) && value !== defaultValue) {
                     value = defaultValue;
                 }
 
@@ -110,10 +114,10 @@ export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCo
         for (const row of rows) {
             let value = row.values[prevColumn.name];
 
-            if (row.isEmpty && value !== defaultValue) {
+            if (row.isEmpty && ['label', 'priority', 'status'].includes(prevColumn.type) && value !== defaultValue) {
                 value = defaultValue;
-                const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...row.values, [prevColumn.name]: value } }, { new: true });
             }
+            const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...row.values, [prevColumn.name]: value } }, { new: true });
         }
     }
 
@@ -167,5 +171,7 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
     await Column.findByIdAndDelete(column?._id);
 
     const dataCollection = await DataCollection.findOne({ _id: column?.dataCollection });
-    deleteUserColumn(user, null, dataCollection)
+    await deleteUserColumn(user, null, dataCollection);
+
+    logger.info(`${name} column has been deleted`)
 }
