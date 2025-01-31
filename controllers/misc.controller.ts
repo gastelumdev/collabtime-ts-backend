@@ -4,8 +4,6 @@ import Workspace from "../models/workspace.model";
 
 // export const purchaseOrder = async (req: Request, res: Response) => {
 //     const { workspaceId, vendorName } = req.params;
-//     console.log(req.body)
-//     console.log({ workspaceId, vendorName })
 
 //     const workspace = await Workspace.findOne({ _id: workspaceId })
 //     generatePurchaseOrderPDF(res, {

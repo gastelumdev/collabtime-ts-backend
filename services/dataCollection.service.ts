@@ -257,38 +257,70 @@ export const setupDataCollection = async (workspace: IWorkspace & { _id: string 
 
     const columnIds = [];
     const values: any = {};
+    let numberOfColumnsCreated = 0;
 
     let position = 1;
 
-    for (const initialColumn of initialColumns || []) {
-        const column = new Column(initialColumn);
-        column.position = position;
-        column.primary = position === 1 ? true : false;
-        position++;
-        columnIds.push(column._id);
-        column.save();
-        values[column.name] = "";
+    if (initialColumns.length > 0) {
+        for (const initialColumn of initialColumns || []) {
+            const column = new Column(initialColumn);
+            column.position = position;
+            column.primary = position === 1 ? true : false;
+            position++;
+            columnIds.push(column._id);
+            column.save();
+            values[column.name] = "";
+            numberOfColumnsCreated++;
+        }
     }
 
-    for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
-        const column = new Column({
+    if (initialColumnsFromUserTemplate.length > 0) {
+        for (const initialColumnFromUser of initialColumnsFromUserTemplate) {
+            const column = new Column({
+                dataCollection: dataCollection._id,
+                name: initialColumnFromUser.name,
+                type: initialColumnFromUser.type,
+                position: initialColumnFromUser.position,
+                permanent: initialColumnFromUser.permanent,
+                people: initialColumnFromUser.people,
+                labels: initialColumnFromUser.labels,
+                dataCollectionRef: initialColumnFromUser.dataCollectionRef,
+                includeInForm: initialColumnFromUser.includeInForm,
+                includeInExport: initialColumnFromUser.includeInExport,
+                autoIncremented: initialColumnFromUser.autoIncremented,
+                autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
+
+            });
+            column.save();
+            values[column.name] = "";
+            numberOfColumnsCreated++;
+        }
+    }
+
+    const numberOfAdditionalColumnsNeeded = 40 - numberOfColumnsCreated;
+
+    for (let i = 0; i < numberOfAdditionalColumnsNeeded; i++) {
+        let newColumn = new Column({
+            name: `Column number ${position}`,
             dataCollection: dataCollection._id,
-            name: initialColumnFromUser.name,
-            type: initialColumnFromUser.type,
-            position: initialColumnFromUser.position,
-            permanent: initialColumnFromUser.permanent,
-            people: initialColumnFromUser.people,
-            labels: initialColumnFromUser.labels,
-            dataCollectionRef: initialColumnFromUser.dataCollectionRef,
-            includeInForm: initialColumnFromUser.includeInForm,
-            includeInExport: initialColumnFromUser.includeInExport,
-            autoIncremented: initialColumnFromUser.autoIncremented,
-            autoIncrementPrefix: initialColumnFromUser.autoIncrementPrefix
-
-        });
-        column.save();
-        values[column.name] = "";
+            position: position,
+            width: '180px',
+            people: [],
+            labels: [],
+            dataCollectionRef: {},
+            dataCollectionRefLabel: '',
+            includeInForm: true,
+            includeInExport: true,
+            autoIncremented: false,
+            autoIncrementPrefix: '',
+            primary: false,
+            prefix: null,
+            isEmpty: true
+        })
+        position++;
+        newColumn.save()
     }
+
 
     dataCollection.columns = columnIds;
 

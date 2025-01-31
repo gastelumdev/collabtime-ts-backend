@@ -4,21 +4,22 @@ import { IColumn, IColumnDocument, IColumnModel } from "../services/column.servi
 const columnSchema: Schema<IColumnDocument> = new Schema({
     dataCollection: { type: Schema.Types.ObjectId },
     name: { type: String },
-    type: { type: String, defualt: "text" },
+    type: { type: String, default: "text" },
     position: { type: Number },
-    width: { type: String },
-    permanent: { type: Boolean },
-    people: { type: [] },
-    labels: { type: [] },
+    width: { type: String, default: '180px' },
+    permanent: { type: Boolean, default: false },
+    people: { type: [], default: [] },
+    labels: { type: [], default: [] },
     dataCollectionRef: { type: {} },
     dataCollectionRefLabel: { type: String },
-    includeInForm: { type: Boolean },
-    includeInExport: { type: Boolean },
-    autoIncremented: { type: Boolean },
-    autoIncrementPrefix: { type: String },
-    primary: { type: Boolean },
+    includeInForm: { type: Boolean, default: true },
+    includeInExport: { type: Boolean, default: true },
+    autoIncremented: { type: Boolean, default: false },
+    autoIncrementPrefix: { type: String, default: '' },
+    primary: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    prefix: { type: String, default: null }
+    prefix: { type: String, default: null },
+    isEmpty: { type: Boolean, default: false }
 }, {
     timestamps: true,
 });

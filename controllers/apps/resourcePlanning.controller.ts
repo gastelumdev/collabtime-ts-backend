@@ -32,8 +32,6 @@ export const getBillOfMaterialsParts = async (req: Request, res: Response) => {
         return item.values.project_id === projectId
     })
 
-    console.log({ response })
-
     res.send(response);
 }
 
@@ -70,7 +68,6 @@ export const updateBillOfMaterialPartValues = async (req: Request, res: Response
     }
 
     const newBomPart = await Row.findByIdAndUpdate(rowToUpdate?._id, { values: newRowValues, refs: { ...rowToUpdate?.refs, ...newRowRefs }, isEmpty: false }, { new: true });
-    console.log(newBomPart);
 
     res.send(newBomPart);
 }
@@ -86,13 +83,10 @@ export const purchaseOrder = async (req: Request, res: Response) => {
 
     for (const bomPart of bomParts) {
         const vendor = bomPart.refs.vendor[0];
-        console.log({ vendor })
         if (vendor.values.Name === vendorName) {
             items.push({ qty: Number(bomPart.values.qty), description: `${bomPart.values['Part No']} - ${bomPart.values.description}`, unitPrice: Number(bomPart.values.unit_price) });
         }
     }
-
-    console.log(items)
 
     generatePurchaseOrderPDF(res, {
         number: 'EA10013',

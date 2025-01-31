@@ -497,10 +497,17 @@ import * as workspaceService from "../services/workspace.service";
 import { io } from "..";
 
 const utility = async () => {
-    const user = await authModel.getUserById('6556993800b829946a77fef7');
-    const userWorkspaces = await UserWorkspace.find({ userId: user?._id });
+    const dataCollection = await DataCollection.findOne({ _id: '679a547e40a243f28c1afc5e' });
+    const columns = await Column.find({ dataCollection: dataCollection?._id });
+    let columnsLength = columns.length;
+    const numberOfColumnsRequired = 40 - columnsLength;
+    for (let i = 0; i < numberOfColumnsRequired; i++) {
+        columnsLength++;
+        const columnNumber = columnsLength;
+        const newColumn = new Column({ dataCollection: dataCollection?._id, name: `Column number ${columnNumber}`, position: columnNumber, isEmpty: true });
 
-    const data = await workspaceService.getUserWorkspaces(userWorkspaces as any);
+        // newColumn.save()
+    }
 }
 
 export const helpersRunner = async () => {
