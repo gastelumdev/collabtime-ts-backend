@@ -180,7 +180,6 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
         io.emit('update row', {})
 
         const columnName = dataCollection?.primaryColumnName || columns[0].name;
-        console.log({ row, newRow })
         const note = `Note: "${newRow?.notesList[newRow?.notesList.length - 1].content}"`;
 
         const message = `A new note has been created in "${row?.values[columnName]}" in the "${dataCollection?.name}" data collection by ${assigner?.firstname} ${assigner?.lastname}.`

@@ -37,6 +37,7 @@ export interface IColumn {
     primary: boolean;
     createdAt: Date;
     prefix?: string | null;
+    isEmpty?: boolean;
 }
 
 export interface IColumnDocument extends IColumn, Document { }
@@ -45,7 +46,7 @@ export interface IColumnModel extends Model<IColumnDocument> {
     buildColumn(args: IColumn): IColumnDocument;
 }
 
-export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, reqbody: IColumn, columnsLength: number, rows: (IRow & { _id: string })[]) => {
+export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, reqbody: IColumn & { _id: string }, columnsLength: number, rows: (IRow & { _id: string })[]) => {
     const people: any = []
 
     for (const member of workspace?.members || []) {
@@ -53,7 +54,7 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
         people.push(person);
     }
 
-    const column = new Column({ ...(reqbody), dataCollection: dataCollection?._id, people: people });
+    const column = { ...(reqbody), people: people };
     column.position = columnsLength + 1
     let value = null;
 
@@ -78,10 +79,11 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
         const updatedRow = await Row.findByIdAndUpdate(row._id, { values: values }, { new: true });
     }
 
-    column.save()
+    // column.save()
+    const updatedColumn = await Column.findByIdAndUpdate(reqbody._id, column, { new: true })
 
     logger.info(`${column.name} column has been created`)
-    return column;
+    return updatedColumn;
 }
 
 export const editColumn = async (prevColumn: IColumn, newColumn: IColumn, dataCollectionId: string, columnId: string, user: IUser) => {
@@ -160,15 +162,37 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
     }
 
     let position = 1;
+    const columnsLength = columns.length;
 
-    for (const column of columns) {
-        let newColumn = { ...column, position };
+    for (const col of columns) {
+        if (column?._id.toString() !== col._id.toString()) {
+            let newColumn = { ...col, position };
 
-        const updatedColumn = await Column.findByIdAndUpdate(column._id, { position: newColumn.position });
-        position = position + 1;
+            const updatedColumn = await Column.findByIdAndUpdate(col._id, { position: newColumn.position });
+            position = position + 1;
+        } else {
+            let newColumn = {
+                name: `Column number ${position}`,
+                position: columnsLength,
+                width: '180px',
+                people: [],
+                labels: [],
+                dataCollectionRef: {},
+                dataCollectionRefLabel: '',
+                includeInForm: true,
+                includeInExport: true,
+                autoIncremented: false,
+                autoIncrementPrefix: '',
+                primary: false,
+                prefix: null,
+                isEmpty: true
+            }
+            const updatedColumn = await Column.findByIdAndUpdate(column?._id, newColumn, { new: true });
+        }
+
     }
 
-    await Column.findByIdAndDelete(column?._id);
+    // await Column.findByIdAndDelete(column?._id);
 
     const dataCollection = await DataCollection.findOne({ _id: column?.dataCollection });
     await deleteUserColumn(user, null, dataCollection);

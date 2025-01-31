@@ -195,8 +195,6 @@ export const getAllWorkspaceUsers = async (req: Request, res: Response) => {
 
         }
 
-        console.log({ users })
-
         res.send(users)
     } catch (error) {
         res.status(400).send(error)

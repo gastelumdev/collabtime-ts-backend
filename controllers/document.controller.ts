@@ -44,7 +44,6 @@ export const updateDocument = async (req: Request, res: Response) => {
 }
 
 export const deleteDocument = async (req: Request, res: Response) => {
-    console.log(req.body)
     try {
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
         const dataCollections = await DataCollection.find({ workspace: workspace?._id });
@@ -75,7 +74,6 @@ export const deleteDocument = async (req: Request, res: Response) => {
 
         res.send(document)
     } catch (error) {
-        console.log(error)
         res.status(400).send({ success: false })
     }
 }
