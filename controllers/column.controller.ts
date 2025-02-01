@@ -61,6 +61,7 @@ export const getWorkspaceColumns = async (req: Request, res: Response) => {
 }
 
 export const createColumn = async (req: Request, res: Response) => {
+    console.log(req.body)
     try {
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId })
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
