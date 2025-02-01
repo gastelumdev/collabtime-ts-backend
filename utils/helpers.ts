@@ -522,6 +522,6 @@ export const helpersRunner = async () => {
     // await integration.syncAll()
     // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
 
-    utility()
+    // utility()
 }
 
