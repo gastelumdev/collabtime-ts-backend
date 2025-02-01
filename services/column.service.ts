@@ -54,9 +54,13 @@ export const setupColumn = async (workspace: IWorkspace & { _id: string }, dataC
         people.push(person);
     }
 
+
+
     const column = { ...(reqbody), people: people };
-    column.position = columnsLength + 1
+    // column.position = columnsLength + 1
     let value = null;
+
+    console.log(column)
 
     if (column.type === "text" || column.type === "number") value = ""
     if (column.type === "label" || column.type === "priority" || column.type === 'status') {
@@ -165,7 +169,7 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
     const columnsLength = columns.length;
 
     for (const col of columns) {
-        if (column?._id.toString() !== col._id.toString()) {
+        if (column?._id.toString() !== col._id.toString() && position !== 40) {
             let newColumn = { ...col, position };
 
             const updatedColumn = await Column.findByIdAndUpdate(col._id, { position: newColumn.position });
@@ -173,7 +177,7 @@ export const removeColumn = async (reqbody: IColumn & { _id: string }, dataColle
         } else {
             let newColumn = {
                 name: `Column number ${position}`,
-                position: columnsLength,
+                position: 40,
                 width: '180px',
                 people: [],
                 labels: [],
