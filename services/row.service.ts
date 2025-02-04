@@ -164,7 +164,7 @@ export const handleAssignedTo = async (workspace: IWorkspace & { _id: string } |
 export const handleNewNote = async (workspace: IWorkspace & { _id: string } | null, dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
     // if there are more notes in the req body than in the db, then there is a new note
     // in which we want to notify the user and update the frontend via sockets
-    if (row?.notesList.length !== newRow.notesList.length) {
+    if (newRow.notesList.length > 0 && row?.notesList.length !== newRow.notesList.length) {
 
         const columns = await Column.find({ dataCollection: dataCollection?._id });
         const allAssigneeIds = await getAllAssigneeIds(columns, newRow);
@@ -177,7 +177,7 @@ export const handleNewNote = async (workspace: IWorkspace & { _id: string } | nu
             }
         }
 
-        io.emit('update row', {})
+        io.emit('update row', {});
 
         const columnName = dataCollection?.primaryColumnName || columns[0].name;
         const note = `Note: "${newRow?.notesList[newRow?.notesList.length - 1].content}"`;
