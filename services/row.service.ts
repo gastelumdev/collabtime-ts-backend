@@ -12,7 +12,7 @@ import Notification from "../models/notification.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { getAllAssigneeIds, IUser } from "./auth.service";
-import { addBlankRows, checkIfLastRow } from "../utils/rows";
+import { addBlankRows, rowsAreLessThanNumber } from "../utils/rows";
 import Treemap from "../utils/integrationApp/swiftSensors/Treemap";
 import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
 import SwiftSensorsIntegration from "../utils/integrationApp/swiftSensors/SwiftSensorsIntegration";
@@ -298,30 +298,22 @@ export const handleCompletedRow = async (row: IRow & { _id: string } | null, new
  * @returns {Promise<any[]>} A promise that resolves to an array of blank rows added.
  */
 export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
-    const isLastRow = await checkIfLastRow(row);
+    const needsMoreRows = await rowsAreLessThanNumber(row);
 
     let blankRows: any = [];
 
-    if (isLastRow) {
+    if (needsMoreRows) {
+        const lastRow = await Row.findOne({ dataCollection: dataCollection?._id }).sort({ position: -1 });
+        console.log({ lastRow });
 
-        // Get the values and the position of the row passed in which is the last row in the list
-        const lastRowValues = newRow.values;
+        // Get the position of the row passed in which is the last row in the list
         let lastRowPosition: any = newRow.position;
 
-        // Way to keep track of how many non empty values there is
-        let numberOfValues = 0;
+        blankRows = await addBlankRows(dataCollection, assigner, 10, lastRowPosition);
 
-        // if any of the last row's values are not empty increase the number of values
-        for (const key in lastRowValues) {
-            if (lastRowValues[key] !== '') {
-                numberOfValues++;
-            }
-        }
-        if (numberOfValues >= 1) {
-            blankRows = await addBlankRows(dataCollection, assigner, 10, lastRowPosition);
-        }
 
         return blankRows;
+        // return []
     }
 }
 

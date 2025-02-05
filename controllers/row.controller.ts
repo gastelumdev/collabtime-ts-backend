@@ -10,7 +10,7 @@ import Workspace from "../models/workspace.model";
 import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
-import { addBlankRows, checkIfLastRow } from "../utils/rows";
+import { addBlankRows } from "../utils/rows";
 import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleAppValueChanges, handleLastRowUpdate, handleNewNote, handleNotifyingUsersOnLabelChange, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
 import UserGroup from "../models/userGroup.model";
