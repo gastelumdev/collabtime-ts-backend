@@ -3,12 +3,13 @@ import Row from "../models/row.models";
 import { IRow } from "../services/row.service";
 import { createPrimaryValues } from "./helpers";
 
-export const checkIfLastRow = async (row: any) => {
-    const rows = await Row.find({ dataCollection: row.dataCollection }).sort({ position: 1 });
+export const rowsAreLessThanNumber = async (row: any, value: number = 10) => {
+    const rows = await Row.find({ dataCollection: row.dataCollection, isEmpty: true });
+    // console.log({ rows })
 
     // if the id of the last row in the list is the same as the row being passed in
     // return true else return false
-    if (rows[rows.length - 1]._id.toString() === row._id.toString()) {
+    if (rows.length <= value) {
         return true;
     }
     return false;
@@ -38,8 +39,17 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
             }
 
             if (column.autoIncremented) {
-
                 emptyRowValues[column.name] = createPrimaryValues(suffixValue, column.autoIncrementPrefix);
+            }
+
+            if (column.type === 'label') {
+                let defaultLabelValue = '';
+                for (const label of column.labels as any) {
+                    if (label.default !== undefined && label.default) {
+                        defaultLabelValue = label.title;
+                    }
+                }
+                emptyRowValues[column.name] = defaultLabelValue;
             }
         }
         lastRowPosition = lastRowPosition + 1024;
