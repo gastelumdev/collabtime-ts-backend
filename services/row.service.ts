@@ -299,6 +299,7 @@ export const handleCompletedRow = async (row: IRow & { _id: string } | null, new
  */
 export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
     const needsMoreRows = await rowsAreLessThanNumber(row);
+    console.log({ needsMoreRows })
 
     let blankRows: any = [];
 
@@ -307,11 +308,11 @@ export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _i
         console.log({ lastRow });
 
         // Get the position of the row passed in which is the last row in the list
-        let lastRowPosition: any = newRow.position;
+        let lastRowPosition: any = lastRow?.position;
 
-        blankRows = await addBlankRows(dataCollection, assigner, 10, lastRowPosition);
+        blankRows = await addBlankRows(dataCollection, assigner, 10, lastRowPosition, lastRow);
 
-
+        console.log({ blankRows })
         return blankRows;
         // return []
     }
