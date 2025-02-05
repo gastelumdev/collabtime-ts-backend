@@ -15,17 +15,17 @@ export const rowsAreLessThanNumber = async (row: any, value: number = 10) => {
     return false;
 }
 
-export const addBlankRows = async (dataCollection: any, user: any, count: number, lastRowPosition: number) => {
+export const addBlankRows = async (dataCollection: any, user: any, count: number, lastRowPosition: number, lastRow: any) => {
     const columns = await Column.find({ dataCollection: dataCollection?._id });
     const rows = await Row.find({ dataCollection: dataCollection._id }).sort({ position: 1 });
-    const lastRow = rows[rows.length - 1];
+    // const lastRow = rows[rows.length - 1];
 
     lastRowPosition = lastRow.position;
 
     let suffixValue = 0;
     const newRows = []
     for (let i = 1; i <= count; i++) {
-
+        console.log({ i })
         // This object will contain all the columns as keys with empty values
         const emptyRowValues: any = {};
 
@@ -35,12 +35,19 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
 
         for (const column of columns) {
             if (suffixValue === 0) {
-                suffixValue = Number(lastRow.values[column.name].split("-")[1]) + 1;
+                if (lastRow.values !== undefined) {
+                    suffixValue = Number(lastRow.values[column.name].split("-")[1]) + 1;
+                }
+
             }
+
+
 
             if (column.autoIncremented) {
                 emptyRowValues[column.name] = createPrimaryValues(suffixValue, column.autoIncrementPrefix);
             }
+
+
 
             if (column.type === 'label') {
                 let defaultLabelValue = '';
@@ -59,6 +66,8 @@ export const addBlankRows = async (dataCollection: any, user: any, count: number
             values: emptyRowValues,
             createdBy: user?._id
         })
+
+        console.log({ newRow })
 
         newRows.push(newRow)
         newRow.save();

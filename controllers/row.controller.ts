@@ -547,8 +547,9 @@ export const getBlankRows = async (req: Request, res: Response) => {
         const dataCollection = await DataCollection.findOne({ _id: dataCollectionId });
         const totalNumberOfRows = await Row.count({ dataCollection: dataCollectionId });
         const user = await User.findOne({ _id: (<any>req).user._id });
+        const lastRow = await Row.findOne({ dataCollection: dataCollection?._id }).sort({ position: -1 });
 
-        const blankRows = await addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows);
+        const blankRows = await addBlankRows(dataCollection, user, numberOfRowsToCreate, totalNumberOfRows, lastRow);
 
         res.send(blankRows)
     } catch (error) {
