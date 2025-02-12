@@ -495,23 +495,15 @@ const setRowsToArchived = async () => {
 
 import * as workspaceService from "../services/workspace.service";
 import { io } from "..";
+import { settings, skirballSettings, workspaceIds } from "../env";
 
 const utility = async () => {
-    // const dataCollection = await DataCollection.findOne({ _id: '679a547e40a243f28c1afc5e' });
-    const dataCollections = await DataCollection.find({});
-    for (const dataCollection of dataCollections) {
-        const columns = await Column.find({ dataCollection: dataCollection?._id });
-        let columnsLength = columns.length;
-        const numberOfColumnsRequired = 40 - columnsLength;
-        for (let i = 0; i < numberOfColumnsRequired; i++) {
-            columnsLength++;
-            const columnNumber = columnsLength;
-            const newColumn = new Column({ dataCollection: dataCollection?._id, name: `Column number ${columnNumber}`, position: columnNumber, isEmpty: true });
+    // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
+    // await swiftSensorsAuth.signin(workspaceIds[1], skirballSettings);
 
-            newColumn.save()
-        }
-    }
-    console.log('Finished adding blank columns');
+    // const integration = new SwiftSensorsIntegration();
+    // await integration.syncOne(workspaceIds[1])
+    // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
 }
 
 export const helpersRunner = async () => {
@@ -522,6 +514,6 @@ export const helpersRunner = async () => {
     // await integration.syncAll()
     // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
 
-    // utility()
+    utility();
 }
 

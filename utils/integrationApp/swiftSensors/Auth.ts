@@ -27,6 +27,7 @@ class SwiftSensorsAPIAuth {
 
         try {
             const signinResponse = await axios.post(url, requestData, { headers });
+            console.log(signinResponse.data)
 
             if (signinResponse.status === 200) {
                 const signinData: { access_token: string; expires_in: number; token_type: string; refresh_token: string; session_id: string; account_id: string } = signinResponse.data;
@@ -39,6 +40,7 @@ class SwiftSensorsAPIAuth {
                 settings.integration.swiftSensors.active = true;
 
                 const updatedWorkspace = await Workspace.findByIdAndUpdate(workspaceId, { settings }, { new: true })
+                console.log(updatedWorkspace)
                 logger.info(`Swift Sensors login for account ${integrationSwiftSensorSettings.email} was successful`)
                 setActive(workspaceId)
             } else {

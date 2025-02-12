@@ -9,6 +9,7 @@ class Device {
     #signal_strength: number;
     #type: string;
     #temperature: number | null;
+    #humidity: number | null;
     #status: number | null;
     #value: number | null;
     #deviceId: string;
@@ -19,6 +20,7 @@ class Device {
     #max_warning: number | null;
 
     constructor(data: ISwiftSensorDeviceForDB) {
+        console.log(data.humidity)
         this.#name = data.name;
         this.#collector_id = data.collector_id;
         this.#collector_ip = data.collector_ip;
@@ -26,6 +28,7 @@ class Device {
         this.#signal_strength = data.signal_strength;
         this.#type = data.type;
         this.#temperature = data.temperature !== undefined ? data.temperature : null;
+        this.#humidity = data.humidity !== undefined ? data.humidity : null;
         this.#status = data.status !== undefined ? data.status : null;
         this.#value = data.value !== undefined ? data.value : null;
         this.#deviceId = data.deviceId;
@@ -65,6 +68,10 @@ class Device {
             return conversion === 'f' ? ((this.#temperature * (9 / 5)) + 32) : this.#temperature;
         }
         return this.#temperature;
+    }
+
+    getHumidity(): number | null {
+        return this.#humidity;
     }
 
     getStatus(): string | null {

@@ -14,7 +14,6 @@ import UserColumn from "../models/userColumn.model";
 
 export const getColumns = async (req: Request, res: Response) => {
 
-
     try {
         const dataCollection = await DataCollection.findOne({ _id: req.params.dataCollectionId });
         const columns = await Column.find({ dataCollection: dataCollection?._id }).sort("position");
@@ -31,7 +30,7 @@ export const getColumns = async (req: Request, res: Response) => {
             }
 
         }
-
+        // console.log(response)
         res.send(response);
     } catch (error) {
         res.status(400).send({ success: false });
