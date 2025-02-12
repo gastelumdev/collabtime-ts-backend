@@ -24,11 +24,13 @@ class SwiftSensorsIntegration {
             const rows = await Row.find({ dataCollection: devicesDataCollection?._id, isEmpty: false }).sort({ position: 1 });
 
             const thresholdLabels = thresholds.map((item: IThreshold) => {
-                return { title: item.name, color: '#00508A' }
+                return { title: item.name, color: '#00508A' };
             })
 
             const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
             const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
+
+
 
             if (treemap && treemap !== undefined) {
                 for (const device of treemap.devices) {
@@ -38,6 +40,7 @@ class SwiftSensorsIntegration {
 
                     for (const row of rows) {
                         if (row.values.deviceId === fullDevice.getDeviceId()) {
+                            console.log({ values });
                             const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
                             logger.info(`${fullDevice.getName()} updated successfully.`);
                         }
@@ -45,11 +48,13 @@ class SwiftSensorsIntegration {
                 }
             } else {
                 logger.error(`Treemap for workspace ${workspace?.name} was unable to initialize.`)
+
                 throw new Error()
             }
 
             Threshold.setup(workspaceId, thresholds, false);
         } catch (error) {
+            console.log({ error })
             logger.error('Something went wrong when updating the thresholds')
         }
 
@@ -68,6 +73,15 @@ class SwiftSensorsIntegration {
     async buildDevice(workspaceId: string, treemap: Treemap, device: ISwiftSensorDevice, thresholds: IThreshold[]) {
         const collector: ISwiftSensorCollector = treemap.data[device.parent];
         const sensor: ISwiftSensorSensor = treemap.data[device.children[0]]
+        let temperature = null;
+        let humidity = null;
+
+        for (const sensorId of device.children) {
+            if (treemap.data[sensorId].profileName == 'Temperature') temperature = treemap.data[sensorId].value;
+            if (treemap.data[sensorId].profileName == 'Humidity') humidity = treemap.data[sensorId].value;
+        }
+
+        console.log({ temperature, humidity })
 
         let threshold: IThreshold | undefined;
 
@@ -84,7 +98,8 @@ class SwiftSensorsIntegration {
             battery_level: device.batteryLevel,
             signal_strength: device.signalStrength,
             type: sensor.profileName,
-            temperature: sensor.profileName === 'Temperature' ? sensor.value : null,
+            temperature: temperature,
+            humidity: humidity,
             status: sensor.profileName === 'Door' ? sensor.value : null,
             value: sensor.profileName === "Electric Potential (DC)" ? sensor.value : null,
             deviceId: sensor.parent,
@@ -107,6 +122,7 @@ class SwiftSensorsIntegration {
             signal_strength: fullDevice.getSignalStrength(),
             type: fullDevice.getType(),
             temperature: fullDevice.getTemperature(),
+            humidity: fullDevice.getHumidity(),
             status: fullDevice.getStatus(),
             value: fullDevice.getValue(),
             deviceId: fullDevice.getDeviceId(),

@@ -56,6 +56,7 @@ interface ISwiftSensorDeviceForDB {
     signal_strength: number;
     type: string;
     temperature?: number | null;
+    humidity?: number | null;
     status?: number | null;
     value?: number | null;
     deviceId: string;
