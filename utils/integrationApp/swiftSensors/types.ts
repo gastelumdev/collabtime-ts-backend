@@ -54,12 +54,15 @@ interface ISwiftSensorDeviceForDB {
     collector_ip: string;
     battery_level: number;
     signal_strength: number;
+    deviceId: string;
+    sensors: ISwiftSensor[],
+}
+
+interface ISwiftSensor {
     type: string;
     temperature?: number | null;
     humidity?: number | null;
-    status?: number | null;
     value?: number | null;
-    deviceId: string;
     threshold_name: string | null;
     min_critical?: number | null,
     min_warning?: number | null,
