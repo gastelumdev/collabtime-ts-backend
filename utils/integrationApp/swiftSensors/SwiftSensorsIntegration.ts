@@ -8,6 +8,7 @@ import Treemap from "./Treemap";
 import Logger from "../../logger/Logger";
 import Threshold from "./Threshold";
 import Column from "../../../models/column.model";
+import { cToF } from "../../helpers";
 
 const logger = new Logger();
 
@@ -33,15 +34,18 @@ class SwiftSensorsIntegration {
             if (treemap && treemap !== undefined) {
                 for (const device of treemap.devices) {
 
-                    console.log(device)
+                    // console.log(device)
 
                     const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
                     const values = await this.buildDeviceValues(fullDevice);
 
+
+
                     for (const sensor of values.sensors) {
+                        console.log({ sensor })
                         for (const row of rows) {
                             if (row.values.sensorId === sensor.sensorId) {
-                                console.log({ sensors: values.sensors })
+                                // console.log({ sensors: values.sensors });
                                 const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, ...sensor, rowId: row?._id } }, { new: true });
                                 logger.info(`${fullDevice.getName()} updated successfully.`);
                             }
@@ -77,7 +81,8 @@ class SwiftSensorsIntegration {
     async buildDevice(workspaceId: string, treemap: Treemap, device: ISwiftSensorDevice, thresholds: IThreshold[]) {
         const collector: ISwiftSensorCollector = treemap.data[device.parent];
         const sensor: ISwiftSensorSensor = treemap.data[device.children[0]];
-        const sensors: ISwiftSensor[] = []
+        const sensors: ISwiftSensor[] = [];
+
 
         for (const sensorId of device.children) {
             const sensorData = treemap.data[sensorId];
@@ -96,7 +101,7 @@ class SwiftSensorsIntegration {
                 type: sensorData.profileName,
                 temperature: sensorData.profileName === 'Temperature' ? sensorData.value : null,
                 humidity: sensorData.profileName === 'Humidity' ? sensorData.value : null,
-                status: sensorData.profileName === 'Door' ? sensorData.value : null,
+                status: sensorData.profileName === 'Door' ? sensorData.value === 0 ? 'Open' : 'Closed' : null,
                 value: sensorData.profileName === "Electric Potential (DC)" ? sensorData.value : null,
                 threshold_name: threshold !== undefined ? threshold.name : null,
                 min_critical: threshold !== undefined ? threshold.minCritical : null,
