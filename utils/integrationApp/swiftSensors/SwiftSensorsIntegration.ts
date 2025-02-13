@@ -99,7 +99,7 @@ class SwiftSensorsIntegration {
             const sensor = {
                 sensorId: sensorId,
                 type: sensorData.profileName,
-                temperature: sensorData.profileName === 'Temperature' ? sensorData.value : null,
+                temperature: sensorData.profileName === 'Temperature' ? cToF(sensorData.value) : null,
                 humidity: sensorData.profileName === 'Humidity' ? sensorData.value : null,
                 status: sensorData.profileName === 'Door' ? sensorData.value === 0 ? 'Open' : 'Closed' : null,
                 value: sensorData.profileName === "Electric Potential (DC)" ? sensorData.value : null,
