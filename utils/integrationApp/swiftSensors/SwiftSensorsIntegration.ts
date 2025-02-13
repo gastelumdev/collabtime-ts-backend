@@ -38,13 +38,17 @@ class SwiftSensorsIntegration {
                     const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
                     const values = await this.buildDeviceValues(fullDevice);
 
-                    for (const row of rows) {
-                        if (row.values.deviceId === fullDevice.getDeviceId()) {
-                            console.log({ values })
-                            const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
-                            logger.info(`${fullDevice.getName()} updated successfully.`);
+                    for (const sensor of values.sensors) {
+                        for (const row of rows) {
+                            if (row.values.sensorId === sensor.sensorId) {
+                                console.log({ sensors: values.sensors })
+                                const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, ...sensor, rowId: row?._id } }, { new: true });
+                                logger.info(`${fullDevice.getName()} updated successfully.`);
+                            }
                         }
                     }
+
+
                 }
             } else {
                 logger.error(`Treemap for workspace ${workspace?.name} was unable to initialize.`)
@@ -88,6 +92,7 @@ class SwiftSensorsIntegration {
             }
 
             const sensor = {
+                sensorId: sensorId,
                 type: sensorData.profileName,
                 temperature: sensorData.profileName === 'Temperature' ? sensorData.value : null,
                 humidity: sensorData.profileName === 'Humidity' ? sensorData.value : null,
