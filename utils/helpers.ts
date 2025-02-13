@@ -495,6 +495,7 @@ const setRowsToArchived = async () => {
 
 import * as workspaceService from "../services/workspace.service";
 import { io } from "..";
+// import { workspaceIds } from "../env";
 // import { settings, skirballSettings, workspaceIds } from "../env";
 
 const utility = async () => {
@@ -514,6 +515,6 @@ export const helpersRunner = async () => {
     // await integration.syncAll()
     // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
 
-    utility();
+    // utility();
 }
 

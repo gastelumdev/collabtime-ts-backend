@@ -30,17 +30,17 @@ class SwiftSensorsIntegration {
             const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
             const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
 
-
-
             if (treemap && treemap !== undefined) {
                 for (const device of treemap.devices) {
+
+                    console.log(device)
 
                     const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
                     const values = await this.buildDeviceValues(fullDevice);
 
                     for (const row of rows) {
                         if (row.values.deviceId === fullDevice.getDeviceId()) {
-                            console.log({ values });
+                            console.log({ values })
                             const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, rowId: row?._id } }, { new: true });
                             logger.info(`${fullDevice.getName()} updated successfully.`);
                         }
@@ -72,23 +72,35 @@ class SwiftSensorsIntegration {
 
     async buildDevice(workspaceId: string, treemap: Treemap, device: ISwiftSensorDevice, thresholds: IThreshold[]) {
         const collector: ISwiftSensorCollector = treemap.data[device.parent];
-        const sensor: ISwiftSensorSensor = treemap.data[device.children[0]]
-        let temperature = null;
-        let humidity = null;
+        const sensor: ISwiftSensorSensor = treemap.data[device.children[0]];
+        const sensors: ISwiftSensor[] = []
 
         for (const sensorId of device.children) {
-            if (treemap.data[sensorId].profileName == 'Temperature') temperature = treemap.data[sensorId].value;
-            if (treemap.data[sensorId].profileName == 'Humidity') humidity = treemap.data[sensorId].value;
-        }
+            const sensorData = treemap.data[sensorId];
 
-        console.log({ temperature, humidity })
+            let threshold: IThreshold | undefined;
 
-        let threshold: IThreshold | undefined;
+            for (const t of thresholds) {
 
-        for (const t of thresholds) {
-            if (t.sensorIds.includes(Number(device.children[0].split("_")[1]))) {
-                threshold = t;
+                if (t.sensorIds.includes(Number(sensorId.split("_")[1]))) {
+                    threshold = t
+                }
             }
+
+            const sensor = {
+                type: sensorData.profileName,
+                temperature: sensorData.profileName === 'Temperature' ? sensorData.value : null,
+                humidity: sensorData.profileName === 'Humidity' ? sensorData.value : null,
+                status: sensorData.profileName === 'Door' ? sensorData.value : null,
+                value: sensorData.profileName === "Electric Potential (DC)" ? sensorData.value : null,
+                threshold_name: threshold !== undefined ? threshold.name : null,
+                min_critical: threshold !== undefined ? threshold.minCritical : null,
+                min_warning: threshold !== undefined ? threshold.minWarning : null,
+                max_warning: threshold !== undefined ? threshold.maxWarning : null,
+                max_critical: threshold !== undefined ? threshold.maxCritical : null
+            }
+
+            sensors.push(sensor);
         }
 
         const fullDevice = new Device({
@@ -97,17 +109,18 @@ class SwiftSensorsIntegration {
             collector_ip: collector.ip,
             battery_level: device.batteryLevel,
             signal_strength: device.signalStrength,
-            type: sensor.profileName,
-            temperature: temperature,
-            humidity: humidity,
-            status: sensor.profileName === 'Door' ? sensor.value : null,
-            value: sensor.profileName === "Electric Potential (DC)" ? sensor.value : null,
             deviceId: sensor.parent,
-            threshold_name: threshold !== undefined ? threshold.name : null,
-            min_critical: threshold !== undefined ? threshold.minCritical : null,
-            min_warning: threshold !== undefined ? threshold.minWarning : null,
-            max_warning: threshold !== undefined ? threshold.maxWarning : null,
-            max_critical: threshold !== undefined ? threshold.maxCritical : null
+            sensors: sensors
+            // type: sensor.profileName,
+            // temperature: temperature,
+            // humidity: humidity,
+            // status: sensor.profileName === 'Door' ? sensor.value : null,
+            // value: sensor.profileName === "Electric Potential (DC)" ? sensor.value : null,
+            // threshold_name: threshold !== undefined ? threshold.name : null,
+            // min_critical: threshold !== undefined ? threshold.minCritical : null,
+            // min_warning: threshold !== undefined ? threshold.minWarning : null,
+            // max_warning: threshold !== undefined ? threshold.maxWarning : null,
+            // max_critical: threshold !== undefined ? threshold.maxCritical : null
         });
 
         return fullDevice;
@@ -120,17 +133,18 @@ class SwiftSensorsIntegration {
             collector_ip: fullDevice.getCollectorIp(),
             battery_level: fullDevice.getBatteryLevel(),
             signal_strength: fullDevice.getSignalStrength(),
-            type: fullDevice.getType(),
-            temperature: fullDevice.getTemperature(),
-            humidity: fullDevice.getHumidity(),
-            status: fullDevice.getStatus(),
-            value: fullDevice.getValue(),
             deviceId: fullDevice.getDeviceId(),
-            threshold_name: fullDevice.getThresholdName(),
-            min_critical: fullDevice.getMinCritical(),
-            min_warning: fullDevice.getMinWarning(),
-            max_warning: fullDevice.getMaxWarning(),
-            max_critical: fullDevice.getMaxCritical()
+            sensors: fullDevice.getSensors()
+            // type: fullDevice.getType(),
+            // temperature: fullDevice.getTemperature(),
+            // humidity: fullDevice.getHumidity(),
+            // status: fullDevice.getStatus(),
+            // value: fullDevice.getValue(),
+            // threshold_name: fullDevice.getThresholdName(),
+            // min_critical: fullDevice.getMinCritical(),
+            // min_warning: fullDevice.getMinWarning(),
+            // max_warning: fullDevice.getMaxWarning(),
+            // max_critical: fullDevice.getMaxCritical()
         }
 
         return values
