@@ -104,10 +104,10 @@ class SwiftSensorsIntegration {
                 status: sensorData.profileName === 'Door' ? sensorData.value === 0 ? 'Open' : 'Closed' : null,
                 value: sensorData.profileName === "Electric Potential (DC)" ? sensorData.value : null,
                 threshold_name: threshold !== undefined ? threshold.name : null,
-                min_critical: threshold !== undefined ? threshold.minCritical : null,
-                min_warning: threshold !== undefined ? threshold.minWarning : null,
-                max_warning: threshold !== undefined ? threshold.maxWarning : null,
-                max_critical: threshold !== undefined ? threshold.maxCritical : null
+                min_critical: threshold !== undefined && threshold.minCritical !== undefined ? cToF(threshold.minCritical as number) : null,
+                min_warning: threshold !== undefined && threshold.minWarning !== undefined ? cToF(threshold.minWarning as number) : null,
+                max_warning: threshold !== undefined && threshold.maxWarning !== undefined ? cToF(threshold.maxWarning as number) : null,
+                max_critical: threshold !== undefined && threshold.maxCritical !== undefined ? cToF(threshold.maxCritical as number) : null
             }
 
             sensors.push(sensor);
