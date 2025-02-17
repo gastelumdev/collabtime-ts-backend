@@ -84,7 +84,7 @@ class Threshold {
         const workspace = await Workspace.findOne({ _id: workspaceId });
         const devicesDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: "Devices" });
         const thresholdsDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: "Thresholds" });
-        const rows = await Row.find({ dataCollection: thresholdsDataCollection }).sort({ position: 1 })
+        const rows = await Row.find({ dataCollection: thresholdsDataCollection }).sort({ position: 1 });
 
         for (const i in rows) {
             try {
@@ -99,8 +99,6 @@ class Threshold {
                     max_warning: threshold.maxWarning !== undefined ? threshold.description === "Temperature" ? cToF(threshold.maxWarning) : threshold.maxWarning : null,
                     min_warning: threshold.minWarning !== undefined ? threshold.description === "Temperature" ? cToF(threshold.minWarning) : threshold.minWarning : null
                 }
-
-                console.log({ threshold })
 
                 const updatedRow = await Row.findByIdAndUpdate(rows[i]?._id, { values: newThreshold, isEmpty: false }, { new: true });
 
