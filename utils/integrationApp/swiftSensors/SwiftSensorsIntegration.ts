@@ -31,6 +31,7 @@ class SwiftSensorsIntegration {
             const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
             const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
 
+            console.log({ thresholds })
             if (treemap && treemap !== undefined) {
                 for (const device of treemap.devices) {
 
@@ -38,8 +39,6 @@ class SwiftSensorsIntegration {
 
                     const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
                     const values = await this.buildDeviceValues(fullDevice);
-
-
 
                     for (const sensor of values.sensors) {
                         console.log({ sensor })
@@ -96,8 +95,6 @@ class SwiftSensorsIntegration {
                 }
             }
 
-            console.log(threshold?.minCritical as number)
-
             const sensor = {
                 sensorId: sensorId,
                 type: sensorData.profileName,
@@ -106,14 +103,16 @@ class SwiftSensorsIntegration {
                 status: sensorData.profileName === 'Door' ? sensorData.value === 0 ? 'Open' : 'Closed' : null,
                 value: sensorData.profileName === "Electric Potential (DC)" ? sensorData.value : null,
                 threshold_name: threshold !== undefined ? threshold.name : null,
-                min_critical: threshold !== undefined && threshold.minCritical !== undefined ? threshold.minCritical : null,
-                min_warning: threshold !== undefined && threshold.minWarning !== undefined ? threshold.minWarning : null,
-                max_warning: threshold !== undefined && threshold.maxWarning !== undefined ? threshold.maxWarning : null,
-                max_critical: threshold !== undefined && threshold.maxCritical !== undefined ? threshold.maxCritical : null
+                min_critical: threshold !== undefined && threshold.minCritical !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.minCritical) : threshold.minCritical : null,
+                min_warning: threshold !== undefined && threshold.minWarning !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.minWarning) : threshold.minWarning : null,
+                max_warning: threshold !== undefined && threshold.maxWarning !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.maxWarning) : threshold.maxWarning : null,
+                max_critical: threshold !== undefined && threshold.maxCritical !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.maxCritical) : threshold.maxCritical : null
             }
 
             sensors.push(sensor);
         }
+
+        console.log({ sensors })
 
         const fullDevice = new Device({
             name: device.name,
