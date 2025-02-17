@@ -88,7 +88,7 @@ class Threshold {
 
         for (const i in rows) {
             try {
-                const threshold = thresholds[i];
+                const threshold = thresholds[i]
 
                 const newThreshold = {
                     id: threshold.id,
@@ -99,6 +99,8 @@ class Threshold {
                     max_warning: threshold.maxWarning !== undefined ? threshold.description === "Temperature" ? cToF(threshold.maxWarning) : threshold.maxWarning : null,
                     min_warning: threshold.minWarning !== undefined ? threshold.description === "Temperature" ? cToF(threshold.minWarning) : threshold.minWarning : null
                 }
+
+                console.log({ threshold })
 
                 const updatedRow = await Row.findByIdAndUpdate(rows[i]?._id, { values: newThreshold, isEmpty: false }, { new: true });
 
