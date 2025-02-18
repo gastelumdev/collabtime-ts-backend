@@ -496,11 +496,9 @@ const setRowsToArchived = async () => {
 import * as workspaceService from "../services/workspace.service";
 import { io } from "..";
 // import { workspaceIds } from "../env";
-// import { settings, skirballSettings, workspaceIds } from "../env";
 
 const utility = async () => {
-    // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
-    // await swiftSensorsAuth.signin(workspaceIds[1], skirballSettings);
+
 
     // const integration = new SwiftSensorsIntegration();
     // await integration.syncOne(workspaceIds[1])
@@ -508,13 +506,7 @@ const utility = async () => {
 }
 
 export const helpersRunner = async () => {
-    // const swiftSensorsAuth = new SwiftSensorsAPIAuth();
-    // await swiftSensorsAuth.signin(workspaceIds[0], settings);
 
-    // const integration = new SwiftSensorsIntegration();
-    // await integration.syncAll()
-    // io.emit("update swift sensor data", { msg: "Swift sensor data updated" });
-
-    // utility();
+    utility();
 }
 

@@ -68,20 +68,21 @@ export const handleIntegrationAppValueChange = async (row: IRow & { _id: string 
             const threshold = thresholds.find((item: IThreshold) => {
                 return item.id == values.id;
             })
-
+            console.log({ threshold })
 
             const newValues = {
                 id: values.id,
                 name: values.name,
                 description: values.description,
-                maxCritical: fToC(Number(values.max_critical)),
-                maxWarning: fToC(Number(values.max_warning)),
-                minCritical: fToC(Number(values.min_critical)),
-                minWarning: fToC(Number(values.min_warning)),
+                maxCritical: threshold.description === 'Temperature' ? fToC(Number(values.max_critical)) : Number(values.max_critical),
+                maxWarning: threshold.description === 'Temperature' ? fToC(Number(values.max_warning)) : Number(values.max_warning),
+                minCritical: threshold.description === 'Temperature' ? fToC(Number(values.min_critical)) : Number(values.min_critical),
+                minWarning: threshold.description === 'Temperature' ? fToC(Number(values.min_warning)) : Number(values.min_warning),
                 unitTypeId: threshold.unitTypeId,
                 sensorIds: threshold.sensorIds,
                 accountId: threshold.accountId
             }
+            console.log({ newValues })
             const newThreshold = await Threshold.update(workspace._id, newValues);
 
             if (!newThreshold) {
