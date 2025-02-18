@@ -209,7 +209,7 @@ export const getUsers = async (req: Request, res: Response) => {
         const invitees = await User.find({ email: { $in: inviteeEmails } });
 
         const reactSelectOptions = nonMembers.map((item: any) => {
-            return { value: item.email, label: `${item.firstname} ${item.lastname}` };
+            return { value: item.email, label: `${item.firstname} ${item.lastname} - ${item.email}` };
         })
         res.send({ members, invitees, nonMembers, reactSelectOptions });
     } catch (error) {

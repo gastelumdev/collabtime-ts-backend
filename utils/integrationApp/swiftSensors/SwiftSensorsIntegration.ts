@@ -17,7 +17,7 @@ class SwiftSensorsIntegration {
         try {
             const treemap = await Treemap.initialize(workspaceId);
             const thresholdInstance = await Threshold.initialize(workspaceId);
-            const thresholds = thresholdInstance?.getData()
+            const thresholds = thresholdInstance?.getData();
 
             const workspace = await Workspace.findOne({ _id: workspaceId })
             const devicesDataCollection = await DataCollection.findOne({ workspace: workspaceId, name: 'Devices' });
@@ -31,22 +31,21 @@ class SwiftSensorsIntegration {
             const thresholdColumn = await Column.findOne({ dataCollection: devicesDataCollection?._id, name: 'threshold_name' });
             const updatedColumn = await Column.findByIdAndUpdate(thresholdColumn?._id, { labels: [{ title: 'None', color: '#00508A' }, ...thresholdLabels] })
 
-            console.log({ thresholds })
             if (treemap && treemap !== undefined) {
                 for (const device of treemap.devices) {
-
-                    // console.log(device)
 
                     const fullDevice = await this.buildDevice(workspaceId, treemap, device, thresholds);
                     const values = await this.buildDeviceValues(fullDevice);
 
                     for (const sensor of values.sensors) {
-                        console.log({ sensor })
+                        const outOfBoundsData = await this.isOutOfBounds(sensor, workspace!);
+
                         for (const row of rows) {
+                            console.log(row.values)
                             if (row.values.sensorId === sensor.sensorId) {
-                                // console.log({ sensors: values.sensors });
-                                const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, ...sensor, rowId: row?._id } }, { new: true });
-                                logger.info(`${fullDevice.getName()} updated successfully.`);
+                                console.log({ isOutOfBounds: row.values.out_of_bounds })
+                                const updatedRow = await Row.findByIdAndUpdate(row?._id, { values: { ...values, ...sensor, rowId: row?._id, out_of_bounds: outOfBoundsData.outOfBounds ? 'Yes' : 'No' } }, { new: true });
+                                logger.info(`${fullDevice.getName()} updated successfully.`)
                             }
                         }
                     }
@@ -61,7 +60,6 @@ class SwiftSensorsIntegration {
 
             Threshold.setup(workspaceId, thresholds, false);
         } catch (error) {
-            console.log({ error })
             logger.error('Something went wrong when updating the thresholds')
         }
 
@@ -75,6 +73,34 @@ class SwiftSensorsIntegration {
             logger.info(`Integration for workspace ${workspace._id} has started`)
             await this.syncOne(workspace._id);
         }
+    }
+
+    async isOutOfBounds(sensor: ISwiftSensor, workspace: IWorkspace) {
+        if (sensor.type === 'Temperature') {
+            if (sensor.temperature! < sensor.min_critical!) {
+                return { outOfBounds: true, message: `Temperature has reached a critical value that is below ${sensor.min_critical}` };
+            } else if (sensor.temperature! < sensor.min_warning! && sensor.temperature! > sensor.min_critical!) {
+                return { outOfBounds: true, message: `Temperature has reached a warning value that is below ${sensor.min_warning}` };
+            } else if (sensor.temperature! > sensor.max_warning! && sensor.temperature! < sensor.max_critical!) {
+                return { outOfBounds: true, message: `Temperature has reached a warning value that is above ${sensor.max_warning}` }
+            } else if (sensor.temperature! > sensor.max_critical!) {
+                return { outOfBounds: true, message: `Temperature has reached a critical value that is above ${sensor.max_critical}` }
+            }
+        }
+
+        if (sensor.type === 'Humidity') {
+            if (sensor.humidity! < sensor.min_critical!) {
+                return { outOfBounds: true, message: `Humidity has reached a critical value that is below ${sensor.min_critical}` };
+            } else if (sensor.humidity! < sensor.min_warning! && sensor.humidity! > sensor.min_critical!) {
+                return { outOfBounds: true, message: `Humidity has reached a warning value that is below ${sensor.min_warning}` };
+            } else if (sensor.humidity! > sensor.max_warning! && sensor.humidity! < sensor.max_critical!) {
+                return { outOfBounds: true, message: `Humidity has reached a warning value that is above ${sensor.max_warning}` }
+            } else if (sensor.humidity! > sensor.max_critical!) {
+                return { outOfBounds: true, message: `Humidity has reached a critical value that is above ${sensor.max_critical}` }
+            }
+        }
+
+        return { outOfBounds: false, message: '' };
     }
 
     async buildDevice(workspaceId: string, treemap: Treemap, device: ISwiftSensorDevice, thresholds: IThreshold[]) {
@@ -106,13 +132,11 @@ class SwiftSensorsIntegration {
                 min_critical: threshold !== undefined && threshold.minCritical !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.minCritical) : threshold.minCritical : null,
                 min_warning: threshold !== undefined && threshold.minWarning !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.minWarning) : threshold.minWarning : null,
                 max_warning: threshold !== undefined && threshold.maxWarning !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.maxWarning) : threshold.maxWarning : null,
-                max_critical: threshold !== undefined && threshold.maxCritical !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.maxCritical) : threshold.maxCritical : null
+                max_critical: threshold !== undefined && threshold.maxCritical !== undefined ? sensorData.profileName === 'Temperature' ? cToF(threshold.maxCritical) : threshold.maxCritical : null,
             }
 
             sensors.push(sensor);
         }
-
-        console.log({ sensors })
 
         const fullDevice = new Device({
             name: device.name,
