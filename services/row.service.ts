@@ -21,6 +21,7 @@ import { handleIntegrationAppValueChange } from "../utils/integrationApp";
 import { handleResourcePlanningAppValueChange } from "../utils/resourcePlanningApp";
 import { handleEvent } from "./event.service";
 import mqtt from 'mqtt';
+import dotenv from 'dotenv';
 
 export interface INote {
     content: string;
@@ -362,11 +363,11 @@ export const handleMQTTAppChanges = async (workspace: IWorkspace & { _id: string
         console.log({ values })
 
         let options = {
-            host: "violetalkali-ckv3yx.a02.usw2.aws.hivemq.cloud",
+            host: process.env.HIVE_BROKER_ADDRESS,
             port: 8883,
             protocol: "mqtts",
-            username: "EAAccess",
-            password: "@MQttAxes2025",
+            username: process.env.HIVE_BROKER_USERNAME,
+            password: process.env.HIVE_BROKER_PASSWORD,
         };
 
         let client = mqtt.connect(options as any);
