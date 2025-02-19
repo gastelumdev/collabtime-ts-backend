@@ -20,6 +20,7 @@ import { fToC } from "../utils/helpers";
 import { handleIntegrationAppValueChange } from "../utils/integrationApp";
 import { handleResourcePlanningAppValueChange } from "../utils/resourcePlanningApp";
 import { handleEvent } from "./event.service";
+import mqtt from 'mqtt';
 
 export interface INote {
     content: string;
@@ -299,20 +300,17 @@ export const handleCompletedRow = async (row: IRow & { _id: string } | null, new
  */
 export const handleLastRowUpdate = async (dataCollection: IDataCollection & { _id: string } | null, row: IRow & { _id: string } | null, newRow: IRow, assigner: IUser | null) => {
     const needsMoreRows = await rowsAreLessThanNumber(row);
-    console.log({ needsMoreRows })
 
     let blankRows: any = [];
 
     if (needsMoreRows) {
         const lastRow = await Row.findOne({ dataCollection: dataCollection?._id }).sort({ position: -1 });
-        console.log({ lastRow });
 
         // Get the position of the row passed in which is the last row in the list
         let lastRowPosition: any = lastRow?.position;
 
         blankRows = await addBlankRows(dataCollection, assigner, 10, lastRowPosition, lastRow);
 
-        console.log({ blankRows })
         return blankRows;
         // return []
     }
@@ -357,7 +355,34 @@ export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: st
     }
 }
 
+export const handleMQTTAppChanges = async (workspace: IWorkspace & { _id: string }, reqbody: IRow) => {
+    if (workspace?._id.toString() === '67b6589d47933e9ec21d22ae') {
+        console.log("MQTT Workspace")
+        const values = reqbody.values;
+        console.log({ values })
 
+        let options = {
+            host: "violetalkali-ckv3yx.a02.usw2.aws.hivemq.cloud",
+            port: 8883,
+            protocol: "mqtts",
+            username: "EAAccess",
+            password: "@MQttAxes2025",
+        };
+
+        let client = mqtt.connect(options as any);
+
+        client.on("connect", function () {
+            console.log("Connected")
+        });
+
+        const relayName = values['Relay Name'];
+        const camelcaseRelayName = relayName.split(" ").join("").toLowerCase();
+        let relayValue = 0
+
+        if (values.status === 'On') relayValue = 1
+        client.publish("my/test/topic", `${camelcaseRelayName}=${relayValue}`);
+    }
+}
 
 export const handleNotifyingUsersOnLabelChange = async (row: IRow, reqbody: IRow, workspace: IWorkspace & { _id: string }, dataCollection: IDataCollection & { _id: string }, assigner: IUser | null) => {
     let newValue = null;

@@ -11,7 +11,7 @@ import User from "../models/auth.model";
 import { io } from "../index";
 import sendEmail from "../utils/sendEmail";
 import { addBlankRows } from "../utils/rows";
-import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleAppValueChanges, handleLastRowUpdate, handleNewNote, handleNotifyingUsersOnLabelChange, handleRowEmptiness, rowIsEmpty, updateRefs } from "../services/row.service";
+import { IRow, handleAcknowledgedRow, handleAssignedTo, handleCompletedRow, handleAppValueChanges, handleLastRowUpdate, handleNewNote, handleNotifyingUsersOnLabelChange, handleRowEmptiness, rowIsEmpty, updateRefs, handleMQTTAppChanges } from "../services/row.service";
 import { IWorkspace } from "../services/workspace.service";
 import UserGroup from "../models/userGroup.model";
 import Threshold from "../utils/integrationApp/swiftSensors/Threshold";
@@ -298,6 +298,8 @@ export const updateRow = async (req: Request, res: Response) => {
         handleAppValueChanges(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string }, assigner as IUser)
 
         handleNotifyingUsersOnLabelChange(row as IRow, req.body, workspace as IWorkspace & { _id: string }, dataCollection as IDataCollection & { _id: string }, assigner)
+
+        handleMQTTAppChanges(workspace as IWorkspace & { _id: string }, req.body);
 
         // Handles the update of the last row in a data collection, adding blank rows if necessary.
         const blankRows = await handleLastRowUpdate(dataCollection, row, req.body, assigner);
