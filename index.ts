@@ -25,6 +25,7 @@ import { helpersRunner } from './utils/helpers';
 import SwiftSensorsAPIAuth from './utils/integrationApp/swiftSensors/Auth';
 import SwiftSensorsIntegration from './utils/integrationApp/swiftSensors/SwiftSensorsIntegration';
 import Logger from './utils/logger/Logger';
+import mqtt from 'mqtt';
 
 const logger = new Logger()
 
@@ -113,6 +114,54 @@ const deleteOldNotifications = async () => {
 }
 
 helpersRunner()
+
+const runMQTT = async () => {
+  let options = {
+    host: process.env.HIVE_BROKER_ADDRESS,
+    port: 8883,
+    protocol: "mqtts",
+    username: process.env.HIVE_BROKER_USERNAME,
+    password: process.env.HIVE_BROKER_PASSWORD,
+  };
+
+  let client = mqtt.connect(options as any);
+
+  client.on("connect", function () {
+    console.log("Connected")
+  });
+
+  client.on("message", async function (topic, message) {
+    // called each time a message is received
+    // console.log("Received message:", topic, message.toString());
+
+    const messageObject = JSON.parse(message.toString());
+    console.log(messageObject)
+
+    const dataCollection = await DataCollection.findOne({ _id: '67b6599947933e9ec21d2866' });
+    const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false });
+
+    for (const row of rows) {
+      if (row.values.output_name === messageObject.outputName) {
+        const status = messageObject.status == 0 ? "Off" : "On";
+
+        const values = { ...row.values, status };
+
+        const updatedRow = await Row.findByIdAndUpdate(row._id, { values }, { new: true });
+
+        console.log(updatedRow);
+      }
+    }
+
+    io.emit('mqtt', messageObject)
+  });
+
+  client.subscribe("group1/000CC8074EF2/output/relay1");
+  client.subscribe("group1/000CC8074EF2/output/relay2");
+  client.subscribe("group1/000CC8074EF2/output/relay3");
+  client.subscribe("group1/000CC8074EF2/output/relay4");
+}
+
+runMQTT()
 
 if (process.env.APP_ENVIRONMENT === "development") {
   // cron.schedule("0 * * * * *", async () => {
