@@ -131,11 +131,8 @@ const runMQTT = async () => {
   });
 
   client.on("message", async function (topic, message) {
-    // called each time a message is received
-    // console.log("Received message:", topic, message.toString());
 
     const messageObject = JSON.parse(message.toString());
-    console.log(messageObject)
 
     const dataCollection = await DataCollection.findOne({ _id: '67b6599947933e9ec21d2866' });
     const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false });
@@ -147,12 +144,10 @@ const runMQTT = async () => {
         const values = { ...row.values, status };
 
         const updatedRow = await Row.findByIdAndUpdate(row._id, { values }, { new: true });
-
-        console.log(updatedRow);
       }
     }
 
-    io.emit('mqtt', messageObject)
+    io.emit(`mqtt/${dataCollection?.workspace}`, messageObject)
   });
 
   client.subscribe("group1/000CC8074EF2/output/relay1");
