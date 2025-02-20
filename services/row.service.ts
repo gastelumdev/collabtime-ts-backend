@@ -358,9 +358,7 @@ export const handleAppValueChanges = async (row: IRow, reqbody: IRow & { _id: st
 
 export const handleMQTTAppChanges = async (workspace: IWorkspace & { _id: string }, reqbody: IRow) => {
     if (workspace?._id.toString() === '67b6589d47933e9ec21d22ae') {
-        console.log("MQTT Workspace")
         const values = reqbody.values;
-        console.log({ values })
 
         let options = {
             host: process.env.HIVE_BROKER_ADDRESS,
