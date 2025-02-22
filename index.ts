@@ -160,7 +160,7 @@ helpersRunner()
 // runMQTT()
 
 const runControlByWebSync = async () => {
-  const request = await axios.get("http://108.178.174.238/state.json", { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
+  const request = await axios.get(`http://${process.env.PANASONIC_CBW_URL}/state.json`, { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
   const data = request.data;
 
   // console.log(data)
@@ -175,7 +175,7 @@ const runControlByWebSync = async () => {
       for (const row of rows) {
         const rowValues = row.values;
 
-        if (rowValues.device_id === key) {
+        if (rowValues.point_id === key) {
           // console.log('Found ' + key)
 
           let convertedValue: string = '';
