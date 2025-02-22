@@ -160,7 +160,7 @@ helpersRunner()
 // runMQTT()
 
 const runControlByWebSync = async () => {
-  const request = await axios.get("http://108.178.174.238/state.json", { headers: { 'Authorization': 'Basic YWRtaW46QzBudHIwbGJ5d2ViQDI1' } });
+  const request = await axios.get("http://108.178.174.238/state.json", { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
   const data = request.data;
 
   console.log(data)
