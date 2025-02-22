@@ -163,12 +163,12 @@ const runControlByWebSync = async () => {
   const request = await axios.get("http://108.178.174.238/state.json", { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
   const data = request.data;
 
-  console.log(data)
+  // console.log(data)
 
   for (const key of Object.keys(data)) {
     const valueFromControlByWeb = Number(data[key])
     if (!isNaN(valueFromControlByWeb) && !['lat', 'long', 'utcTime', 'timezoneOffset', 'minRecRefresh', 'downloadSettings'].includes(key)) {
-      console.log({ name: key, valueFromControlByWeb });
+      // console.log({ name: key, valueFromControlByWeb });
 
       const rows = await Row.find({ dataCollection: '67b6599947933e9ec21d2866' });
 
@@ -176,7 +176,7 @@ const runControlByWebSync = async () => {
         const rowValues = row.values;
 
         if (rowValues.device_id === key) {
-          console.log('Found ' + key)
+          // console.log('Found ' + key)
 
           let convertedValue: string = '';
 
@@ -184,7 +184,12 @@ const runControlByWebSync = async () => {
             convertedValue = valueFromControlByWeb == 0 ? 'Off' : 'On';
           }
 
-          const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } })
+          if (rowValues.status !== convertedValue) {
+            console.log('Updating value');
+            const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } })
+            io.emit(`mqtt/67b6589d47933e9ec21d22ae`);
+          }
+
         }
       }
     }
@@ -192,7 +197,7 @@ const runControlByWebSync = async () => {
   }
 }
 
-runControlByWebSync()
+// runControlByWebSync()
 
 if (process.env.APP_ENVIRONMENT === "development") {
   // cron.schedule("0 * * * * *", async () => {
@@ -204,6 +209,10 @@ if (process.env.APP_ENVIRONMENT === "development") {
   // cron.schedule("30 0 23 * * *", () => {
   //   const swiftSensorAuth = new SwiftSensorsAPIAuth();
   //   swiftSensorAuth.refreshAll();
+  // })
+
+  // cron.schedule("*/3 * * * * *", () => {
+  //   runControlByWebSync()
   // })
 }
 
@@ -249,6 +258,10 @@ if (process.env.APP_ENVIRONMENT === "production") {
   cron.schedule("30 0 23 * * *", () => {
     const swiftSensorAuth = new SwiftSensorsAPIAuth();
     swiftSensorAuth.refreshAll();
+  })
+
+  cron.schedule("*/3 * * * * *", () => {
+    runControlByWebSync()
   })
 }
 
