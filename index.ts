@@ -26,6 +26,7 @@ import SwiftSensorsAPIAuth from './utils/integrationApp/swiftSensors/Auth';
 import SwiftSensorsIntegration from './utils/integrationApp/swiftSensors/SwiftSensorsIntegration';
 import Logger from './utils/logger/Logger';
 import mqtt from 'mqtt';
+import axios from 'axios';
 
 const logger = new Logger()
 
@@ -115,48 +116,83 @@ const deleteOldNotifications = async () => {
 
 helpersRunner()
 
-const runMQTT = async () => {
-  let options = {
-    host: process.env.HIVE_BROKER_ADDRESS,
-    port: 8883,
-    protocol: "mqtts",
-    username: process.env.HIVE_BROKER_USERNAME,
-    password: process.env.HIVE_BROKER_PASSWORD,
-  };
+// const runMQTT = async () => {
+//   let options = {
+//     host: process.env.HIVE_BROKER_ADDRESS,
+//     port: 8883,
+//     protocol: "mqtts",
+//     username: process.env.HIVE_BROKER_USERNAME,
+//     password: process.env.HIVE_BROKER_PASSWORD,
+//   };
 
-  let client = mqtt.connect(options as any);
+//   let client = mqtt.connect(options as any);
 
-  client.on("connect", function () {
-    console.log("Connected")
-  });
+//   client.on("connect", function () {
+//     console.log("Connected")
+//   });
 
-  client.on("message", async function (topic, message) {
+//   client.on("message", async function (topic, message) {
 
-    const messageObject = JSON.parse(message.toString());
+//     const messageObject = JSON.parse(message.toString());
 
-    const dataCollection = await DataCollection.findOne({ _id: '67b6599947933e9ec21d2866' });
-    const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false });
+//     const dataCollection = await DataCollection.findOne({ _id: '67b6599947933e9ec21d2866' });
+//     const rows = await Row.find({ dataCollection: dataCollection?._id, isEmpty: false });
 
-    for (const row of rows) {
-      if (row.values.output_name === messageObject.outputName) {
-        const status = messageObject.status == 0 ? "Off" : "On";
+//     for (const row of rows) {
+//       if (row.values.output_name === messageObject.outputName) {
+//         const status = messageObject.status == 0 ? "Off" : "On";
 
-        const values = { ...row.values, status };
+//         const values = { ...row.values, status };
 
-        const updatedRow = await Row.findByIdAndUpdate(row._id, { values }, { new: true });
+//         const updatedRow = await Row.findByIdAndUpdate(row._id, { values }, { new: true });
+//       }
+//     }
+
+//     io.emit(`mqtt/${dataCollection?.workspace}`, messageObject)
+//   });
+
+//   client.subscribe("group1/000CC8074EF2/output/relay1");
+//   client.subscribe("group1/000CC8074EF2/output/relay2");
+//   client.subscribe("group1/000CC8074EF2/output/relay3");
+//   client.subscribe("group1/000CC8074EF2/output/relay4");
+// }
+
+// runMQTT()
+
+const runControlByWebSync = async () => {
+  const request = await axios.get("http://108.178.174.238/state.json", { headers: { 'Authorization': 'Basic YWRtaW46QzBudHIwbGJ5d2ViQDI1' } });
+  const data = request.data;
+
+  console.log(data)
+
+  for (const key of Object.keys(data)) {
+    const valueFromControlByWeb = Number(data[key])
+    if (!isNaN(valueFromControlByWeb) && !['lat', 'long', 'utcTime', 'timezoneOffset', 'minRecRefresh', 'downloadSettings'].includes(key)) {
+      console.log({ name: key, valueFromControlByWeb });
+
+      const rows = await Row.find({ dataCollection: '67b6599947933e9ec21d2866' });
+
+      for (const row of rows) {
+        const rowValues = row.values;
+
+        if (rowValues.device_id === key) {
+          console.log('Found ' + key)
+
+          let convertedValue: string = '';
+
+          if (rowValues.type === 'Relay Output') {
+            convertedValue = valueFromControlByWeb == 0 ? 'Off' : 'On';
+          }
+
+          const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } })
+        }
       }
     }
 
-    io.emit(`mqtt/${dataCollection?.workspace}`, messageObject)
-  });
-
-  client.subscribe("group1/000CC8074EF2/output/relay1");
-  client.subscribe("group1/000CC8074EF2/output/relay2");
-  client.subscribe("group1/000CC8074EF2/output/relay3");
-  client.subscribe("group1/000CC8074EF2/output/relay4");
+  }
 }
 
-runMQTT()
+runControlByWebSync()
 
 if (process.env.APP_ENVIRONMENT === "development") {
   // cron.schedule("0 * * * * *", async () => {
