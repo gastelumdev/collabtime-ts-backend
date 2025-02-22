@@ -22,6 +22,7 @@ import { handleResourcePlanningAppValueChange } from "../utils/resourcePlanningA
 import { handleEvent } from "./event.service";
 import mqtt from 'mqtt';
 import dotenv from 'dotenv';
+import axios from "axios";
 
 export interface INote {
     content: string;
@@ -360,26 +361,28 @@ export const handleMQTTAppChanges = async (workspace: IWorkspace & { _id: string
     if (workspace?._id.toString() === '67b6589d47933e9ec21d22ae') {
         const values = reqbody.values;
 
-        let options = {
-            host: process.env.HIVE_BROKER_ADDRESS,
-            port: 8883,
-            protocol: "mqtts",
-            username: process.env.HIVE_BROKER_USERNAME,
-            password: process.env.HIVE_BROKER_PASSWORD,
-        };
-
-        let client = mqtt.connect(options as any);
-
-        client.on("connect", function () {
-            console.log("Connected")
-        });
-
-        const relayName = values['Relay Name'];
-        const camelcaseRelayName = relayName.split(" ").join("").toLowerCase();
+        const pointId = values.point_id;
         let relayValue = 0
 
         if (values.status === 'On') relayValue = 1
-        client.publish("my/test/topic", `${camelcaseRelayName}=${relayValue}`);
+
+        // let options = {
+        //     host: process.env.HIVE_BROKER_ADDRESS,
+        //     port: 8883,
+        //     protocol: "mqtts",
+        //     username: process.env.HIVE_BROKER_USERNAME,
+        //     password: process.env.HIVE_BROKER_PASSWORD,
+        // };
+
+        // let client = mqtt.connect(options as any);
+
+        // client.on("connect", function () {
+        //     console.log("Connected")
+        // });
+        // client.publish("my/test/topic", `${camelcaseRelayName}=${relayValue}`);
+
+        const request = await axios.get(`http://${process.env.PANASONIC_CBW_URL}/state.json?${pointId}=${relayValue}`, { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
+
     }
 }
 
