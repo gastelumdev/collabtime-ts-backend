@@ -163,7 +163,7 @@ const runControlByWebSync = async () => {
   const request = await axios.get(`http://${process.env.PANASONIC_CBW_URL}/state.json`, { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
   const data = request.data;
 
-  // console.log(data)
+  console.log(data)
 
   for (const key of Object.keys(data)) {
     const valueFromControlByWeb = Number(data[key])
@@ -180,13 +180,12 @@ const runControlByWebSync = async () => {
 
           let convertedValue: string = '';
 
-          if (rowValues.type === 'Relay Output') {
+          if (rowValues.type === 'Relay Output' || rowValues.type === 'Digital Input') {
             convertedValue = valueFromControlByWeb == 0 ? 'Off' : 'On';
           }
 
           if (rowValues.status !== convertedValue) {
-            console.log('Updating value');
-            const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } })
+            const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } }, { new: true })
             io.emit(`mqtt/67b6589d47933e9ec21d22ae`);
           }
 
@@ -197,7 +196,7 @@ const runControlByWebSync = async () => {
   }
 }
 
-// runControlByWebSync()
+// runControlByWebSync();
 
 if (process.env.APP_ENVIRONMENT === "development") {
   // cron.schedule("0 * * * * *", async () => {

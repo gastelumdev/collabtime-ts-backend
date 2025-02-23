@@ -23,6 +23,8 @@ import { handleEvent } from "./event.service";
 import mqtt from 'mqtt';
 import dotenv from 'dotenv';
 import axios from "axios";
+import Logger from "../utils/logger/Logger";
+const logger = new Logger()
 
 export interface INote {
     content: string;
@@ -382,7 +384,7 @@ export const handleMQTTAppChanges = async (workspace: IWorkspace & { _id: string
         // client.publish("my/test/topic", `${camelcaseRelayName}=${relayValue}`);
 
         const request = await axios.get(`http://${process.env.PANASONIC_CBW_URL}/state.json?${pointId}=${relayValue}`, { headers: { 'Authorization': 'Basic ' + process.env.PANASONIC_CBW_KEY } });
-
+        logger.info(`${pointId} has been updated to ${values.status}`)
     }
 }
 
