@@ -259,9 +259,9 @@ if (process.env.APP_ENVIRONMENT === "production") {
     swiftSensorAuth.refreshAll();
   })
 
-  cron.schedule("*/3 * * * * *", () => {
-    runControlByWebSync()
-  })
+  // cron.schedule("*/3 * * * * *", () => {
+  //   runControlByWebSync()
+  // })
 }
 
 const changeRowPositions = async () => {
