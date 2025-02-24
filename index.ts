@@ -180,7 +180,7 @@ const runControlByWebSync = async () => {
 
           let convertedValue: string = '';
 
-          if (rowValues.type === 'Relay Output' || rowValues.type === 'Digital Input') {
+          if (['Relay Output', 'Digital Input', 'Register'].includes(rowValues.type)) {
             convertedValue = valueFromControlByWeb == 0 ? 'Off' : 'On';
           }
 
