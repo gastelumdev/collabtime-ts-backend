@@ -186,7 +186,7 @@ const runControlByWebSync = async () => {
 
           if (rowValues.status !== convertedValue) {
             const updatedRow = await Row.findByIdAndUpdate(row._id, { values: { ...rowValues, status: convertedValue } }, { new: true })
-            io.emit(`mqtt/67b6589d47933e9ec21d22ae`)
+            io.emit(`mqtt/67b6589d47933e9ec21d22ae`);
           }
 
         }

@@ -55,6 +55,17 @@ export const getDataCollectionViewsByRowId = async (req: Request, res: Response)
 
 }
 
+export const getDataCollectionViewById = async (req: Request, res: Response) => {
+    console.log(req.params.dataCollectionViewId)
+    try {
+        const view = await DataCollectionView.findOne({ _id: req.params.dataCollectionViewId });
+        console.log(view)
+        res.send(view)
+    } catch (err) {
+        res.status(400).send({ success: false })
+    }
+}
+
 export const createDataCollectionView = async (req: Request, res: Response) => {
     try {
         const workspace = await Workspace.findOne({ _id: req.params.workspaceId });
