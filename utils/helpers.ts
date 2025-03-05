@@ -498,15 +498,27 @@ import { io } from "..";
 // import { workspaceIds } from "../env";
 
 const utility = async () => {
-
-
     // const integration = new SwiftSensorsIntegration();
     // await integration.syncOne(workspaceIds[1])
     // io.emit("update swift sensor data", { msg: "Swift sensor data updated" })
+
+    const workspaces = await Workspace.find({});
+
+    for (const workspace of workspaces) {
+        const views = await DataCollectionView.find({ workspace: workspace._id });
+
+        let position = 1;
+
+        for (const view of views) {
+            const updatedView = await DataCollectionView.findByIdAndUpdate(view._id, { position }, { new: true });
+            position++;
+            console.log(updatedView);
+        }
+    }
 }
 
 export const helpersRunner = async () => {
 
-    utility();
+    // utility();
 }
 

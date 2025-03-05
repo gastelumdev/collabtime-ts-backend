@@ -16,6 +16,7 @@ const dataCollectionViewSchema: Schema<IDataCollectionViewDocument> = new Schema
     main: { type: Schema.Types.Boolean, default: false },
     maxNumberOfItems: { type: Number, default: null },
     createdAt: { type: Date, default: Date.now },
+    position: { type: Number },
 }, {
     timestamps: true
 });

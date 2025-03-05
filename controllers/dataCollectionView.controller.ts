@@ -14,7 +14,7 @@ import UserColumn from "../models/userColumn.model";
 
 export const getDataCollectionViews = async (req: Request, res: Response) => {
     try {
-        const dataCollectionViews = await DataCollectionView.find({ workspace: req?.params.workspaceId });
+        const dataCollectionViews = await DataCollectionView.find({ workspace: req?.params.workspaceId }).sort({ position: 1 });
         const response: any = [];
 
         for (const dataCollectionView of dataCollectionViews) {

@@ -19,6 +19,7 @@ export interface IDataCollectionView {
     rowsOfDataCollection?: Schema.Types.ObjectId | null;
     main?: boolean;
     maxNumberOfItems?: number | null;
+    position?: number;
 }
 
 export interface IDataCollectionViewDocument extends IDataCollectionView, Document {
